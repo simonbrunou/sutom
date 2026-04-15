@@ -1,0 +1,5 @@
+name = "sutom"
+compatibility_date = "2026-04-15"
+
+[pages]
+build_output_dir = "build"
