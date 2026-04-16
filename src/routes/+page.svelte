@@ -40,6 +40,52 @@
 		}, duration);
 	}
 
+	function formatDateFR(date: Date): string {
+		return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+	}
+
+	function buildShareText(): string {
+		const attemptStr =
+			gameState.gameStatus === 'won'
+				? `${gameState.guesses.length}/${gameState.maxAttempts}`
+				: `X/${gameState.maxAttempts}`;
+		const dateStr = formatDateFR(new Date());
+		const lines = gameState.guesses.map((g) => {
+			const tiles = evaluateGuess(g, gameState.solution);
+			return tiles
+				.map((t) => {
+					if (t.state === 'correct') return '🟪';
+					if (t.state === 'misplaced') return '🟨';
+					return '⬛';
+				})
+				.join('');
+		});
+		return `SUTOM - ${dateStr}\n${attemptStr}\n\n${lines.join('\n')}`;
+	}
+
+	async function shareResult() {
+		const text = buildShareText();
+		if (navigator.share) {
+			try {
+				await navigator.share({ text });
+				return;
+			} catch (err) {
+				if (err instanceof Error && err.name === 'AbortError') return;
+				// fall through to clipboard
+			}
+		}
+		if (navigator.clipboard?.writeText) {
+			try {
+				await navigator.clipboard.writeText(text);
+				showToast('Copié !');
+				return;
+			} catch {
+				// fall through
+			}
+		}
+		window.prompt('Copiez ce texte :', text);
+	}
+
 	function handleKey(key: string) {
 		if (gameState.gameStatus !== 'playing') return;
 
@@ -63,14 +109,22 @@
 				const messages = ['Génial !', 'Magnifique !', 'Superbe !', 'Bien joué !', 'De justesse !', 'Ouf !'];
 				const idx = Math.min(gameState.guesses.length - 1, messages.length - 1);
 				bounceRow = gameState.guesses.length - 1;
+				const animDelay = gameState.solution.length * 150 + 500;
 				setTimeout(() => {
 					showToast(messages[idx], 3000);
 					bounceRow = -1;
-				}, gameState.solution.length * 150 + 500);
+				}, animDelay);
+				setTimeout(() => {
+					if (gameState.gameStatus !== 'playing') showStats = true;
+				}, animDelay + 2000);
 			} else if (gameState.gameStatus === 'lost') {
+				const animDelay = gameState.solution.length * 150 + 500;
 				setTimeout(() => {
 					showToast(`Le mot était : ${gameState.solution}`, 5000);
-				}, gameState.solution.length * 150 + 500);
+				}, animDelay);
+				setTimeout(() => {
+					if (gameState.gameStatus !== 'playing') showStats = true;
+				}, animDelay + 2000);
 			}
 			return;
 		}
@@ -198,18 +252,7 @@
 				</div>
 			</div>
 			{#if gameState.gameStatus !== 'playing'}
-				<button class="share-btn" onclick={() => {
-					const lines = gameState.guesses.map(g => {
-						const tiles = evaluateGuess(g, gameState.solution);
-						return tiles.map(t => {
-							if (t.state === 'correct') return '🟪';
-							if (t.state === 'misplaced') return '🟨';
-							return '⬛';
-						}).join('');
-					});
-					const text = `SUTOM ${gameState.guesses.length}/${gameState.maxAttempts}\n\n${lines.join('\n')}`;
-					navigator.clipboard.writeText(text).then(() => showToast('Copié !'));
-				}}>
+				<button class="share-btn" onclick={shareResult}>
 					Partager
 				</button>
 			{/if}
