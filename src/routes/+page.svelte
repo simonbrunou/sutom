@@ -80,7 +80,7 @@
 			return;
 		}
 
-		if (/^[A-Z]$/.test(key)) {
+		if (/^[A-Z]$/.test(key) || key === '.') {
 			gameState = addLetter(gameState, key);
 		}
 	}
@@ -100,6 +100,9 @@
 		} else if (/^[A-Z]$/.test(key)) {
 			e.preventDefault();
 			handleKey(key);
+		} else if (e.key === '.') {
+			e.preventDefault();
+			handleKey('.');
 		}
 	}
 

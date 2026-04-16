@@ -48,6 +48,24 @@ describe('Keyboard', () => {
 		expect(onKey).toHaveBeenCalledWith('BACK');
 	});
 
+	it('renders dot key for placeholders', () => {
+		render(Keyboard, { props: { keyStates: {}, onKey: vi.fn() } });
+		expect(screen.getByTestId('key-.')).toBeInTheDocument();
+	});
+
+	it('calls onKey with . when dot is clicked', async () => {
+		const onKey = vi.fn();
+		render(Keyboard, { props: { keyStates: {}, onKey } });
+		await fireEvent.click(screen.getByTestId('key-.'));
+		expect(onKey).toHaveBeenCalledWith('.');
+	});
+
+	it('has correct aria-label for dot key', () => {
+		render(Keyboard, { props: { keyStates: {}, onKey: vi.fn() } });
+		const dotKey = screen.getByTestId('key-.');
+		expect(dotKey.getAttribute('aria-label')).toBe('Point');
+	});
+
 	it('has correct aria-label on keyboard group', () => {
 		render(Keyboard, { props: { keyStates: {}, onKey: vi.fn() } });
 		const keyboard = screen.getByRole('group');

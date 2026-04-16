@@ -13,12 +13,13 @@
 	const rows = [
 		['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
 		['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'],
-		['ENTER', 'W', 'X', 'C', 'V', 'B', 'N', 'BACK']
+		['.', 'W', 'X', 'C', 'V', 'B', 'N', 'ENTER', 'BACK']
 	];
 
 	function getKeyLabel(key: string): string {
 		if (key === 'ENTER') return 'Valider';
 		if (key === 'BACK') return 'Effacer';
+		if (key === '.') return 'Point';
 		return key;
 	}
 
@@ -29,7 +30,7 @@
 	}
 
 	function getStateClass(key: string): string {
-		if (key === 'ENTER' || key === 'BACK') return '';
+		if (key === 'ENTER' || key === 'BACK' || key === '.') return '';
 		const state = keyStates[key];
 		if (state) return `key-${state}`;
 		return '';
@@ -42,8 +43,8 @@
 			{#each row as key}
 				<button
 					class="key {getStateClass(key)}"
-					class:key-wide={key === 'ENTER' || key === 'BACK'}
-					class:key-special={key === 'ENTER' || key === 'BACK'}
+					class:key-wide={key === 'ENTER' || key === 'BACK' || key === '.'}
+					class:key-special={key === 'ENTER' || key === 'BACK' || key === '.'}
 					onclick={() => onKey(key)}
 					aria-label={getKeyLabel(key)}
 					data-testid="key-{key}"
