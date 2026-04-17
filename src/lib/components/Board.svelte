@@ -6,12 +6,14 @@
 		grid,
 		currentRowIndex = 0,
 		shakeRow = -1,
-		bounceRow = -1
+		bounceRow = -1,
+		initialLetter = ''
 	}: {
 		grid: TileData[][];
 		currentRowIndex?: number;
 		shakeRow?: number;
 		bounceRow?: number;
+		initialLetter?: string;
 	} = $props();
 </script>
 
@@ -22,6 +24,7 @@
 			animate={i < currentRowIndex}
 			shake={i === shakeRow}
 			bounce={i === bounceRow}
+			{initialLetter}
 		/>
 	{/each}
 </div>
