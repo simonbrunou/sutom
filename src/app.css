@@ -1,47 +1,56 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-	--color-bg: #0f0a1a;
+	--color-bg: #0b0616;
 	--color-bg-secondary: #1a1230;
 	--color-surface: rgba(255, 255, 255, 0.06);
 	--color-surface-hover: rgba(255, 255, 255, 0.1);
+	--color-surface-active: rgba(255, 255, 255, 0.14);
 	--color-border: rgba(255, 255, 255, 0.12);
-	--color-border-active: rgba(255, 255, 255, 0.3);
-	--color-text: #f0eef6;
-	--color-text-muted: rgba(240, 238, 246, 0.5);
+	--color-border-active: rgba(255, 255, 255, 0.32);
+	--color-text: #f5f3fb;
+	--color-text-muted: rgba(245, 243, 251, 0.55);
+	--color-text-dim: rgba(245, 243, 251, 0.35);
 
-	/* Tile states - unique color scheme */
+	/* Tile states */
 	--color-correct: #6c5ce7;
+	--color-correct-hi: #8778f5;
 	--color-correct-text: #ffffff;
 	--color-misplaced: #fdcb6e;
+	--color-misplaced-hi: #ffd98a;
 	--color-misplaced-text: #1a1230;
-	--color-absent: rgba(255, 255, 255, 0.08);
-	--color-absent-text: rgba(255, 255, 255, 0.35);
+	--color-absent: rgba(255, 255, 255, 0.06);
+	--color-absent-text: rgba(255, 255, 255, 0.3);
 	--color-initial: #e84393;
+	--color-initial-hi: #ff6ab0;
 	--color-initial-text: #ffffff;
 	--color-tbd: rgba(255, 255, 255, 0.04);
 	--color-empty: transparent;
 
 	/* Keyboard */
-	--color-key: rgba(255, 255, 255, 0.1);
-	--color-key-text: #f0eef6;
-	--color-key-special: rgba(108, 92, 231, 0.4);
+	--color-key: rgba(255, 255, 255, 0.08);
+	--color-key-hover: rgba(255, 255, 255, 0.16);
+	--color-key-text: #f5f3fb;
+	--color-key-special: rgba(108, 92, 231, 0.35);
+	--color-key-special-hover: rgba(108, 92, 231, 0.55);
 
 	/* Accent */
 	--color-accent: #a29bfe;
-	--color-accent-glow: rgba(162, 155, 254, 0.3);
+	--color-accent-glow: rgba(162, 155, 254, 0.35);
 
 	/* Sizing */
-	--tile-size: clamp(42px, 10vw, 62px);
+	--tile-size: clamp(44px, 11vw, 62px);
 	--tile-gap: clamp(4px, 1vw, 8px);
 	--tile-radius: 12px;
-	--key-height: 52px;
+	--key-height: clamp(48px, 7.5vh, 56px);
 	--key-radius: 10px;
-	--header-height: 60px;
+	--header-height: 64px;
 
-	/* Animation */
-	--flip-duration: 500ms;
-	--pop-duration: 100ms;
+	/* Timing */
+	--flip-duration: 600ms;
+	--pop-duration: 120ms;
+	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
 	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 	color: var(--color-text);
@@ -65,11 +74,13 @@ body {
 body {
 	background: var(--color-bg);
 	background-image:
-		radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.08) 0%, transparent 50%),
-		radial-gradient(ellipse at 80% 20%, rgba(232, 67, 147, 0.06) 0%, transparent 50%),
-		radial-gradient(ellipse at 50% 100%, rgba(253, 203, 110, 0.04) 0%, transparent 40%);
+		radial-gradient(ellipse at 20% 50%, rgba(108, 92, 231, 0.12) 0%, transparent 55%),
+		radial-gradient(ellipse at 80% 20%, rgba(232, 67, 147, 0.1) 0%, transparent 55%),
+		radial-gradient(ellipse at 50% 100%, rgba(253, 203, 110, 0.06) 0%, transparent 45%);
+	background-attachment: fixed;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
 }
 
 button {
@@ -77,6 +88,8 @@ button {
 	cursor: pointer;
 	border: none;
 	outline: none;
+	background: none;
+	color: inherit;
 }
 
 button:focus-visible {
@@ -105,24 +118,29 @@ button:focus-visible {
 }
 
 @keyframes pop {
-	0% { transform: scale(1); }
-	50% { transform: scale(1.12); }
+	0% { transform: scale(0.85); }
+	50% { transform: scale(1.08); }
 	100% { transform: scale(1); }
 }
 
 @keyframes shake {
 	0%, 100% { transform: translateX(0); }
-	10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-	20%, 40%, 60%, 80% { transform: translateX(4px); }
+	10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+	20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
 @keyframes bounce {
 	0%, 20% { transform: translateY(0); }
-	40% { transform: translateY(-20px); }
+	40% { transform: translateY(-22px); }
 	50% { transform: translateY(4px); }
-	60% { transform: translateY(-8px); }
+	60% { transform: translateY(-10px); }
 	80% { transform: translateY(2px); }
 	100% { transform: translateY(0); }
+}
+
+@keyframes slide-down {
+	from { transform: translate(-50%, -16px); opacity: 0; }
+	to { transform: translate(-50%, 0); opacity: 1; }
 }
 
 @keyframes slide-up {
@@ -136,11 +154,37 @@ button:focus-visible {
 }
 
 @keyframes scale-in {
-	from { transform: scale(0.9); opacity: 0; }
-	to { transform: scale(1); opacity: 1; }
+	from { transform: scale(0.92) translateY(8px); opacity: 0; }
+	to { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 @keyframes glow-pulse {
-	0%, 100% { box-shadow: 0 0 8px var(--color-accent-glow); }
-	50% { box-shadow: 0 0 20px var(--color-accent-glow); }
+	0%, 100% { box-shadow: 0 0 10px var(--color-accent-glow); }
+	50% { box-shadow: 0 0 24px var(--color-accent-glow); }
+}
+
+@keyframes confetti-fall {
+	0% {
+		transform: translateY(-20vh) rotate(0deg);
+		opacity: 1;
+	}
+	100% {
+		transform: translateY(120vh) rotate(720deg);
+		opacity: 0;
+	}
+}
+
+@keyframes float-y {
+	0%, 100% { transform: translateY(0px); }
+	50% { transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
 }
