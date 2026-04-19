@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
 	evaluateGuess,
 	createInitialState,
@@ -344,6 +344,39 @@ describe('getDailyWord', () => {
 		const words = ['arbre', 'monde'];
 		const word = getDailyWord(words);
 		expect(word).toBe(word.toUpperCase());
+	});
+
+	describe('across day boundaries', () => {
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
+		it('returns different words on consecutive days', () => {
+			// Use a word list long enough that consecutive day indices map to different entries.
+			const words = Array.from({ length: 50 }, (_, i) => `WORD${i}`);
+
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date(2026, 3, 19, 12, 0, 0));
+			const day1 = getDailyWord(words);
+
+			vi.setSystemTime(new Date(2026, 3, 20, 12, 0, 0));
+			const day2 = getDailyWord(words);
+
+			expect(day1).not.toBe(day2);
+		});
+
+		it('returns the same word just before and after the within-day boundary', () => {
+			const words = Array.from({ length: 50 }, (_, i) => `WORD${i}`);
+
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date(2026, 3, 19, 0, 0, 1));
+			const earlyMorning = getDailyWord(words);
+
+			vi.setSystemTime(new Date(2026, 3, 19, 23, 59, 59));
+			const lateNight = getDailyWord(words);
+
+			expect(earlyMorning).toBe(lateNight);
+		});
 	});
 });
 
