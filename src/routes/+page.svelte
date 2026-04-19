@@ -176,9 +176,12 @@
 					if (gameState.gameStatus !== 'playing') showStats = true;
 				}, animDelay + 2000);
 			} else if (gameState.gameStatus === 'lost') {
-				const animDelay = gameState.solution.length * 150 + 500;
+				// Capture solution now; a midnight-rollover reset during animDelay
+				// would otherwise leak tomorrow's word into the reveal toast.
+				const revealedSolution = gameState.solution;
+				const animDelay = revealedSolution.length * 150 + 500;
 				setTimeout(() => {
-					showToast(`Le mot était : ${gameState.solution}`, 5000, 'error');
+					showToast(`Le mot était : ${revealedSolution}`, 5000, 'error');
 					haptic([100, 50, 100]);
 				}, animDelay);
 				setTimeout(() => {
