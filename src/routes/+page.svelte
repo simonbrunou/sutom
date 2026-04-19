@@ -129,6 +129,11 @@
 		const m = Math.floor((diff % 3_600_000) / 60_000);
 		const s = Math.floor((diff % 60_000) / 1000);
 		countdown = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+		const todayWord = getDailyWord(WORDS);
+		if (todayWord !== gameState.solution) {
+			gameState = createInitialState(todayWord);
+		}
 	}
 
 	function triggerConfetti() {
@@ -171,9 +176,12 @@
 					if (gameState.gameStatus !== 'playing') showStats = true;
 				}, animDelay + 2000);
 			} else if (gameState.gameStatus === 'lost') {
-				const animDelay = gameState.solution.length * 150 + 500;
+				// Capture solution now; a midnight-rollover reset during animDelay
+				// would otherwise leak tomorrow's word into the reveal toast.
+				const revealedSolution = gameState.solution;
+				const animDelay = revealedSolution.length * 150 + 500;
 				setTimeout(() => {
-					showToast(`Le mot était : ${gameState.solution}`, 5000, 'error');
+					showToast(`Le mot était : ${revealedSolution}`, 5000, 'error');
 					haptic([100, 50, 100]);
 				}, animDelay);
 				setTimeout(() => {
