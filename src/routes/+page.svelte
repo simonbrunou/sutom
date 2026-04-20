@@ -11,14 +11,14 @@
 		getDailyWord,
 		type GameState
 	} from '$lib/game';
-	import { WORDS, isValidWord } from '$lib/words';
+	import { ANSWER_WORDS, isValidWord } from '$lib/words';
 	import Header from '$lib/components/Header.svelte';
 	import Board from '$lib/components/Board.svelte';
 	import Keyboard from '$lib/components/Keyboard.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 
-	let gameState: GameState = $state(createInitialState(getDailyWord(WORDS)));
+	let gameState: GameState = $state(createInitialState(getDailyWord(ANSWER_WORDS)));
 	let shakeRow = $state(-1);
 	let bounceRow = $state(-1);
 	let toastMessage = $state('');
@@ -130,7 +130,7 @@
 		const s = Math.floor((diff % 60_000) / 1000);
 		countdown = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-		const todayWord = getDailyWord(WORDS);
+		const todayWord = getDailyWord(ANSWER_WORDS);
 		if (todayWord !== gameState.solution) {
 			gameState = createInitialState(todayWord);
 		}
@@ -231,7 +231,7 @@
 			const saved = localStorage.getItem('sutom-state');
 			if (saved) {
 				const parsed = JSON.parse(saved);
-				const todayWord = getDailyWord(WORDS);
+				const todayWord = getDailyWord(ANSWER_WORDS);
 				if (parsed.solution === todayWord) {
 					gameState = parsed;
 				}

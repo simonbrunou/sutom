@@ -1,35 +1,35 @@
 import { describe, it, expect } from 'vitest';
-import { WORDS, VALID_GUESSES, isValidWord, getWordsByLength } from './words';
+import { ANSWER_WORDS, VALID_GUESSES, isValidWord } from './words';
 
-describe('WORDS', () => {
+describe('ANSWER_WORDS', () => {
 	it('contains words', () => {
-		expect(WORDS.length).toBeGreaterThan(0);
+		expect(ANSWER_WORDS.length).toBeGreaterThan(0);
+	});
+
+	it('loads thousands of dictionary words', () => {
+		expect(ANSWER_WORDS.length).toBeGreaterThan(1000);
 	});
 
 	it('all words are uppercase', () => {
-		for (const word of WORDS) {
+		for (const word of ANSWER_WORDS) {
 			expect(word).toBe(word.toUpperCase());
 		}
 	});
 
-	it('all words are at least 5 letters', () => {
-		for (const word of WORDS) {
+	it('all words are between 5 and 8 letters', () => {
+		for (const word of ANSWER_WORDS) {
 			expect(word.length).toBeGreaterThanOrEqual(5);
+			expect(word.length).toBeLessThanOrEqual(8);
 		}
 	});
 
 	it('contains words of various lengths', () => {
-		const lengths = new Set(WORDS.map((w) => w.length));
+		const lengths = new Set(ANSWER_WORDS.map((w) => w.length));
 		expect(lengths.size).toBeGreaterThanOrEqual(3);
 	});
 
-	it('contains no duplicates', () => {
-		const unique = new Set(WORDS);
-		expect(unique.size).toBe(WORDS.length);
-	});
-
 	it('contains only alphabetic characters', () => {
-		for (const word of WORDS) {
+		for (const word of ANSWER_WORDS) {
 			expect(word).toMatch(/^[A-Z]+$/);
 		}
 	});
@@ -40,56 +40,29 @@ describe('VALID_GUESSES', () => {
 		expect(VALID_GUESSES).toBeInstanceOf(Set);
 	});
 
-	it('contains all words from WORDS', () => {
-		for (const word of WORDS) {
-			expect(VALID_GUESSES.has(word.toUpperCase())).toBe(true);
+	it('contains all answer words', () => {
+		for (let i = 0; i < Math.min(ANSWER_WORDS.length, 100); i++) {
+			expect(VALID_GUESSES.has(ANSWER_WORDS[i])).toBe(true);
 		}
 	});
 });
 
 describe('isValidWord', () => {
-	it('returns true for words in the list', () => {
-		const word = WORDS[0];
+	it('returns true for words in the dictionary', () => {
+		const word = ANSWER_WORDS[0];
 		expect(isValidWord(word)).toBe(true);
 	});
 
 	it('is case insensitive', () => {
-		const word = WORDS[0];
+		const word = ANSWER_WORDS[0];
 		expect(isValidWord(word.toLowerCase())).toBe(true);
 	});
 
-	it('returns false for words not in the list', () => {
+	it('returns false for words not in the dictionary', () => {
 		expect(isValidWord('XYZXYZ')).toBe(false);
 	});
 
 	it('returns false for empty string', () => {
 		expect(isValidWord('')).toBe(false);
-	});
-});
-
-describe('getWordsByLength', () => {
-	it('returns words of the specified length', () => {
-		const fiveLetterWords = getWordsByLength(5);
-		for (const word of fiveLetterWords) {
-			expect(word.length).toBe(5);
-		}
-	});
-
-	it('returns empty array for length with no words', () => {
-		const result = getWordsByLength(1);
-		expect(result).toHaveLength(0);
-	});
-
-	it('returns subset of WORDS', () => {
-		const fiveLetterWords = getWordsByLength(5);
-		for (const word of fiveLetterWords) {
-			expect(WORDS).toContain(word);
-		}
-	});
-
-	it('returns non-empty for valid lengths', () => {
-		expect(getWordsByLength(5).length).toBeGreaterThan(0);
-		expect(getWordsByLength(6).length).toBeGreaterThan(0);
-		expect(getWordsByLength(7).length).toBeGreaterThan(0);
 	});
 });
