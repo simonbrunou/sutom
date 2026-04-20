@@ -36,9 +36,8 @@
 	class:tile-correct={!initial && state === 'correct'}
 	class:tile-misplaced={!initial && state === 'misplaced'}
 	class:tile-absent={!initial && state === 'absent'}
-	class:tile-tbd={!initial && state === 'tbd'}
+	class:tile-tbd={state === 'tbd' || initial}
 	class:tile-empty={!initial && state === 'empty'}
-	class:tile-initial={initial}
 	class:tile-animate={animate && !initial}
 	class:tile-bounce={bounce}
 	class:tile-filled={letter !== '' && state === 'tbd' && !initial}
@@ -121,17 +120,7 @@
 		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 	}
 
-	.tile-initial {
-		background: linear-gradient(145deg, var(--color-initial-hi), var(--color-initial));
-		border-color: var(--color-initial);
-		color: var(--color-initial-text);
-		border-radius: 999px;
-		box-shadow:
-			0 4px 16px rgba(232, 67, 147, 0.35),
-			inset 0 1px 0 rgba(255, 255, 255, 0.22);
-	}
-
-	.tile-animate {
+.tile-animate {
 		animation: flip-in var(--flip-duration) var(--ease-out);
 		animation-delay: var(--delay);
 		animation-fill-mode: both;
