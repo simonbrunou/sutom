@@ -33,6 +33,15 @@ describe('ANSWER_WORDS', () => {
 			expect(word).toMatch(/^[A-Z]+$/);
 		}
 	});
+
+	it('is shuffled out of lexical order so daily picks are distributed', () => {
+		// dictionary.txt is alphabetical; without a shuffle the first thousands
+		// of entries would all start with 'A' and getDailyWord would serve only
+		// A-words for years. Sample the early slice and require variety.
+		const sample = ANSWER_WORDS.slice(0, 30);
+		const firstLetters = new Set(sample.map((w) => w[0]));
+		expect(firstLetters.size).toBeGreaterThanOrEqual(10);
+	});
 });
 
 describe('VALID_GUESSES', () => {
