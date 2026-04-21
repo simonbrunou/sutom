@@ -27,4 +27,7 @@ jobs:
         run: npm run test
 
       - name: Build
+        env:
+          BASE_PATH: /sutom
+          PUBLIC_SITE_URL: https://simonbrunou.github.io/sutom
         run: npm run build
