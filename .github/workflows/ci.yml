@@ -28,6 +28,6 @@ jobs:
 
       - name: Build
         env:
-          BASE_PATH: /sutom
-          PUBLIC_SITE_URL: https://simonbrunou.github.io/sutom
+          BASE_PATH: ''
+          PUBLIC_SITE_URL: https://sutom.sbrn.eu
         run: npm run build
