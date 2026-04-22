@@ -38,3 +38,4 @@ jobs:
           folder: build
           clean: true
           clean-exclude: pr-preview
+          force: false
