@@ -1,6 +1,8 @@
-// Answer pool and valid-guess set: both derived from the bundled French dictionary.
+// Answer pool: curated common French words (infinitives only for verbs).
+// Valid guesses: the full French dictionary so players can use any real word.
 // Each day's solution is picked at random from ANSWER_WORDS via getDailyWord().
 import dictionaryText from './dictionary.txt?raw';
+import validGuessesText from './valid-guesses.txt?raw';
 
 // dictionary.txt is sorted alphabetically, so the first ~6k entries are A*.
 // Indexing into that lexical order with getDailyWord would give players A-words
@@ -27,14 +29,19 @@ function deterministicShuffle<T>(arr: readonly T[], seed: number): T[] {
 	return out;
 }
 
-const filteredDictionary: string[] = dictionaryText
-	.split('\n')
-	.map((w) => w.trim().toUpperCase())
-	.filter((w) => w.length >= 5 && w.length <= 8 && /^[A-Z]+$/.test(w));
+function parseWordList(text: string): string[] {
+	return text
+		.split('\n')
+		.map((w) => w.trim().toUpperCase())
+		.filter((w) => w.length >= 5 && w.length <= 8 && /^[A-Z]+$/.test(w));
+}
 
-export const ANSWER_WORDS: string[] = deterministicShuffle(filteredDictionary, 0x5_07_07_05);
+export const ANSWER_WORDS: string[] = deterministicShuffle(
+	parseWordList(dictionaryText),
+	0x5_07_07_05
+);
 
-export const VALID_GUESSES: Set<string> = new Set(ANSWER_WORDS);
+export const VALID_GUESSES: Set<string> = new Set(parseWordList(validGuessesText));
 
 export function isValidWord(word: string): boolean {
 	return VALID_GUESSES.has(word.toUpperCase());
