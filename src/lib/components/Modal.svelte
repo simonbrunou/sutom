@@ -14,10 +14,42 @@
 	} = $props();
 
 	let dialogEl: HTMLDivElement | undefined = $state();
+	let previouslyFocused: HTMLElement | null = null;
+
+	function focusFirstElement() {
+		if (!dialogEl) return;
+		const focusable = dialogEl.querySelector<HTMLElement>(
+			'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+		);
+		focusable?.focus();
+	}
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			onClose();
+			return;
+		}
+
+		if (e.key === 'Tab' && dialogEl) {
+			const focusableEls = dialogEl.querySelectorAll<HTMLElement>(
+				'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+			);
+			if (focusableEls.length === 0) return;
+
+			const first = focusableEls[0];
+			const last = focusableEls[focusableEls.length - 1];
+
+			if (e.shiftKey) {
+				if (document.activeElement === first) {
+					e.preventDefault();
+					last.focus();
+				}
+			} else {
+				if (document.activeElement === last) {
+					e.preventDefault();
+					first.focus();
+				}
+			}
 		}
 	}
 
@@ -27,10 +59,13 @@
 		}
 	}
 
-	onMount(() => {
-		if (open && dialogEl) {
-			const focusable = dialogEl.querySelector<HTMLElement>('button, [tabindex]');
-			focusable?.focus();
+	$effect(() => {
+		if (open) {
+			previouslyFocused = document.activeElement as HTMLElement | null;
+			requestAnimationFrame(() => focusFirstElement());
+		} else if (previouslyFocused) {
+			previouslyFocused.focus();
+			previouslyFocused = null;
 		}
 	});
 </script>
@@ -56,7 +91,7 @@
 					aria-label="Fermer"
 					data-testid="modal-close"
 				>
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
 						<line x1="18" y1="6" x2="6" y2="18"/>
 						<line x1="6" y1="6" x2="18" y2="18"/>
 					</svg>

@@ -257,6 +257,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>{gameState.gameStatus === 'won' ? 'Gagné !' : gameState.gameStatus === 'lost' ? 'Perdu' : `Essai ${gameState.guesses.length + 1}/${gameState.maxAttempts}`} - SUTOM</title>
+</svelte:head>
+
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="game-container">
@@ -296,22 +300,22 @@
 			<p>Trouvez le mot du jour en <strong>6 essais</strong>.</p>
 			<p>La <strong>première lettre</strong> vous est offerte. Chaque essai doit être un mot valide.</p>
 
-			<div class="rules-section">
+			<div class="rules-section" role="list">
 				<h3>Indices</h3>
-				<div class="rule-example">
-					<div class="example-tile initial">S</div>
+				<div class="rule-example" role="listitem">
+					<div class="example-tile initial" aria-hidden="true">S</div>
 					<span>Lettre donnée au départ</span>
 				</div>
-				<div class="rule-example">
-					<div class="example-tile correct">O</div>
+				<div class="rule-example" role="listitem">
+					<div class="example-tile correct" aria-hidden="true">O</div>
 					<span>Lettre bien placée</span>
 				</div>
-				<div class="rule-example">
-					<div class="example-tile misplaced">A</div>
+				<div class="rule-example" role="listitem">
+					<div class="example-tile misplaced" aria-hidden="true">A</div>
 					<span>Lettre présente mais mal placée</span>
 				</div>
-				<div class="rule-example">
-					<div class="example-tile absent">X</div>
+				<div class="rule-example" role="listitem">
+					<div class="example-tile absent" aria-hidden="true">X</div>
 					<span>Lettre absente du mot</span>
 				</div>
 			</div>

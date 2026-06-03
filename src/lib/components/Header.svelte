@@ -24,7 +24,7 @@
 
 <header class="header">
 	<button class="header-btn" onclick={onShowRules} aria-label="Règles du jeu">
-		<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+		<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 			<circle cx="12" cy="12" r="10"/>
 			<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
 			<line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -39,15 +39,15 @@
 			<span class="title-letter" style="--i:3">O</span>
 			<span class="title-letter" style="--i:4">M</span>
 		</h1>
-		<div class="dots" aria-label="Essais utilisés : {attemptsUsed} sur {maxAttempts}">
+		<div class="dots" role="img" aria-label="Essais utilisés : {attemptsUsed} sur {maxAttempts}">
 			{#each Array.from({ length: maxAttempts }, (_, i) => i) as i}
-				<span class={dotClass(i)}></span>
+				<span class={dotClass(i)} aria-hidden="true"></span>
 			{/each}
 		</div>
 	</div>
 
 	<button class="header-btn" onclick={onShowStats} aria-label="Statistiques">
-		<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+		<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 			<line x1="18" y1="20" x2="18" y2="10"/>
 			<line x1="12" y1="20" x2="12" y2="4"/>
 			<line x1="6" y1="20" x2="6" y2="14"/>
