@@ -7,7 +7,8 @@
 		index = 0,
 		animate = false,
 		bounce = false,
-		initial = false
+		initial = false,
+		placeholder = false
 	}: {
 		letter?: string;
 		state?: LetterState;
@@ -15,10 +16,12 @@
 		animate?: boolean;
 		bounce?: boolean;
 		initial?: boolean;
+		placeholder?: boolean;
 	} = $props();
 
 	function getAriaLabel(): string {
 		if (initial) return `${letter}, lettre donnée`;
+		if (placeholder) return `${letter}, indice`;
 		if (!letter) return 'Vide';
 		const stateLabels: Record<LetterState, string> = {
 			correct: 'bien placée',
@@ -37,7 +40,8 @@
 	class:tile-misplaced={!initial && state === 'misplaced'}
 	class:tile-absent={!initial && state === 'absent'}
 	class:tile-tbd={state === 'tbd' || initial}
-	class:tile-empty={!initial && state === 'empty'}
+	class:tile-empty={!initial && !placeholder && state === 'empty'}
+	class:tile-placeholder={placeholder}
 	class:tile-animate={animate && !initial}
 	class:tile-bounce={bounce}
 	class:tile-filled={letter !== '' && state === 'tbd' && !initial}
@@ -46,7 +50,7 @@
 	aria-label={getAriaLabel()}
 	aria-roledescription="lettre"
 	data-testid="tile"
-	data-state={initial ? 'initial' : state}
+	data-state={initial ? 'initial' : placeholder ? 'placeholder' : state}
 >
 	<span class="tile-letter">{letter}</span>
 </div>
@@ -83,6 +87,13 @@
 	.tile-empty {
 		border-color: var(--color-border);
 		background: var(--color-empty);
+	}
+
+	.tile-placeholder {
+		border-color: var(--color-correct);
+		background: var(--color-empty);
+		color: var(--color-correct);
+		opacity: 0.33;
 	}
 
 	.tile-tbd {

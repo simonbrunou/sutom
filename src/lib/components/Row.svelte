@@ -29,7 +29,7 @@
 		{#if i === 0 && isUnsubmitted && initialLetter}
 			<Tile letter={initialLetter} state="tbd" index={0} animate={false} bounce={bounce} initial={true} />
 		{:else}
-			<Tile letter={tile.letter} state={tile.state} index={i} animate={animate} bounce={bounce} />
+			<Tile letter={tile.letter} state={tile.state} index={i} animate={animate} bounce={bounce} placeholder={tile.placeholder ?? false} />
 		{/if}
 	{/each}
 </div>
