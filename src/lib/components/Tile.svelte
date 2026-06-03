@@ -91,9 +91,9 @@
 
 	.tile-placeholder {
 		border-color: var(--color-correct);
-		background: var(--color-empty);
+		border-style: dashed;
+		background: transparent;
 		color: var(--color-correct);
-		opacity: 0.33;
 	}
 
 	.tile-tbd {
