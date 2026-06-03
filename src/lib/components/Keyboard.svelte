@@ -16,10 +16,18 @@
 		['.', 'W', 'X', 'C', 'V', 'B', 'N', 'BACK', 'ENTER']
 	];
 
+	const stateLabels: Record<string, string> = {
+		correct: 'bien placée',
+		misplaced: 'mal placée',
+		absent: 'absente'
+	};
+
 	function getKeyLabel(key: string): string {
 		if (key === 'ENTER') return 'Valider';
 		if (key === 'BACK') return 'Effacer';
 		if (key === '.') return 'Point';
+		const state = keyStates[key];
+		if (state && stateLabels[state]) return `${key}, ${stateLabels[state]}`;
 		return key;
 	}
 

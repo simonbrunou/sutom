@@ -13,20 +13,21 @@ describe('Toast', () => {
 		expect(screen.queryByText('Hidden message')).not.toBeInTheDocument();
 	});
 
-	it('does not show when message is empty', () => {
+	it('hides content when message is empty', () => {
 		render(Toast, { props: { message: '', visible: true } });
-		expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
+		const toast = screen.getByTestId('toast');
+		expect(toast).toHaveClass('toast-hidden');
 	});
 
-	it('has alert role', () => {
+	it('has status role', () => {
 		render(Toast, { props: { message: 'Alert!', visible: true } });
-		const toast = screen.getByRole('alert');
+		const toast = screen.getByRole('status');
 		expect(toast).toBeInTheDocument();
 	});
 
-	it('has aria-live assertive', () => {
+	it('has aria-live polite', () => {
 		render(Toast, { props: { message: 'Important', visible: true } });
-		const toast = screen.getByRole('alert');
-		expect(toast.getAttribute('aria-live')).toBe('assertive');
+		const toast = screen.getByRole('status');
+		expect(toast.getAttribute('aria-live')).toBe('polite');
 	});
 });

@@ -10,16 +10,16 @@
 	} = $props();
 </script>
 
-{#if visible && message}
-	<div
-		class="toast toast-{variant}"
-		role="alert"
-		aria-live="assertive"
-		data-testid="toast"
-	>
-		<span class="toast-text">{message}</span>
-	</div>
-{/if}
+<div
+	class="toast toast-{variant}"
+	class:toast-hidden={!visible || !message}
+	role="status"
+	aria-live="polite"
+	aria-atomic="true"
+	data-testid="toast"
+>
+	<span class="toast-text">{visible && message ? message : ''}</span>
+</div>
 
 <style>
 	.toast {
@@ -45,6 +45,18 @@
 			0 10px 30px rgba(0, 0, 0, 0.35),
 			inset 0 1px 0 rgba(255, 255, 255, 0.6);
 		max-width: calc(100vw - 32px);
+	}
+
+	.toast-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border-width: 0;
 	}
 
 	.toast-text {

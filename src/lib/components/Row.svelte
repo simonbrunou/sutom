@@ -7,13 +7,15 @@
 		animate = false,
 		shake = false,
 		bounce = false,
-		initialLetter = ''
+		initialLetter = '',
+		rowLabel = ''
 	}: {
 		tiles: TileData[];
 		animate?: boolean;
 		shake?: boolean;
 		bounce?: boolean;
 		initialLetter?: string;
+		rowLabel?: string;
 	} = $props();
 
 	// A row is "unsubmitted" if its first tile is not yet evaluated.
@@ -22,7 +24,7 @@
 	);
 </script>
 
-<div class="row" class:row-shake={shake} role="row" data-testid="row">
+<div class="row" class:row-shake={shake} role="row" aria-label={rowLabel} data-testid="row">
 	{#each tiles as tile, i}
 		{#if i === 0 && isUnsubmitted && initialLetter}
 			<Tile letter={initialLetter} state="tbd" index={0} animate={false} bounce={bounce} initial={true} />

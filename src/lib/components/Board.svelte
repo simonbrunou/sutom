@@ -25,6 +25,7 @@
 			shake={i === shakeRow}
 			bounce={i === bounceRow}
 			{initialLetter}
+			rowLabel="Essai {i + 1}"
 		/>
 	{/each}
 </div>
