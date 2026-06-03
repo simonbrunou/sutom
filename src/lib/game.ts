@@ -3,6 +3,7 @@ export type LetterState = 'correct' | 'misplaced' | 'absent' | 'empty' | 'tbd';
 export interface TileData {
 	letter: string;
 	state: LetterState;
+	placeholder?: boolean;
 }
 
 export type GameStatus = 'playing' | 'won' | 'lost';
@@ -119,8 +120,22 @@ export function getKeyboardState(guesses: string[], solution: string): Record<st
 	return keyStates;
 }
 
+export function getCorrectPositions(guesses: string[], solution: string): Map<number, string> {
+	const positions = new Map<number, string>();
+	for (const guess of guesses) {
+		const evaluation = evaluateGuess(guess, solution);
+		for (let i = 0; i < evaluation.length; i++) {
+			if (evaluation[i].state === 'correct') {
+				positions.set(i, evaluation[i].letter);
+			}
+		}
+	}
+	return positions;
+}
+
 export function getGridData(state: GameState): TileData[][] {
 	const rows: TileData[][] = [];
+	const correctPositions = getCorrectPositions(state.guesses, state.solution);
 
 	// Submitted guesses
 	for (const guess of state.guesses) {
@@ -133,6 +148,8 @@ export function getGridData(state: GameState): TileData[][] {
 		for (let i = 0; i < state.solution.length; i++) {
 			if (i < state.currentGuess.length) {
 				currentRow.push({ letter: state.currentGuess[i], state: 'tbd' });
+			} else if (correctPositions.has(i)) {
+				currentRow.push({ letter: correctPositions.get(i)!, state: 'empty', placeholder: true });
 			} else {
 				currentRow.push({ letter: '', state: 'empty' });
 			}
@@ -145,7 +162,11 @@ export function getGridData(state: GameState): TileData[][] {
 	for (let i = 0; i < remainingRows; i++) {
 		const emptyRow: TileData[] = [];
 		for (let j = 0; j < state.solution.length; j++) {
-			emptyRow.push({ letter: '', state: 'empty' });
+			if (correctPositions.has(j)) {
+				emptyRow.push({ letter: correctPositions.get(j)!, state: 'empty', placeholder: true });
+			} else {
+				emptyRow.push({ letter: '', state: 'empty' });
+			}
 		}
 		rows.push(emptyRow);
 	}
