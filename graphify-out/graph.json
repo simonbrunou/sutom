@@ -94,355 +94,13 @@
   },
   "nodes": [
     {
-      "label": "vite.config.ts",
-      "file_type": "code",
-      "source_file": "vite.config.ts",
-      "source_location": "L1",
-      "id": "vite_config_ts",
-      "community": 14,
-      "norm_label": "vite.config.ts"
-    },
-    {
       "label": "svelte.config.js",
       "file_type": "code",
       "source_file": "svelte.config.js",
       "source_location": "L1",
       "id": "svelte_config_js",
-      "community": 15,
-      "norm_label": "svelte.config.js"
-    },
-    {
-      "label": "app.d.ts",
-      "file_type": "code",
-      "source_file": "src/app.d.ts",
-      "source_location": "L1",
-      "id": "src_app_d_ts",
-      "community": 16,
-      "norm_label": "app.d.ts"
-    },
-    {
-      "label": "game.test.ts",
-      "file_type": "code",
-      "source_file": "src/lib/game.test.ts",
-      "source_location": "L1",
-      "id": "src_lib_game_test_ts",
-      "community": 17,
-      "norm_label": "game.test.ts"
-    },
-    {
-      "label": "words.ts",
-      "file_type": "code",
-      "source_file": "src/lib/words.ts",
-      "source_location": "L1",
-      "id": "src_lib_words_ts",
-      "community": 1,
-      "norm_label": "words.ts"
-    },
-    {
-      "label": "isValidWord()",
-      "file_type": "code",
-      "source_file": "src/lib/words.ts",
-      "source_location": "L226",
-      "id": "words_isvalidword",
-      "community": 1,
-      "norm_label": "isvalidword()"
-    },
-    {
-      "label": "getWordsByLength()",
-      "file_type": "code",
-      "source_file": "src/lib/words.ts",
-      "source_location": "L230",
-      "id": "words_getwordsbylength",
-      "community": 1,
-      "norm_label": "getwordsbylength()"
-    },
-    {
-      "label": "words.test.ts",
-      "file_type": "code",
-      "source_file": "src/lib/words.test.ts",
-      "source_location": "L1",
-      "id": "src_lib_words_test_ts",
       "community": 18,
-      "norm_label": "words.test.ts"
-    },
-    {
-      "label": "game.ts",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L1",
-      "id": "src_lib_game_ts",
-      "community": 0,
-      "norm_label": "game.ts"
-    },
-    {
-      "label": "createInitialState()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L18",
-      "id": "game_createinitialstate",
-      "community": 0,
-      "norm_label": "createinitialstate()"
-    },
-    {
-      "label": "evaluateGuess()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L28",
-      "id": "game_evaluateguess",
-      "community": 0,
-      "norm_label": "evaluateguess()"
-    },
-    {
-      "label": "addLetter()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L58",
-      "id": "game_addletter",
-      "community": 0,
-      "norm_label": "addletter()"
-    },
-    {
-      "label": "removeLetter()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L68",
-      "id": "game_removeletter",
-      "community": 0,
-      "norm_label": "removeletter()"
-    },
-    {
-      "label": "submitGuess()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L79",
-      "id": "game_submitguess",
-      "community": 0,
-      "norm_label": "submitguess()"
-    },
-    {
-      "label": "getKeyboardState()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L102",
-      "id": "game_getkeyboardstate",
-      "community": 0,
-      "norm_label": "getkeyboardstate()"
-    },
-    {
-      "label": "getGridData()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L122",
-      "id": "game_getgriddata",
-      "community": 0,
-      "norm_label": "getgriddata()"
-    },
-    {
-      "label": "getDailyWord()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L156",
-      "id": "game_getdailyword",
-      "community": 0,
-      "norm_label": "getdailyword()"
-    },
-    {
-      "label": "isValidLength()",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L164",
-      "id": "game_isvalidlength",
-      "community": 0,
-      "norm_label": "isvalidlength()"
-    },
-    {
-      "label": "index.ts",
-      "file_type": "code",
-      "source_file": "src/lib/index.ts",
-      "source_location": "L1",
-      "id": "src_lib_index_ts",
-      "community": 19,
-      "norm_label": "index.ts"
-    },
-    {
-      "label": "Board.svelte",
-      "file_type": "code",
-      "source_file": "src/lib/components/Board.svelte",
-      "source_location": "L1",
-      "id": "src_lib_components_board_svelte",
-      "community": 5,
-      "norm_label": "board.svelte"
-    },
-    {
-      "label": "Toast.test.ts",
-      "file_type": "code",
-      "source_file": "src/lib/components/Toast.test.ts",
-      "source_location": "L1",
-      "id": "src_lib_components_toast_test_ts",
-      "community": 6,
-      "norm_label": "toast.test.ts"
-    },
-    {
-      "label": "Keyboard.svelte",
-      "file_type": "code",
-      "source_file": "src/lib/components/Keyboard.svelte",
-      "source_location": "L1",
-      "id": "src_lib_components_keyboard_svelte",
-      "community": 10,
-      "norm_label": "keyboard.svelte"
-    },
-    {
-      "label": "Board.test.ts",
-      "file_type": "code",
-      "source_file": "src/lib/components/Board.test.ts",
-      "source_location": "L1",
-      "id": "src_lib_components_board_test_ts",
-      "community": 5,
-      "norm_label": "board.test.ts"
-    },
-    {
-      "label": "makeEmptyRow()",
-      "file_type": "code",
-      "source_file": "src/lib/components/Board.test.ts",
-      "source_location": "L6",
-      "id": "board_test_makeemptyrow",
-      "community": 5,
-      "norm_label": "makeemptyrow()"
-    },
-    {
-      "label": "makeRow()",
-      "file_type": "code",
-      "source_file": "src/lib/components/Board.test.ts",
-      "source_location": "L10",
-      "id": "board_test_makerow",
-      "community": 5,
-      "norm_label": "makerow()"
-    },
-    {
-      "label": "Modal.svelte",
-      "file_type": "code",
-      "source_file": "src/lib/components/Modal.svelte",
-      "source_location": "L1",
-      "id": "src_lib_components_modal_svelte",
-      "community": 20,
-      "norm_label": "modal.svelte"
-    },
-    {
-      "label": "Tile.svelte",
-      "file_type": "code",
-      "source_file": "src/lib/components/Tile.svelte",
-      "source_location": "L1",
-      "id": "src_lib_components_tile_svelte",
-      "community": 8,
-      "norm_label": "tile.svelte"
-    },
-    {
-      "label": "ModalTestWrapper.svelte",
-      "file_type": "code",
-      "source_file": "src/lib/components/ModalTestWrapper.svelte",
-      "source_location": "L1",
-      "id": "src_lib_components_modaltestwrapper_svelte",
-      "community": 7,
-      "norm_label": "modaltestwrapper.svelte"
-    },
-    {
-      "label": "Modal.test.ts",
-      "file_type": "code",
-      "source_file": "src/lib/components/Modal.test.ts",
-      "source_location": "L1",
-      "id": "src_lib_components_modal_test_ts",
-      "community": 7,
-      "norm_label": "modal.test.ts"
-    },
-    {
-      "label": "Toast.svelte",
-      "file_type": "code",
-      "source_file": "src/lib/components/Toast.svelte",
-      "source_location": "L1",
-      "id": "src_lib_components_toast_svelte",
-      "community": 6,
-      "norm_label": "toast.svelte"
-    },
-    {
-      "label": "Row.svelte",
-      "file_type": "code",
-      "source_file": "src/lib/components/Row.svelte",
-      "source_location": "L1",
-      "id": "src_lib_components_row_svelte",
-      "community": 21,
-      "norm_label": "row.svelte"
-    },
-    {
-      "label": "Tile.test.ts",
-      "file_type": "code",
-      "source_file": "src/lib/components/Tile.test.ts",
-      "source_location": "L1",
-      "id": "src_lib_components_tile_test_ts",
-      "community": 8,
-      "norm_label": "tile.test.ts"
-    },
-    {
-      "label": "Header.svelte",
-      "file_type": "code",
-      "source_file": "src/lib/components/Header.svelte",
-      "source_location": "L1",
-      "id": "src_lib_components_header_svelte",
-      "community": 9,
-      "norm_label": "header.svelte"
-    },
-    {
-      "label": "Header.test.ts",
-      "file_type": "code",
-      "source_file": "src/lib/components/Header.test.ts",
-      "source_location": "L1",
-      "id": "src_lib_components_header_test_ts",
-      "community": 9,
-      "norm_label": "header.test.ts"
-    },
-    {
-      "label": "Keyboard.test.ts",
-      "file_type": "code",
-      "source_file": "src/lib/components/Keyboard.test.ts",
-      "source_location": "L1",
-      "id": "src_lib_components_keyboard_test_ts",
-      "community": 10,
-      "norm_label": "keyboard.test.ts"
-    },
-    {
-      "label": "+page.svelte",
-      "file_type": "code",
-      "source_file": "src/routes/+page.svelte",
-      "source_location": "L1",
-      "id": "src_routes_page_svelte",
-      "community": 11,
-      "norm_label": "+page.svelte"
-    },
-    {
-      "label": "if()",
-      "file_type": "code",
-      "source_file": "src/routes/+page.svelte",
-      "source_location": "L47",
-      "id": "page_if",
-      "community": 11,
-      "norm_label": "if()"
-    },
-    {
-      "label": "+layout.svelte",
-      "file_type": "code",
-      "source_file": "src/routes/+layout.svelte",
-      "source_location": "L1",
-      "id": "src_routes_layout_svelte",
-      "community": 22,
-      "norm_label": "+layout.svelte"
-    },
-    {
-      "label": "setup.ts",
-      "file_type": "code",
-      "source_file": "src/tests/setup.ts",
-      "source_location": "L1",
-      "id": "src_tests_setup_ts",
-      "community": 23,
-      "norm_label": "setup.ts"
+      "norm_label": "svelte.config.js"
     },
     {
       "label": "Vite Configuration",
@@ -454,34 +112,35 @@
       "author": null,
       "contributor": null,
       "id": "vite_config",
-      "community": 13,
+      "community": 14,
       "norm_label": "vite configuration"
     },
     {
-      "label": "Svelte Configuration",
+      "label": "eslint.config.js",
       "file_type": "code",
-      "source_file": "svelte.config.js",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "svelte_config",
-      "community": 24,
-      "norm_label": "svelte configuration"
+      "source_file": "eslint.config.js",
+      "source_location": "L1",
+      "id": "eslint_config_js",
+      "community": 19,
+      "norm_label": "eslint.config.js"
     },
     {
-      "label": "CLAUDE.md Project Notes",
-      "file_type": "document",
-      "source_file": "CLAUDE.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "claude_md",
-      "community": 12,
-      "norm_label": "claude.md project notes"
+      "label": "generate-assets.mjs",
+      "file_type": "code",
+      "source_file": "scripts/generate-assets.mjs",
+      "source_location": "L1",
+      "id": "scripts_generate_assets_mjs",
+      "community": 9,
+      "norm_label": "generate-assets.mjs"
+    },
+    {
+      "label": "svgToPng()",
+      "file_type": "code",
+      "source_file": "scripts/generate-assets.mjs",
+      "source_location": "L135",
+      "id": "scripts_generate_assets_svgtopng",
+      "community": 9,
+      "norm_label": "svgtopng()"
     },
     {
       "label": "App Type Declarations",
@@ -493,216 +152,8 @@
       "author": null,
       "contributor": null,
       "id": "app_d_ts",
-      "community": 25,
+      "community": 20,
       "norm_label": "app type declarations"
-    },
-    {
-      "label": "LetterState Type",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "line 1",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "game_letterstate",
-      "community": 0,
-      "norm_label": "letterstate type"
-    },
-    {
-      "label": "TileData Interface",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "lines 3-6",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "game_tiledata",
-      "community": 0,
-      "norm_label": "tiledata interface"
-    },
-    {
-      "label": "GameStatus Type",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "line 8",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "game_gamestatus",
-      "community": 0,
-      "norm_label": "gamestatus type"
-    },
-    {
-      "label": "GameState Interface",
-      "file_type": "code",
-      "source_file": "src/lib/game.ts",
-      "source_location": "lines 10-16",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "game_gamestate",
-      "community": 0,
-      "norm_label": "gamestate interface"
-    },
-    {
-      "label": "WORDS Constant (Solution Word Lists)",
-      "file_type": "code",
-      "source_file": "src/lib/words.ts",
-      "source_location": "line 214",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "words_words",
-      "community": 1,
-      "norm_label": "words constant (solution word lists)"
-    },
-    {
-      "label": "VALID_GUESSES Set",
-      "file_type": "code",
-      "source_file": "src/lib/words.ts",
-      "source_location": "line 221",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "words_valid_guesses",
-      "community": 1,
-      "norm_label": "valid_guesses set"
-    },
-    {
-      "label": "French Dictionary (dictionary.txt)",
-      "file_type": "document",
-      "source_file": "src/lib/dictionary.txt",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "dictionary_txt",
-      "community": 1,
-      "norm_label": "french dictionary (dictionary.txt)"
-    },
-    {
-      "label": "Library Barrel Exports",
-      "file_type": "code",
-      "source_file": "src/lib/index.ts",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "index_barrel",
-      "community": 12,
-      "norm_label": "library barrel exports"
-    },
-    {
-      "label": "Game Logic Tests",
-      "file_type": "code",
-      "source_file": "src/lib/game.test.ts",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "game_test",
-      "community": 0,
-      "norm_label": "game logic tests"
-    },
-    {
-      "label": "Words Module Tests",
-      "file_type": "code",
-      "source_file": "src/lib/words.test.ts",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "words_test",
-      "community": 1,
-      "norm_label": "words module tests"
-    },
-    {
-      "label": "Main Game Page (+page.svelte)",
-      "file_type": "code",
-      "source_file": "src/routes/+page.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "page_svelte",
-      "community": 0,
-      "norm_label": "main game page (+page.svelte)"
-    },
-    {
-      "label": "Root Layout (+layout.svelte)",
-      "file_type": "code",
-      "source_file": "src/routes/+layout.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "layout_svelte",
-      "community": 26,
-      "norm_label": "root layout (+layout.svelte)"
-    },
-    {
-      "label": "Test Setup (jest-dom/vitest)",
-      "file_type": "code",
-      "source_file": "src/tests/setup.ts",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "tests_setup",
-      "community": 13,
-      "norm_label": "test setup (jest-dom/vitest)"
-    },
-    {
-      "label": "handleKey (Game Input Handler)",
-      "file_type": "code",
-      "source_file": "src/routes/+page.svelte",
-      "source_location": "line 43",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "page_handlekey",
-      "community": 0,
-      "norm_label": "handlekey (game input handler)"
-    },
-    {
-      "label": "LocalStorage State Persistence",
-      "file_type": "code",
-      "source_file": "src/routes/+page.svelte",
-      "source_location": "lines 113-136",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "page_localstorage_persistence",
-      "community": 0,
-      "norm_label": "localstorage state persistence"
-    },
-    {
-      "label": "Share Results Feature",
-      "file_type": "code",
-      "source_file": "src/routes/+page.svelte",
-      "source_location": "lines 201-212",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "page_share_results",
-      "community": 0,
-      "norm_label": "share results feature"
     },
     {
       "label": "*.txt?raw Module Declaration",
@@ -718,173 +169,283 @@
       "norm_label": "*.txt?raw module declaration"
     },
     {
-      "label": "WORDS_5 (5-Letter French Words)",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "src/lib/index.ts",
+      "source_location": "L1",
+      "id": "src_lib_index_ts",
+      "community": 21,
+      "norm_label": "index.ts"
+    },
+    {
+      "label": "words.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/words.test.ts",
+      "source_location": "L1",
+      "id": "src_lib_words_test_ts",
+      "community": 6,
+      "norm_label": "words.test.ts"
+    },
+    {
+      "label": "words.ts",
       "file_type": "code",
       "source_file": "src/lib/words.ts",
-      "source_location": "line 5",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "words_words_5",
+      "source_location": "L1",
+      "id": "src_lib_words_ts",
       "community": 1,
-      "norm_label": "words_5 (5-letter french words)"
+      "norm_label": "words.ts"
     },
     {
-      "label": "WORDS_6 (6-Letter French Words)",
+      "label": "mulberry32()",
       "file_type": "code",
       "source_file": "src/lib/words.ts",
-      "source_location": "line 64",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "words_words_6",
+      "source_location": "L11",
+      "id": "lib_words_mulberry32",
       "community": 1,
-      "norm_label": "words_6 (6-letter french words)"
+      "norm_label": "mulberry32()"
     },
     {
-      "label": "WORDS_7 (7-Letter French Words)",
+      "label": "deterministicShuffle()",
       "file_type": "code",
       "source_file": "src/lib/words.ts",
-      "source_location": "line 110",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "words_words_7",
+      "source_location": "L22",
+      "id": "lib_words_deterministicshuffle",
       "community": 1,
-      "norm_label": "words_7 (7-letter french words)"
+      "norm_label": "deterministicshuffle()"
     },
     {
-      "label": "WORDS_8 (8-Letter French Words)",
+      "label": "parseWordList()",
       "file_type": "code",
       "source_file": "src/lib/words.ts",
-      "source_location": "line 160",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "words_words_8",
+      "source_location": "L32",
+      "id": "lib_words_parsewordlist",
       "community": 1,
-      "norm_label": "words_8 (8-letter french words)"
+      "norm_label": "parsewordlist()"
     },
     {
-      "label": "Static Adapter Configuration",
+      "label": "isValidWord()",
       "file_type": "code",
-      "source_file": "svelte.config.js",
-      "source_location": "line 8",
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "svelte_config_adapter_static",
-      "community": 0,
-      "norm_label": "static adapter configuration"
+      "source_file": "src/lib/words.ts",
+      "source_location": "L46",
+      "id": "lib_words_isvalidword",
+      "community": 6,
+      "norm_label": "isvalidword()"
     },
     {
-      "label": "Board Component",
+      "label": "game.ts",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L1",
+      "id": "src_lib_game_ts",
+      "community": 2,
+      "norm_label": "game.ts"
+    },
+    {
+      "label": "createInitialState()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L19",
+      "id": "lib_game_createinitialstate",
+      "community": 2,
+      "norm_label": "createinitialstate()"
+    },
+    {
+      "label": "evaluateGuess()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L29",
+      "id": "lib_game_evaluateguess",
+      "community": 2,
+      "norm_label": "evaluateguess()"
+    },
+    {
+      "label": "addLetter()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L59",
+      "id": "lib_game_addletter",
+      "community": 2,
+      "norm_label": "addletter()"
+    },
+    {
+      "label": "removeLetter()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L69",
+      "id": "lib_game_removeletter",
+      "community": 2,
+      "norm_label": "removeletter()"
+    },
+    {
+      "label": "submitGuess()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L80",
+      "id": "lib_game_submitguess",
+      "community": 2,
+      "norm_label": "submitguess()"
+    },
+    {
+      "label": "getKeyboardState()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L103",
+      "id": "lib_game_getkeyboardstate",
+      "community": 2,
+      "norm_label": "getkeyboardstate()"
+    },
+    {
+      "label": "getCorrectPositions()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L123",
+      "id": "lib_game_getcorrectpositions",
+      "community": 2,
+      "norm_label": "getcorrectpositions()"
+    },
+    {
+      "label": "getGridData()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L136",
+      "id": "lib_game_getgriddata",
+      "community": 2,
+      "norm_label": "getgriddata()"
+    },
+    {
+      "label": "getDayIndex()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L178",
+      "id": "lib_game_getdayindex",
+      "community": 2,
+      "norm_label": "getdayindex()"
+    },
+    {
+      "label": "getDailyWord()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L184",
+      "id": "lib_game_getdailyword",
+      "community": 2,
+      "norm_label": "getdailyword()"
+    },
+    {
+      "label": "isValidLength()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L188",
+      "id": "lib_game_isvalidlength",
+      "community": 2,
+      "norm_label": "isvalidlength()"
+    },
+    {
+      "label": "stats.ts",
+      "file_type": "code",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L1",
+      "id": "src_lib_stats_ts",
+      "community": 3,
+      "norm_label": "stats.ts"
+    },
+    {
+      "label": "createStats()",
+      "file_type": "code",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L26",
+      "id": "lib_stats_createstats",
+      "community": 3,
+      "norm_label": "createstats()"
+    },
+    {
+      "label": "recordResult()",
+      "file_type": "code",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L45",
+      "id": "lib_stats_recordresult",
+      "community": 3,
+      "norm_label": "recordresult()"
+    },
+    {
+      "label": "winPercent()",
+      "file_type": "code",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L68",
+      "id": "lib_stats_winpercent",
+      "community": 3,
+      "norm_label": "winpercent()"
+    },
+    {
+      "label": "isValidStats()",
+      "file_type": "code",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L72",
+      "id": "lib_stats_isvalidstats",
+      "community": 3,
+      "norm_label": "isvalidstats()"
+    },
+    {
+      "label": "loadStats()",
+      "file_type": "code",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L92",
+      "id": "lib_stats_loadstats",
+      "community": 3,
+      "norm_label": "loadstats()"
+    },
+    {
+      "label": "saveStats()",
+      "file_type": "code",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L104",
+      "id": "lib_stats_savestats",
+      "community": 3,
+      "norm_label": "savestats()"
+    },
+    {
+      "label": "stats.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L1",
+      "id": "src_lib_stats_test_ts",
+      "community": 3,
+      "norm_label": "stats.test.ts"
+    },
+    {
+      "label": "win()",
+      "file_type": "code",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L12",
+      "id": "lib_stats_test_win",
+      "community": 3,
+      "norm_label": "win()"
+    },
+    {
+      "label": "loss()",
+      "file_type": "code",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L13",
+      "id": "lib_stats_test_loss",
+      "community": 3,
+      "norm_label": "loss()"
+    },
+    {
+      "label": "game.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L1",
+      "id": "src_lib_game_test_ts",
+      "community": 2,
+      "norm_label": "game.test.ts"
+    },
+    {
+      "label": "Board.svelte",
       "file_type": "code",
       "source_file": "src/lib/components/Board.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "board_component",
-      "community": 2,
-      "norm_label": "board component"
-    },
-    {
-      "label": "Keyboard Component",
-      "file_type": "code",
-      "source_file": "src/lib/components/Keyboard.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "keyboard_component",
-      "community": 2,
-      "norm_label": "keyboard component"
-    },
-    {
-      "label": "Modal Component",
-      "file_type": "code",
-      "source_file": "src/lib/components/Modal.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "modal_component",
-      "community": 3,
-      "norm_label": "modal component"
-    },
-    {
-      "label": "Tile Component",
-      "file_type": "code",
-      "source_file": "src/lib/components/Tile.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "tile_component",
-      "community": 2,
-      "norm_label": "tile component"
-    },
-    {
-      "label": "Toast Component",
-      "file_type": "code",
-      "source_file": "src/lib/components/Toast.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "toast_component",
-      "community": 3,
-      "norm_label": "toast component"
-    },
-    {
-      "label": "Row Component",
-      "file_type": "code",
-      "source_file": "src/lib/components/Row.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "row_component",
-      "community": 2,
-      "norm_label": "row component"
-    },
-    {
-      "label": "Header Component",
-      "file_type": "code",
-      "source_file": "src/lib/components/Header.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "header_component",
-      "community": 3,
-      "norm_label": "header component"
-    },
-    {
-      "label": "ModalTestWrapper Component",
-      "file_type": "code",
-      "source_file": "src/lib/components/ModalTestWrapper.svelte",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "modaltestwrapper_component",
-      "community": 3,
-      "norm_label": "modaltestwrapper component"
+      "source_location": "L1",
+      "id": "src_lib_components_board_svelte",
+      "community": 8,
+      "norm_label": "board.svelte"
     },
     {
       "label": "Board Tests",
@@ -896,47 +457,17 @@
       "author": null,
       "contributor": null,
       "id": "board_test",
-      "community": 2,
+      "community": 4,
       "norm_label": "board tests"
     },
     {
-      "label": "Toast Tests",
+      "label": "Header.svelte",
       "file_type": "code",
-      "source_file": "src/lib/components/Toast.test.ts",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "toast_test",
-      "community": 3,
-      "norm_label": "toast tests"
-    },
-    {
-      "label": "Modal Tests",
-      "file_type": "code",
-      "source_file": "src/lib/components/Modal.test.ts",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "modal_test",
-      "community": 3,
-      "norm_label": "modal tests"
-    },
-    {
-      "label": "Tile Tests",
-      "file_type": "code",
-      "source_file": "src/lib/components/Tile.test.ts",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "tile_test",
-      "community": 2,
-      "norm_label": "tile tests"
+      "source_file": "src/lib/components/Header.svelte",
+      "source_location": "L1",
+      "id": "src_lib_components_header_svelte",
+      "community": 10,
+      "norm_label": "header.svelte"
     },
     {
       "label": "Header Tests",
@@ -948,8 +479,17 @@
       "author": null,
       "contributor": null,
       "id": "header_test",
-      "community": 3,
+      "community": 5,
       "norm_label": "header tests"
+    },
+    {
+      "label": "Keyboard.svelte",
+      "file_type": "code",
+      "source_file": "src/lib/components/Keyboard.svelte",
+      "source_location": "L1",
+      "id": "src_lib_components_keyboard_svelte",
+      "community": 16,
+      "norm_label": "keyboard.svelte"
     },
     {
       "label": "Keyboard Tests",
@@ -961,8 +501,792 @@
       "author": null,
       "contributor": null,
       "id": "keyboard_test",
-      "community": 2,
+      "community": 4,
       "norm_label": "keyboard tests"
+    },
+    {
+      "label": "Modal.svelte",
+      "file_type": "code",
+      "source_file": "src/lib/components/Modal.svelte",
+      "source_location": "L1",
+      "id": "src_lib_components_modal_svelte",
+      "community": 11,
+      "norm_label": "modal.svelte"
+    },
+    {
+      "label": "onClose()",
+      "file_type": "code",
+      "source_file": "src/lib/components/Modal.svelte",
+      "source_location": "L29",
+      "id": "components_modal_onclose",
+      "community": 11,
+      "norm_label": "onclose()"
+    },
+    {
+      "label": "ModalTestWrapper Component",
+      "file_type": "code",
+      "source_file": "src/lib/components/ModalTestWrapper.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "modaltestwrapper_component",
+      "community": 5,
+      "norm_label": "modaltestwrapper component"
+    },
+    {
+      "label": "Row.svelte",
+      "file_type": "code",
+      "source_file": "src/lib/components/Row.svelte",
+      "source_location": "L1",
+      "id": "src_lib_components_row_svelte",
+      "community": 22,
+      "norm_label": "row.svelte"
+    },
+    {
+      "label": "Tile.svelte",
+      "file_type": "code",
+      "source_file": "src/lib/components/Tile.svelte",
+      "source_location": "L1",
+      "id": "src_lib_components_tile_svelte",
+      "community": 12,
+      "norm_label": "tile.svelte"
+    },
+    {
+      "label": "Tile Tests",
+      "file_type": "code",
+      "source_file": "src/lib/components/Tile.test.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "tile_test",
+      "community": 4,
+      "norm_label": "tile tests"
+    },
+    {
+      "label": "Toast.svelte",
+      "file_type": "code",
+      "source_file": "src/lib/components/Toast.svelte",
+      "source_location": "L1",
+      "id": "src_lib_components_toast_svelte",
+      "community": 13,
+      "norm_label": "toast.svelte"
+    },
+    {
+      "label": "Toast.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/components/Toast.test.ts",
+      "source_location": "L1",
+      "id": "src_lib_components_toast_test_ts",
+      "community": 13,
+      "norm_label": "toast.test.ts"
+    },
+    {
+      "label": "Modal.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/components/Modal.test.ts",
+      "source_location": "L1",
+      "id": "src_lib_components_modal_test_ts",
+      "community": 15,
+      "norm_label": "modal.test.ts"
+    },
+    {
+      "label": "Root Layout (+layout.svelte)",
+      "file_type": "code",
+      "source_file": "src/routes/+layout.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "layout_svelte",
+      "community": 23,
+      "norm_label": "root layout (+layout.svelte)"
+    },
+    {
+      "label": "+layout.ts",
+      "file_type": "code",
+      "source_file": "src/routes/+layout.ts",
+      "source_location": "L1",
+      "id": "src_routes_layout_ts",
+      "community": 24,
+      "norm_label": "+layout.ts"
+    },
+    {
+      "label": "+page.svelte",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L1",
+      "id": "src_routes_page_svelte",
+      "community": 6,
+      "norm_label": "+page.svelte"
+    },
+    {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L59",
+      "id": "routes_page_if",
+      "community": 6,
+      "norm_label": "if()"
+    },
+    {
+      "label": "shareResult()",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L108",
+      "id": "routes_page_shareresult",
+      "community": 6,
+      "norm_label": "shareresult()"
+    },
+    {
+      "label": "updateCountdown()",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L130",
+      "id": "routes_page_updatecountdown",
+      "community": 2,
+      "norm_label": "updatecountdown()"
+    },
+    {
+      "label": "triggerConfetti()",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L147",
+      "id": "routes_page_triggerconfetti",
+      "community": 6,
+      "norm_label": "triggerconfetti()"
+    },
+    {
+      "label": "handleKey()",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L152",
+      "id": "routes_page_handlekey",
+      "community": 6,
+      "norm_label": "handlekey()"
+    },
+    {
+      "label": "handleKeydown()",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L216",
+      "id": "routes_page_handlekeydown",
+      "community": 6,
+      "norm_label": "handlekeydown()"
+    },
+    {
+      "label": "Test Setup (jest-dom/vitest)",
+      "file_type": "code",
+      "source_file": "src/tests/setup.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "tests_setup",
+      "community": 14,
+      "norm_label": "test setup (jest-dom/vitest)"
+    },
+    {
+      "label": "vite.config.ts",
+      "file_type": "code",
+      "source_file": "vite.config.ts",
+      "source_location": "L1",
+      "community": 25,
+      "norm_label": "vite.config.ts",
+      "id": "vite_config_ts"
+    },
+    {
+      "label": "app.d.ts",
+      "file_type": "code",
+      "source_file": "src/app.d.ts",
+      "source_location": "L1",
+      "community": 26,
+      "norm_label": "app.d.ts",
+      "id": "src_app_d_ts"
+    },
+    {
+      "label": "isValidWord()",
+      "file_type": "code",
+      "source_file": "src/lib/words.ts",
+      "source_location": "L226",
+      "community": 1,
+      "norm_label": "isvalidword()",
+      "id": "words_isvalidword"
+    },
+    {
+      "label": "getWordsByLength()",
+      "file_type": "code",
+      "source_file": "src/lib/words.ts",
+      "source_location": "L230",
+      "community": 1,
+      "norm_label": "getwordsbylength()",
+      "id": "words_getwordsbylength"
+    },
+    {
+      "label": "createInitialState()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L18",
+      "community": 0,
+      "norm_label": "createinitialstate()",
+      "id": "game_createinitialstate"
+    },
+    {
+      "label": "evaluateGuess()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L28",
+      "community": 0,
+      "norm_label": "evaluateguess()",
+      "id": "game_evaluateguess"
+    },
+    {
+      "label": "addLetter()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L58",
+      "community": 0,
+      "norm_label": "addletter()",
+      "id": "game_addletter"
+    },
+    {
+      "label": "removeLetter()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L68",
+      "community": 0,
+      "norm_label": "removeletter()",
+      "id": "game_removeletter"
+    },
+    {
+      "label": "submitGuess()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L79",
+      "community": 0,
+      "norm_label": "submitguess()",
+      "id": "game_submitguess"
+    },
+    {
+      "label": "getKeyboardState()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L102",
+      "community": 0,
+      "norm_label": "getkeyboardstate()",
+      "id": "game_getkeyboardstate"
+    },
+    {
+      "label": "getGridData()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L122",
+      "community": 0,
+      "norm_label": "getgriddata()",
+      "id": "game_getgriddata"
+    },
+    {
+      "label": "getDailyWord()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L156",
+      "community": 0,
+      "norm_label": "getdailyword()",
+      "id": "game_getdailyword"
+    },
+    {
+      "label": "isValidLength()",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L164",
+      "community": 0,
+      "norm_label": "isvalidlength()",
+      "id": "game_isvalidlength"
+    },
+    {
+      "label": "Board.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/components/Board.test.ts",
+      "source_location": "L1",
+      "community": 8,
+      "norm_label": "board.test.ts",
+      "id": "src_lib_components_board_test_ts"
+    },
+    {
+      "label": "makeEmptyRow()",
+      "file_type": "code",
+      "source_file": "src/lib/components/Board.test.ts",
+      "source_location": "L6",
+      "community": 8,
+      "norm_label": "makeemptyrow()",
+      "id": "board_test_makeemptyrow"
+    },
+    {
+      "label": "makeRow()",
+      "file_type": "code",
+      "source_file": "src/lib/components/Board.test.ts",
+      "source_location": "L10",
+      "community": 8,
+      "norm_label": "makerow()",
+      "id": "board_test_makerow"
+    },
+    {
+      "label": "ModalTestWrapper.svelte",
+      "file_type": "code",
+      "source_file": "src/lib/components/ModalTestWrapper.svelte",
+      "source_location": "L1",
+      "community": 15,
+      "norm_label": "modaltestwrapper.svelte",
+      "id": "src_lib_components_modaltestwrapper_svelte"
+    },
+    {
+      "label": "Tile.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/components/Tile.test.ts",
+      "source_location": "L1",
+      "community": 12,
+      "norm_label": "tile.test.ts",
+      "id": "src_lib_components_tile_test_ts"
+    },
+    {
+      "label": "Header.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/components/Header.test.ts",
+      "source_location": "L1",
+      "community": 10,
+      "norm_label": "header.test.ts",
+      "id": "src_lib_components_header_test_ts"
+    },
+    {
+      "label": "Keyboard.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/components/Keyboard.test.ts",
+      "source_location": "L1",
+      "community": 16,
+      "norm_label": "keyboard.test.ts",
+      "id": "src_lib_components_keyboard_test_ts"
+    },
+    {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L47",
+      "community": 6,
+      "norm_label": "if()",
+      "id": "page_if"
+    },
+    {
+      "label": "+layout.svelte",
+      "file_type": "code",
+      "source_file": "src/routes/+layout.svelte",
+      "source_location": "L1",
+      "community": 27,
+      "norm_label": "+layout.svelte",
+      "id": "src_routes_layout_svelte"
+    },
+    {
+      "label": "setup.ts",
+      "file_type": "code",
+      "source_file": "src/tests/setup.ts",
+      "source_location": "L1",
+      "community": 28,
+      "norm_label": "setup.ts",
+      "id": "src_tests_setup_ts"
+    },
+    {
+      "label": "Svelte Configuration",
+      "file_type": "code",
+      "source_file": "svelte.config.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 29,
+      "norm_label": "svelte configuration",
+      "id": "svelte_config"
+    },
+    {
+      "label": "CLAUDE.md Project Notes",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 17,
+      "norm_label": "claude.md project notes",
+      "id": "claude_md"
+    },
+    {
+      "label": "LetterState Type",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "line 1",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "letterstate type",
+      "id": "game_letterstate"
+    },
+    {
+      "label": "TileData Interface",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "lines 3-6",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "tiledata interface",
+      "id": "game_tiledata"
+    },
+    {
+      "label": "GameStatus Type",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "line 8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "gamestatus type",
+      "id": "game_gamestatus"
+    },
+    {
+      "label": "GameState Interface",
+      "file_type": "code",
+      "source_file": "src/lib/game.ts",
+      "source_location": "lines 10-16",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "gamestate interface",
+      "id": "game_gamestate"
+    },
+    {
+      "label": "WORDS Constant (Solution Word Lists)",
+      "file_type": "code",
+      "source_file": "src/lib/words.ts",
+      "source_location": "line 214",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "words constant (solution word lists)",
+      "id": "words_words"
+    },
+    {
+      "label": "VALID_GUESSES Set",
+      "file_type": "code",
+      "source_file": "src/lib/words.ts",
+      "source_location": "line 221",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "valid_guesses set",
+      "id": "words_valid_guesses"
+    },
+    {
+      "label": "French Dictionary (dictionary.txt)",
+      "file_type": "document",
+      "source_file": "src/lib/dictionary.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "french dictionary (dictionary.txt)",
+      "id": "dictionary_txt"
+    },
+    {
+      "label": "Library Barrel Exports",
+      "file_type": "code",
+      "source_file": "src/lib/index.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 17,
+      "norm_label": "library barrel exports",
+      "id": "index_barrel"
+    },
+    {
+      "label": "Game Logic Tests",
+      "file_type": "code",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "game logic tests",
+      "id": "game_test"
+    },
+    {
+      "label": "Words Module Tests",
+      "file_type": "code",
+      "source_file": "src/lib/words.test.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "words module tests",
+      "id": "words_test"
+    },
+    {
+      "label": "Main Game Page (+page.svelte)",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "main game page (+page.svelte)",
+      "id": "page_svelte"
+    },
+    {
+      "label": "handleKey (Game Input Handler)",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "line 43",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "handlekey (game input handler)",
+      "id": "page_handlekey"
+    },
+    {
+      "label": "LocalStorage State Persistence",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "lines 113-136",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "localstorage state persistence",
+      "id": "page_localstorage_persistence"
+    },
+    {
+      "label": "Share Results Feature",
+      "file_type": "code",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "lines 201-212",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "share results feature",
+      "id": "page_share_results"
+    },
+    {
+      "label": "WORDS_5 (5-Letter French Words)",
+      "file_type": "code",
+      "source_file": "src/lib/words.ts",
+      "source_location": "line 5",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "words_5 (5-letter french words)",
+      "id": "words_words_5"
+    },
+    {
+      "label": "WORDS_6 (6-Letter French Words)",
+      "file_type": "code",
+      "source_file": "src/lib/words.ts",
+      "source_location": "line 64",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "words_6 (6-letter french words)",
+      "id": "words_words_6"
+    },
+    {
+      "label": "WORDS_7 (7-Letter French Words)",
+      "file_type": "code",
+      "source_file": "src/lib/words.ts",
+      "source_location": "line 110",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "words_7 (7-letter french words)",
+      "id": "words_words_7"
+    },
+    {
+      "label": "WORDS_8 (8-Letter French Words)",
+      "file_type": "code",
+      "source_file": "src/lib/words.ts",
+      "source_location": "line 160",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 1,
+      "norm_label": "words_8 (8-letter french words)",
+      "id": "words_words_8"
+    },
+    {
+      "label": "Static Adapter Configuration",
+      "file_type": "code",
+      "source_file": "svelte.config.js",
+      "source_location": "line 8",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 0,
+      "norm_label": "static adapter configuration",
+      "id": "svelte_config_adapter_static"
+    },
+    {
+      "label": "Board Component",
+      "file_type": "code",
+      "source_file": "src/lib/components/Board.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 4,
+      "norm_label": "board component",
+      "id": "board_component"
+    },
+    {
+      "label": "Keyboard Component",
+      "file_type": "code",
+      "source_file": "src/lib/components/Keyboard.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 4,
+      "norm_label": "keyboard component",
+      "id": "keyboard_component"
+    },
+    {
+      "label": "Modal Component",
+      "file_type": "code",
+      "source_file": "src/lib/components/Modal.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 5,
+      "norm_label": "modal component",
+      "id": "modal_component"
+    },
+    {
+      "label": "Tile Component",
+      "file_type": "code",
+      "source_file": "src/lib/components/Tile.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 4,
+      "norm_label": "tile component",
+      "id": "tile_component"
+    },
+    {
+      "label": "Toast Component",
+      "file_type": "code",
+      "source_file": "src/lib/components/Toast.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 5,
+      "norm_label": "toast component",
+      "id": "toast_component"
+    },
+    {
+      "label": "Row Component",
+      "file_type": "code",
+      "source_file": "src/lib/components/Row.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 4,
+      "norm_label": "row component",
+      "id": "row_component"
+    },
+    {
+      "label": "Header Component",
+      "file_type": "code",
+      "source_file": "src/lib/components/Header.svelte",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 5,
+      "norm_label": "header component",
+      "id": "header_component"
+    },
+    {
+      "label": "Toast Tests",
+      "file_type": "code",
+      "source_file": "src/lib/components/Toast.test.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 5,
+      "norm_label": "toast tests",
+      "id": "toast_test"
+    },
+    {
+      "label": "Modal Tests",
+      "file_type": "code",
+      "source_file": "src/lib/components/Modal.test.ts",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "community": 5,
+      "norm_label": "modal tests",
+      "id": "modal_test"
     },
     {
       "label": "TileData Type",
@@ -973,9 +1297,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "tiledata_type",
-      "community": 2,
-      "norm_label": "tiledata type"
+      "community": 4,
+      "norm_label": "tiledata type",
+      "id": "tiledata_type"
     },
     {
       "label": "LetterState Type",
@@ -986,9 +1310,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "letterstate_type",
-      "community": 2,
-      "norm_label": "letterstate type"
+      "community": 4,
+      "norm_label": "letterstate type",
+      "id": "letterstate_type"
     },
     {
       "label": "Keyboard onKey Callback",
@@ -999,9 +1323,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "keyboard_onkey_callback",
-      "community": 2,
-      "norm_label": "keyboard onkey callback"
+      "community": 4,
+      "norm_label": "keyboard onkey callback",
+      "id": "keyboard_onkey_callback"
     },
     {
       "label": "Header onShowRules Callback",
@@ -1012,9 +1336,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "header_onshowrules_callback",
-      "community": 3,
-      "norm_label": "header onshowrules callback"
+      "community": 5,
+      "norm_label": "header onshowrules callback",
+      "id": "header_onshowrules_callback"
     },
     {
       "label": "Header onShowStats Callback",
@@ -1025,9 +1349,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "header_onshowstats_callback",
-      "community": 3,
-      "norm_label": "header onshowstats callback"
+      "community": 5,
+      "norm_label": "header onshowstats callback",
+      "id": "header_onshowstats_callback"
     },
     {
       "label": "Modal onClose Callback",
@@ -1038,9 +1362,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "modal_onclose_callback",
-      "community": 3,
-      "norm_label": "modal onclose callback"
+      "community": 5,
+      "norm_label": "modal onclose callback",
+      "id": "modal_onclose_callback"
     },
     {
       "label": "Favicon SVG Icon",
@@ -1051,9 +1375,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "favicon_svg_icon",
-      "community": 4,
-      "norm_label": "favicon svg icon"
+      "community": 7,
+      "norm_label": "favicon svg icon",
+      "id": "favicon_svg_icon"
     },
     {
       "label": "Letter S Branding Element",
@@ -1064,9 +1388,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "favicon_letter_s",
-      "community": 4,
-      "norm_label": "letter s branding element"
+      "community": 7,
+      "norm_label": "letter s branding element",
+      "id": "favicon_letter_s"
     },
     {
       "label": "Purple-to-Pink Gradient Background",
@@ -1077,9 +1401,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "favicon_gradient_bg",
-      "community": 4,
-      "norm_label": "purple-to-pink gradient background"
+      "community": 7,
+      "norm_label": "purple-to-pink gradient background",
+      "id": "favicon_gradient_bg"
     },
     {
       "label": "App HTML Shell",
@@ -1090,9 +1414,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "app_html",
-      "community": 4,
-      "norm_label": "app html shell"
+      "community": 7,
+      "norm_label": "app html shell",
+      "id": "app_html"
     },
     {
       "label": "Static Headers Config",
@@ -1103,23 +1427,102 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "headers_config",
-      "community": 4,
-      "norm_label": "static headers config"
+      "community": 7,
+      "norm_label": "static headers config",
+      "id": "headers_config"
     }
   ],
   "links": [
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "vite.config.ts",
+      "source_location": "line 10",
+      "weight": 1.0,
+      "source": "vite_config",
+      "target": "tests_setup"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/generate-assets.mjs",
+      "source_location": "L135",
+      "weight": 1.0,
+      "source": "scripts_generate_assets_mjs",
+      "target": "scripts_generate_assets_svgtopng",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "src/app.d.ts",
+      "source_location": "lines 3-6",
+      "weight": 0.8,
+      "source": "dictionary_txt",
+      "target": "app_d_ts_txt_raw_declaration"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/words.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_words_test_ts",
+      "target": "lib_words_isvalidword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/words.ts",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_lib_words_ts",
+      "target": "lib_words_mulberry32",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/words.ts",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_lib_words_ts",
+      "target": "lib_words_deterministicshuffle",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/words.ts",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "src_lib_words_ts",
+      "target": "lib_words_parsewordlist",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/words.ts",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "src_lib_words_ts",
+      "target": "lib_words_isvalidword",
+      "confidence_score": 1.0
+    },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/words.ts",
       "source_location": "L226",
       "weight": 1.0,
-      "_src": "src_lib_words_ts",
-      "_tgt": "words_isvalidword",
+      "confidence_score": 1.0,
       "source": "src_lib_words_ts",
-      "target": "words_isvalidword",
-      "confidence_score": 1.0
+      "target": "words_isvalidword"
     },
     {
       "relation": "contains",
@@ -1127,10 +1530,839 @@
       "source_file": "src/lib/words.ts",
       "source_location": "L230",
       "weight": 1.0,
-      "_src": "src_lib_words_ts",
-      "_tgt": "words_getwordsbylength",
+      "confidence_score": 1.0,
       "source": "src_lib_words_ts",
-      "target": "words_getwordsbylength",
+      "target": "words_getwordsbylength"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/words.ts",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "lib_words_deterministicshuffle",
+      "target": "lib_words_mulberry32",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L163",
+      "weight": 1.0,
+      "source": "routes_page_handlekey",
+      "target": "lib_words_isvalidword"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_createinitialstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_evaluateguess",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_addletter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_removeletter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L80",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_submitguess",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L103",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_getkeyboardstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L123",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_getcorrectpositions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L136",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_getgriddata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L178",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_getdayindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_getdailyword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L188",
+      "weight": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "lib_game_isvalidlength",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_createinitialstate"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L28",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_evaluateguess"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L58",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_addletter"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L68",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_removeletter"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L79",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_submitguess"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L102",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_getkeyboardstate"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L122",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_getgriddata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L156",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_getdailyword"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L164",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_game_ts",
+      "target": "game_isvalidlength"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_createinitialstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L143",
+      "weight": 1.0,
+      "source": "routes_page_updatecountdown",
+      "target": "lib_game_createinitialstate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L107",
+      "weight": 1.0,
+      "source": "lib_game_getkeyboardstate",
+      "target": "lib_game_evaluateguess",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L126",
+      "weight": 1.0,
+      "source": "lib_game_getcorrectpositions",
+      "target": "lib_game_evaluateguess",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L142",
+      "weight": 1.0,
+      "source": "lib_game_getgriddata",
+      "target": "lib_game_evaluateguess",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_evaluateguess",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_addletter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L211",
+      "weight": 1.0,
+      "source": "routes_page_handlekey",
+      "target": "lib_game_addletter"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_removeletter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L205",
+      "weight": 1.0,
+      "source": "routes_page_handlekey",
+      "target": "lib_game_removeletter"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_submitguess",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L170",
+      "weight": 1.0,
+      "source": "routes_page_handlekey",
+      "target": "lib_game_submitguess"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_getkeyboardstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L138",
+      "weight": 1.0,
+      "source": "lib_game_getgriddata",
+      "target": "lib_game_getcorrectpositions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_getgriddata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.ts",
+      "source_location": "L185",
+      "weight": 1.0,
+      "source": "lib_game_getdailyword",
+      "target": "lib_game_getdayindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_getdailyword",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "routes_page_updatecountdown",
+      "target": "lib_game_getdailyword"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/game.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_game_test_ts",
+      "target": "lib_game_isvalidlength",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "src_lib_stats_ts",
+      "target": "lib_stats_createstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "src_lib_stats_ts",
+      "target": "lib_stats_recordresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L68",
+      "weight": 1.0,
+      "source": "src_lib_stats_ts",
+      "target": "lib_stats_winpercent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L72",
+      "weight": 1.0,
+      "source": "src_lib_stats_ts",
+      "target": "lib_stats_isvalidstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "src_lib_stats_ts",
+      "target": "lib_stats_loadstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "src_lib_stats_ts",
+      "target": "lib_stats_savestats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L93",
+      "weight": 1.0,
+      "source": "lib_stats_loadstats",
+      "target": "lib_stats_createstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_stats_test_ts",
+      "target": "lib_stats_createstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_stats_test_ts",
+      "target": "lib_stats_recordresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_stats_test_ts",
+      "target": "lib_stats_winpercent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.ts",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "lib_stats_loadstats",
+      "target": "lib_stats_isvalidstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_stats_test_ts",
+      "target": "lib_stats_loadstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_lib_stats_test_ts",
+      "target": "lib_stats_savestats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "src_lib_stats_test_ts",
+      "target": "lib_stats_test_win",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/stats.test.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_lib_stats_test_ts",
+      "target": "lib_stats_test_loss",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/components/Board.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_components_board_svelte",
+      "target": "src_lib_components_board_test_ts"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/components/Board.test.ts",
+      "source_location": "line 3",
+      "weight": 1.0,
+      "source": "board_component",
+      "target": "board_test"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/components/Board.test.ts",
+      "source_location": "line 4",
+      "weight": 0.8,
+      "source": "board_test",
+      "target": "tiledata_type"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "src/lib/components/Board.test.ts",
+      "source_location": null,
+      "weight": 0.5,
+      "source": "board_test",
+      "target": "tile_test"
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/components/Header.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_components_header_svelte",
+      "target": "src_lib_components_header_test_ts"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/components/Header.test.ts",
+      "source_location": "line 3",
+      "weight": 1.0,
+      "source": "header_component",
+      "target": "header_test"
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/components/Keyboard.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_components_keyboard_svelte",
+      "target": "src_lib_components_keyboard_test_ts"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/components/Keyboard.test.ts",
+      "source_location": "line 3",
+      "weight": 1.0,
+      "source": "keyboard_component",
+      "target": "keyboard_test"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/components/Modal.svelte",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_lib_components_modal_svelte",
+      "target": "components_modal_onclose",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/components/ModalTestWrapper.svelte",
+      "source_location": "line 17",
+      "weight": 1.0,
+      "source": "modal_component",
+      "target": "modaltestwrapper_component"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/components/ModalTestWrapper.svelte",
+      "source_location": "line 12",
+      "weight": 0.9,
+      "source": "modaltestwrapper_component",
+      "target": "modal_onclose_callback"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/components/Modal.test.ts",
+      "source_location": "line 3",
+      "weight": 1.0,
+      "source": "modaltestwrapper_component",
+      "target": "modal_test"
+    },
+    {
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/components/Tile.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_components_tile_svelte",
+      "target": "src_lib_components_tile_test_ts"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/components/Tile.test.ts",
+      "source_location": "line 3",
+      "weight": 1.0,
+      "source": "tile_component",
+      "target": "tile_test"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/components/Toast.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_components_toast_test_ts",
+      "target": "src_lib_components_toast_svelte"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/components/Modal.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_lib_components_modaltestwrapper_svelte",
+      "target": "src_lib_components_modal_test_ts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "src_routes_page_svelte",
+      "target": "routes_page_if",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L108",
+      "weight": 1.0,
+      "source": "src_routes_page_svelte",
+      "target": "routes_page_shareresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L130",
+      "weight": 1.0,
+      "source": "src_routes_page_svelte",
+      "target": "routes_page_updatecountdown",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L147",
+      "weight": 1.0,
+      "source": "src_routes_page_svelte",
+      "target": "routes_page_triggerconfetti",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L152",
+      "weight": 1.0,
+      "source": "src_routes_page_svelte",
+      "target": "routes_page_handlekey",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L216",
+      "weight": 1.0,
+      "source": "src_routes_page_svelte",
+      "target": "routes_page_handlekeydown",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L47",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_routes_page_svelte",
+      "target": "page_if"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/routes/+page.svelte",
+      "source_location": "L224",
+      "weight": 1.0,
+      "source": "routes_page_handlekeydown",
+      "target": "routes_page_handlekey",
       "confidence_score": 1.0
     },
     {
@@ -1140,8 +2372,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 53",
       "weight": 1.0,
-      "_src": "page_handlekey",
-      "_tgt": "words_isvalidword",
       "source": "words_isvalidword",
       "target": "page_handlekey"
     },
@@ -1152,8 +2382,6 @@
       "source_file": "src/lib/words.ts",
       "source_location": "line 227",
       "weight": 1.0,
-      "_src": "words_isvalidword",
-      "_tgt": "words_valid_guesses",
       "source": "words_isvalidword",
       "target": "words_valid_guesses"
     },
@@ -1164,8 +2392,6 @@
       "source_file": "src/lib/words.test.ts",
       "source_location": "line 51",
       "weight": 1.0,
-      "_src": "words_test",
-      "_tgt": "words_isvalidword",
       "source": "words_isvalidword",
       "target": "words_test"
     },
@@ -1176,8 +2402,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": null,
       "weight": 0.7,
-      "_src": "game_isvalidlength",
-      "_tgt": "words_isvalidword",
       "source": "words_isvalidword",
       "target": "game_isvalidlength"
     },
@@ -1188,8 +2412,6 @@
       "source_file": "src/lib/words.ts",
       "source_location": "line 231",
       "weight": 1.0,
-      "_src": "words_getwordsbylength",
-      "_tgt": "words_words",
       "source": "words_getwordsbylength",
       "target": "words_words"
     },
@@ -1200,118 +2422,8 @@
       "source_file": "src/lib/words.test.ts",
       "source_location": "line 71",
       "weight": 1.0,
-      "_src": "words_test",
-      "_tgt": "words_getwordsbylength",
       "source": "words_getwordsbylength",
       "target": "words_test"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_createinitialstate",
-      "source": "src_lib_game_ts",
-      "target": "game_createinitialstate",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L28",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_evaluateguess",
-      "source": "src_lib_game_ts",
-      "target": "game_evaluateguess",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L58",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_addletter",
-      "source": "src_lib_game_ts",
-      "target": "game_addletter",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L68",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_removeletter",
-      "source": "src_lib_game_ts",
-      "target": "game_removeletter",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L79",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_submitguess",
-      "source": "src_lib_game_ts",
-      "target": "game_submitguess",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L102",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_getkeyboardstate",
-      "source": "src_lib_game_ts",
-      "target": "game_getkeyboardstate",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L122",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_getgriddata",
-      "source": "src_lib_game_ts",
-      "target": "game_getgriddata",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L156",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_getdailyword",
-      "source": "src_lib_game_ts",
-      "target": "game_getdailyword",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/game.ts",
-      "source_location": "L164",
-      "weight": 1.0,
-      "_src": "src_lib_game_ts",
-      "_tgt": "game_isvalidlength",
-      "source": "src_lib_game_ts",
-      "target": "game_isvalidlength",
-      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -1320,8 +2432,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 21",
       "weight": 1.0,
-      "_src": "page_svelte",
-      "_tgt": "game_createinitialstate",
       "source": "game_createinitialstate",
       "target": "page_svelte"
     },
@@ -1332,8 +2442,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 18",
       "weight": 1.0,
-      "_src": "game_createinitialstate",
-      "_tgt": "game_gamestate",
       "source": "game_createinitialstate",
       "target": "game_gamestate"
     },
@@ -1344,8 +2452,6 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 110",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_createinitialstate",
       "source": "game_createinitialstate",
       "target": "game_test"
     },
@@ -1355,8 +2461,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 106",
       "weight": 1.0,
-      "_src": "game_getkeyboardstate",
-      "_tgt": "game_evaluateguess",
       "confidence_score": 1.0,
       "source": "game_evaluateguess",
       "target": "game_getkeyboardstate"
@@ -1367,8 +2471,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 127",
       "weight": 1.0,
-      "_src": "game_getgriddata",
-      "_tgt": "game_evaluateguess",
       "confidence_score": 1.0,
       "source": "game_evaluateguess",
       "target": "game_getgriddata"
@@ -1380,8 +2482,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 203",
       "weight": 1.0,
-      "_src": "page_share_results",
-      "_tgt": "game_evaluateguess",
       "source": "game_evaluateguess",
       "target": "page_share_results"
     },
@@ -1392,8 +2492,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 28",
       "weight": 1.0,
-      "_src": "game_evaluateguess",
-      "_tgt": "game_tiledata",
       "source": "game_evaluateguess",
       "target": "game_tiledata"
     },
@@ -1404,8 +2502,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 31",
       "weight": 1.0,
-      "_src": "game_evaluateguess",
-      "_tgt": "game_letterstate",
       "source": "game_evaluateguess",
       "target": "game_letterstate"
     },
@@ -1416,8 +2512,6 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 17",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_evaluateguess",
       "source": "game_evaluateguess",
       "target": "game_test"
     },
@@ -1428,8 +2522,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 84",
       "weight": 1.0,
-      "_src": "page_handlekey",
-      "_tgt": "game_addletter",
       "source": "game_addletter",
       "target": "page_handlekey"
     },
@@ -1440,8 +2532,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 58",
       "weight": 1.0,
-      "_src": "game_addletter",
-      "_tgt": "game_gamestate",
       "source": "game_addletter",
       "target": "game_gamestate"
     },
@@ -1452,8 +2542,6 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 144",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_addletter",
       "source": "game_addletter",
       "target": "game_test"
     },
@@ -1464,8 +2552,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 79",
       "weight": 1.0,
-      "_src": "page_handlekey",
-      "_tgt": "game_removeletter",
       "source": "game_removeletter",
       "target": "page_handlekey"
     },
@@ -1476,8 +2562,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 68",
       "weight": 1.0,
-      "_src": "game_removeletter",
-      "_tgt": "game_gamestate",
       "source": "game_removeletter",
       "target": "game_gamestate"
     },
@@ -1488,8 +2572,6 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 179",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_removeletter",
       "source": "game_removeletter",
       "target": "game_test"
     },
@@ -1500,8 +2582,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 60",
       "weight": 1.0,
-      "_src": "page_handlekey",
-      "_tgt": "game_submitguess",
       "source": "game_submitguess",
       "target": "page_handlekey"
     },
@@ -1512,8 +2592,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 79",
       "weight": 1.0,
-      "_src": "game_submitguess",
-      "_tgt": "game_gamestate",
       "source": "game_submitguess",
       "target": "game_gamestate"
     },
@@ -1524,8 +2602,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 87",
       "weight": 1.0,
-      "_src": "game_submitguess",
-      "_tgt": "game_gamestatus",
       "source": "game_submitguess",
       "target": "game_gamestatus"
     },
@@ -1536,8 +2612,6 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 203",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_submitguess",
       "source": "game_submitguess",
       "target": "game_test"
     },
@@ -1548,8 +2622,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 31",
       "weight": 1.0,
-      "_src": "page_svelte",
-      "_tgt": "game_getkeyboardstate",
       "source": "game_getkeyboardstate",
       "target": "page_svelte"
     },
@@ -1560,8 +2632,6 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 254",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_getkeyboardstate",
       "source": "game_getkeyboardstate",
       "target": "game_test"
     },
@@ -1572,8 +2642,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 30",
       "weight": 1.0,
-      "_src": "page_svelte",
-      "_tgt": "game_getgriddata",
       "source": "game_getgriddata",
       "target": "page_svelte"
     },
@@ -1584,8 +2652,6 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 284",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_getgriddata",
       "source": "game_getgriddata",
       "target": "game_test"
     },
@@ -1596,8 +2662,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 21",
       "weight": 1.0,
-      "_src": "page_svelte",
-      "_tgt": "game_getdailyword",
       "source": "game_getdailyword",
       "target": "page_svelte"
     },
@@ -1608,8 +2672,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 119",
       "weight": 1.0,
-      "_src": "page_localstorage_persistence",
-      "_tgt": "game_getdailyword",
       "source": "game_getdailyword",
       "target": "page_localstorage_persistence"
     },
@@ -1620,8 +2682,6 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 331",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_getdailyword",
       "source": "game_getdailyword",
       "target": "game_test"
     },
@@ -1632,8 +2692,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 156",
       "weight": 0.9,
-      "_src": "game_getdailyword",
-      "_tgt": "words_words",
       "source": "game_getdailyword",
       "target": "words_words"
     },
@@ -1644,46 +2702,8 @@
       "source_file": "src/lib/game.test.ts",
       "source_location": "line 351",
       "weight": 1.0,
-      "_src": "game_test",
-      "_tgt": "game_isvalidlength",
       "source": "game_isvalidlength",
       "target": "game_test"
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/components/Board.test.ts",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_src": "src_lib_components_board_test_ts",
-      "_tgt": "src_lib_components_board_svelte",
-      "source": "src_lib_components_board_svelte",
-      "target": "src_lib_components_board_test_ts",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/components/Toast.test.ts",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_src": "src_lib_components_toast_test_ts",
-      "_tgt": "src_lib_components_toast_svelte",
-      "source": "src_lib_components_toast_test_ts",
-      "target": "src_lib_components_toast_svelte",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/components/Keyboard.test.ts",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_src": "src_lib_components_keyboard_test_ts",
-      "_tgt": "src_lib_components_keyboard_svelte",
-      "source": "src_lib_components_keyboard_svelte",
-      "target": "src_lib_components_keyboard_test_ts",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -1691,11 +2711,9 @@
       "source_file": "src/lib/components/Board.test.ts",
       "source_location": "L6",
       "weight": 1.0,
-      "_src": "src_lib_components_board_test_ts",
-      "_tgt": "board_test_makeemptyrow",
+      "confidence_score": 1.0,
       "source": "src_lib_components_board_test_ts",
-      "target": "board_test_makeemptyrow",
-      "confidence_score": 1.0
+      "target": "board_test_makeemptyrow"
     },
     {
       "relation": "contains",
@@ -1703,71 +2721,9 @@
       "source_file": "src/lib/components/Board.test.ts",
       "source_location": "L10",
       "weight": 1.0,
-      "_src": "src_lib_components_board_test_ts",
-      "_tgt": "board_test_makerow",
-      "source": "src_lib_components_board_test_ts",
-      "target": "board_test_makerow",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/components/Tile.test.ts",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_src": "src_lib_components_tile_test_ts",
-      "_tgt": "src_lib_components_tile_svelte",
-      "source": "src_lib_components_tile_svelte",
-      "target": "src_lib_components_tile_test_ts",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/components/Modal.test.ts",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_src": "src_lib_components_modal_test_ts",
-      "_tgt": "src_lib_components_modaltestwrapper_svelte",
-      "source": "src_lib_components_modaltestwrapper_svelte",
-      "target": "src_lib_components_modal_test_ts",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "src/lib/components/Header.test.ts",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_src": "src_lib_components_header_test_ts",
-      "_tgt": "src_lib_components_header_svelte",
-      "source": "src_lib_components_header_svelte",
-      "target": "src_lib_components_header_test_ts",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/routes/+page.svelte",
-      "source_location": "L47",
-      "weight": 1.0,
-      "_src": "src_routes_page_svelte",
-      "_tgt": "page_if",
-      "source": "src_routes_page_svelte",
-      "target": "page_if",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "vite.config.ts",
-      "source_location": "line 10",
-      "weight": 1.0,
-      "_src": "vite_config",
-      "_tgt": "tests_setup",
-      "source": "vite_config",
-      "target": "tests_setup"
+      "source": "src_lib_components_board_test_ts",
+      "target": "board_test_makerow"
     },
     {
       "relation": "conceptually_related_to",
@@ -1776,8 +2732,6 @@
       "source_file": "CLAUDE.md",
       "source_location": null,
       "weight": 0.4,
-      "_src": "claude_md",
-      "_tgt": "index_barrel",
       "source": "claude_md",
       "target": "index_barrel"
     },
@@ -1788,8 +2742,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 5",
       "weight": 1.0,
-      "_src": "game_tiledata",
-      "_tgt": "game_letterstate",
       "source": "game_letterstate",
       "target": "game_tiledata"
     },
@@ -1800,8 +2752,6 @@
       "source_file": "src/lib/game.ts",
       "source_location": "line 14",
       "weight": 1.0,
-      "_src": "game_gamestate",
-      "_tgt": "game_gamestatus",
       "source": "game_gamestatus",
       "target": "game_gamestate"
     },
@@ -1812,8 +2762,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "lines 113-136",
       "weight": 1.0,
-      "_src": "page_localstorage_persistence",
-      "_tgt": "game_gamestate",
       "source": "game_gamestate",
       "target": "page_localstorage_persistence"
     },
@@ -1824,8 +2772,6 @@
       "source_file": "src/routes/+page.svelte",
       "source_location": "line 14",
       "weight": 1.0,
-      "_src": "page_svelte",
-      "_tgt": "words_words",
       "source": "words_words",
       "target": "page_svelte"
     },
@@ -1836,8 +2782,6 @@
       "source_file": "src/lib/words.ts",
       "source_location": "line 222",
       "weight": 1.0,
-      "_src": "words_valid_guesses",
-      "_tgt": "words_words",
       "source": "words_words",
       "target": "words_valid_guesses"
     },
@@ -1848,8 +2792,6 @@
       "source_file": "src/lib/words.ts",
       "source_location": "line 214",
       "weight": 1.0,
-      "_src": "words_words",
-      "_tgt": "words_words_5",
       "source": "words_words",
       "target": "words_words_5"
     },
@@ -1860,8 +2802,6 @@
       "source_file": "src/lib/words.ts",
       "source_location": "line 214",
       "weight": 1.0,
-      "_src": "words_words",
-      "_tgt": "words_words_6",
       "source": "words_words",
       "target": "words_words_6"
     },
@@ -1872,8 +2812,6 @@
       "source_file": "src/lib/words.ts",
       "source_location": "line 214",
       "weight": 1.0,
-      "_src": "words_words",
-      "_tgt": "words_words_7",
       "source": "words_words",
       "target": "words_words_7"
     },
@@ -1884,8 +2822,6 @@
       "source_file": "src/lib/words.ts",
       "source_location": "line 214",
       "weight": 1.0,
-      "_src": "words_words",
-      "_tgt": "words_words_8",
       "source": "words_words",
       "target": "words_words_8"
     },
@@ -1896,8 +2832,6 @@
       "source_file": "src/lib/words.test.ts",
       "source_location": "line 5",
       "weight": 1.0,
-      "_src": "words_test",
-      "_tgt": "words_words",
       "source": "words_words",
       "target": "words_test"
     },
@@ -1908,8 +2842,6 @@
       "source_file": "src/lib/words.ts",
       "source_location": "lines 216-224",
       "weight": 1.0,
-      "_src": "words_valid_guesses",
-      "_tgt": "dictionary_txt",
       "source": "words_valid_guesses",
       "target": "dictionary_txt"
     },
@@ -1920,22 +2852,8 @@
       "source_file": "src/lib/words.test.ts",
       "source_location": "line 39",
       "weight": 1.0,
-      "_src": "words_test",
-      "_tgt": "words_valid_guesses",
       "source": "words_valid_guesses",
       "target": "words_test"
-    },
-    {
-      "relation": "conceptually_related_to",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "source_file": "src/app.d.ts",
-      "source_location": "lines 3-6",
-      "weight": 0.8,
-      "_src": "app_d_ts_txt_raw_declaration",
-      "_tgt": "dictionary_txt",
-      "source": "dictionary_txt",
-      "target": "app_d_ts_txt_raw_declaration"
     },
     {
       "relation": "conceptually_related_to",
@@ -1944,8 +2862,6 @@
       "source_file": "svelte.config.js",
       "source_location": "line 8",
       "weight": 0.6,
-      "_src": "svelte_config_adapter_static",
-      "_tgt": "page_svelte",
       "source": "page_svelte",
       "target": "svelte_config_adapter_static"
     },
@@ -1956,8 +2872,6 @@
       "source_file": "src/lib/components/Board.svelte",
       "source_location": "line 20",
       "weight": 1.0,
-      "_src": "board_component",
-      "_tgt": "row_component",
       "source": "board_component",
       "target": "row_component"
     },
@@ -1968,22 +2882,8 @@
       "source_file": "src/lib/components/Board.svelte",
       "source_location": "line 2",
       "weight": 1.0,
-      "_src": "board_component",
-      "_tgt": "tiledata_type",
       "source": "board_component",
       "target": "tiledata_type"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/components/Board.test.ts",
-      "source_location": "line 3",
-      "weight": 1.0,
-      "_src": "board_test",
-      "_tgt": "board_component",
-      "source": "board_component",
-      "target": "board_test"
     },
     {
       "relation": "shares_data_with",
@@ -1992,8 +2892,6 @@
       "source_file": "src/lib/components/Keyboard.svelte",
       "source_location": "line 2",
       "weight": 1.0,
-      "_src": "keyboard_component",
-      "_tgt": "letterstate_type",
       "source": "keyboard_component",
       "target": "letterstate_type"
     },
@@ -2004,22 +2902,8 @@
       "source_file": "src/lib/components/Keyboard.svelte",
       "source_location": "line 9",
       "weight": 0.8,
-      "_src": "keyboard_component",
-      "_tgt": "keyboard_onkey_callback",
       "source": "keyboard_component",
       "target": "keyboard_onkey_callback"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/components/Keyboard.test.ts",
-      "source_location": "line 3",
-      "weight": 1.0,
-      "_src": "keyboard_test",
-      "_tgt": "keyboard_component",
-      "source": "keyboard_component",
-      "target": "keyboard_test"
     },
     {
       "relation": "shares_data_with",
@@ -2028,8 +2912,6 @@
       "source_file": "src/lib/components/Tile.svelte",
       "source_location": null,
       "weight": 0.8,
-      "_src": "tile_component",
-      "_tgt": "keyboard_component",
       "source": "keyboard_component",
       "target": "tile_component"
     },
@@ -2040,22 +2922,8 @@
       "source_file": "src/lib/components/Modal.svelte",
       "source_location": "line 8",
       "weight": 0.8,
-      "_src": "modal_component",
-      "_tgt": "modal_onclose_callback",
       "source": "modal_component",
       "target": "modal_onclose_callback"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/components/ModalTestWrapper.svelte",
-      "source_location": "line 17",
-      "weight": 1.0,
-      "_src": "modaltestwrapper_component",
-      "_tgt": "modal_component",
-      "source": "modal_component",
-      "target": "modaltestwrapper_component"
     },
     {
       "relation": "references",
@@ -2064,8 +2932,6 @@
       "source_file": "src/lib/components/Modal.test.ts",
       "source_location": null,
       "weight": 0.9,
-      "_src": "modal_test",
-      "_tgt": "modal_component",
       "source": "modal_component",
       "target": "modal_test"
     },
@@ -2076,8 +2942,6 @@
       "source_file": "src/lib/components/Header.svelte",
       "source_location": null,
       "weight": 0.7,
-      "_src": "header_component",
-      "_tgt": "modal_component",
       "source": "modal_component",
       "target": "header_component"
     },
@@ -2088,8 +2952,6 @@
       "source_file": "src/lib/components/Toast.svelte",
       "source_location": null,
       "weight": 0.5,
-      "_src": "toast_component",
-      "_tgt": "modal_component",
       "source": "modal_component",
       "target": "toast_component"
     },
@@ -2100,8 +2962,6 @@
       "source_file": "src/lib/components/Row.svelte",
       "source_location": "line 20",
       "weight": 1.0,
-      "_src": "row_component",
-      "_tgt": "tile_component",
       "source": "tile_component",
       "target": "row_component"
     },
@@ -2112,22 +2972,8 @@
       "source_file": "src/lib/components/Tile.svelte",
       "source_location": "line 2",
       "weight": 1.0,
-      "_src": "tile_component",
-      "_tgt": "letterstate_type",
       "source": "tile_component",
       "target": "letterstate_type"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/components/Tile.test.ts",
-      "source_location": "line 3",
-      "weight": 1.0,
-      "_src": "tile_test",
-      "_tgt": "tile_component",
-      "source": "tile_component",
-      "target": "tile_test"
     },
     {
       "relation": "references",
@@ -2136,8 +2982,6 @@
       "source_file": "src/lib/components/Toast.test.ts",
       "source_location": "line 3",
       "weight": 1.0,
-      "_src": "toast_test",
-      "_tgt": "toast_component",
       "source": "toast_component",
       "target": "toast_test"
     },
@@ -2148,8 +2992,6 @@
       "source_file": "src/lib/components/Row.svelte",
       "source_location": "line 2",
       "weight": 1.0,
-      "_src": "row_component",
-      "_tgt": "tiledata_type",
       "source": "row_component",
       "target": "tiledata_type"
     },
@@ -2160,8 +3002,6 @@
       "source_file": "src/lib/components/Header.svelte",
       "source_location": "line 2",
       "weight": 0.8,
-      "_src": "header_component",
-      "_tgt": "header_onshowrules_callback",
       "source": "header_component",
       "target": "header_onshowrules_callback"
     },
@@ -2172,70 +3012,8 @@
       "source_file": "src/lib/components/Header.svelte",
       "source_location": "line 2",
       "weight": 0.8,
-      "_src": "header_component",
-      "_tgt": "header_onshowstats_callback",
       "source": "header_component",
       "target": "header_onshowstats_callback"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/components/Header.test.ts",
-      "source_location": "line 3",
-      "weight": 1.0,
-      "_src": "header_test",
-      "_tgt": "header_component",
-      "source": "header_component",
-      "target": "header_test"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/components/ModalTestWrapper.svelte",
-      "source_location": "line 12",
-      "weight": 0.9,
-      "_src": "modaltestwrapper_component",
-      "_tgt": "modal_onclose_callback",
-      "source": "modaltestwrapper_component",
-      "target": "modal_onclose_callback"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/components/Modal.test.ts",
-      "source_location": "line 3",
-      "weight": 1.0,
-      "_src": "modal_test",
-      "_tgt": "modaltestwrapper_component",
-      "source": "modaltestwrapper_component",
-      "target": "modal_test"
-    },
-    {
-      "relation": "shares_data_with",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/lib/components/Board.test.ts",
-      "source_location": "line 4",
-      "weight": 0.8,
-      "_src": "board_test",
-      "_tgt": "tiledata_type",
-      "source": "board_test",
-      "target": "tiledata_type"
-    },
-    {
-      "relation": "semantically_similar_to",
-      "confidence": "INFERRED",
-      "confidence_score": 0.7,
-      "source_file": "src/lib/components/Board.test.ts",
-      "source_location": null,
-      "weight": 0.5,
-      "_src": "board_test",
-      "_tgt": "tile_test",
-      "source": "board_test",
-      "target": "tile_test"
     },
     {
       "relation": "conceptually_related_to",
@@ -2244,8 +3022,6 @@
       "source_file": "static/favicon.svg",
       "source_location": "lines 2-7",
       "weight": 1.0,
-      "_src": "favicon_gradient_bg",
-      "_tgt": "favicon_svg_icon",
       "source": "favicon_svg_icon",
       "target": "favicon_gradient_bg"
     },
@@ -2256,8 +3032,6 @@
       "source_file": "static/favicon.svg",
       "source_location": "line 9",
       "weight": 1.0,
-      "_src": "favicon_letter_s",
-      "_tgt": "favicon_svg_icon",
       "source": "favicon_svg_icon",
       "target": "favicon_letter_s"
     },
@@ -2268,8 +3042,6 @@
       "source_file": "src/app.html",
       "source_location": "line 8",
       "weight": 1.0,
-      "_src": "app_html",
-      "_tgt": "favicon_svg_icon",
       "source": "favicon_svg_icon",
       "target": "app_html"
     },
@@ -2280,8 +3052,6 @@
       "source_file": "static/_headers",
       "source_location": "line 4",
       "weight": 0.8,
-      "_src": "headers_config",
-      "_tgt": "favicon_svg_icon",
       "source": "favicon_svg_icon",
       "target": "headers_config"
     },
@@ -2292,8 +3062,6 @@
       "source_file": "static/favicon.svg",
       "source_location": null,
       "weight": 0.7,
-      "_src": "favicon_letter_s",
-      "_tgt": "favicon_gradient_bg",
       "source": "favicon_letter_s",
       "target": "favicon_gradient_bg"
     }
@@ -2386,5 +3154,6 @@
       "confidence_score": 1.0,
       "source_file": "src/lib/components"
     }
-  ]
+  ],
+  "built_at_commit": "bb74ebaa02454d31fee037536d019ff8d629be06"
 }

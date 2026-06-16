@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import ModalTestWrapper from './ModalTestWrapper.svelte';
 
@@ -49,7 +49,7 @@ describe('Modal', () => {
 	});
 
 	it('calls onClose when close button is clicked', async () => {
-		const result = render(ModalTestWrapper, { props: { open: true, title: 'Close' } });
+		render(ModalTestWrapper, { props: { open: true, title: 'Close' } });
 		const closeBtn = screen.getByTestId('modal-close');
 		await fireEvent.click(closeBtn);
 		// The wrapper handles the close event

@@ -1,30 +1,154 @@
 {
-  "vite.config.ts": 1776321523.0,
-  "svelte.config.js": 1776321523.0,
-  "src/app.d.ts": 1776321523.0,
-  "src/lib/game.test.ts": 1776321523.0,
-  "src/lib/words.ts": 1776321523.0,
-  "src/lib/words.test.ts": 1776321523.0,
-  "src/lib/game.ts": 1776321523.0,
-  "src/lib/index.ts": 1776321523.0,
-  "src/lib/components/Board.svelte": 1776321523.0,
-  "src/lib/components/Toast.test.ts": 1776321523.0,
-  "src/lib/components/Keyboard.svelte": 1776321523.0,
-  "src/lib/components/Board.test.ts": 1776321523.0,
-  "src/lib/components/Modal.svelte": 1776321523.0,
-  "src/lib/components/Tile.svelte": 1776321523.0,
-  "src/lib/components/ModalTestWrapper.svelte": 1776321523.0,
-  "src/lib/components/Modal.test.ts": 1776321523.0,
-  "src/lib/components/Toast.svelte": 1776321523.0,
-  "src/lib/components/Row.svelte": 1776321523.0,
-  "src/lib/components/Tile.test.ts": 1776321523.0,
-  "src/lib/components/Header.svelte": 1776321523.0,
-  "src/lib/components/Header.test.ts": 1776321523.0,
-  "src/lib/components/Keyboard.test.ts": 1776321523.0,
-  "src/routes/+page.svelte": 1776321523.0,
-  "src/routes/+layout.svelte": 1776321523.0,
-  "src/tests/setup.ts": 1776321523.0,
-  "CLAUDE.md": 1776323401.9398751,
-  "src/lib/dictionary.txt": 1776321523.0,
-  "static/favicon.svg": 1776321523.0
+  "/home/sbrn/Projects/sutom/svelte.config.js": {
+    "mtime": 1780909715.8123071,
+    "hash": "84ee66d09dd557858a28965a15dcc817"
+  },
+  "/home/sbrn/Projects/sutom/vite.config.ts": {
+    "mtime": 1780909715.8123071,
+    "hash": "e0b218e8aafae17d2445ef76c8c4826a"
+  },
+  "/home/sbrn/Projects/sutom/eslint.config.js": {
+    "mtime": 1781632833.5264418,
+    "hash": "a144f45dcce00bab060cc18ea77b30ed"
+  },
+  "/home/sbrn/Projects/sutom/scripts/generate-assets.mjs": {
+    "mtime": 1780909715.809252,
+    "hash": "f2824ec22a97e5c0afe52512bd0f0876"
+  },
+  "/home/sbrn/Projects/sutom/src/app.d.ts": {
+    "mtime": 1780909715.8101404,
+    "hash": "b2b2f929719f56c43f82206402098cc0"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/index.ts": {
+    "mtime": 1780909715.8102365,
+    "hash": "02adba1811d05a0340d7cb2d7c71b2a3"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/words.test.ts": {
+    "mtime": 1780909715.8112519,
+    "hash": "fd2e0549bb2e6de595b96e1ead539ecf"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/words.ts": {
+    "mtime": 1780909715.8112519,
+    "hash": "4c1e0c7c09e88f00ab84e71ce707d081"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/game.ts": {
+    "mtime": 1781631583.3626535,
+    "hash": "322753535ebb6dbaa05f50ef0f116a3e"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/stats.ts": {
+    "mtime": 1781631627.487234,
+    "hash": "af4d7fbc4cb5ad95000a78d0ff73805f"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/stats.test.ts": {
+    "mtime": 1781632843.7793405,
+    "hash": "bbffd74f58684f11361374bd047c3adc"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/game.test.ts": {
+    "mtime": 1781632855.9872196,
+    "hash": "064a37c7537be057df916f91d62af68b"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Board.svelte": {
+    "mtime": 1780909715.8101993,
+    "hash": "bdc7273e8e6a270c306f0c4288f1936e"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Board.test.ts": {
+    "mtime": 1780909715.8102365,
+    "hash": "1b370a34aea21ecdafaa9c7caa3e087b"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Header.svelte": {
+    "mtime": 1780909715.8102365,
+    "hash": "e4f1d50ec0166fbeed1ad605d697624d"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Header.test.ts": {
+    "mtime": 1780909715.8102365,
+    "hash": "c642bb8810d585ffb9b12eecae26fdf2"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Keyboard.svelte": {
+    "mtime": 1780909715.8102365,
+    "hash": "1ebfc5c66b34cc40c4205d00d42096af"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Keyboard.test.ts": {
+    "mtime": 1780909715.8102365,
+    "hash": "0cfef79c6d002f60ff2060b4810a4dbd"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Modal.svelte": {
+    "mtime": 1780909715.8102365,
+    "hash": "a2037e244a3176bf5b1d7b92bf68af85"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/ModalTestWrapper.svelte": {
+    "mtime": 1780909715.8102365,
+    "hash": "ccdc29c2b1c7591560ea8ae86da6d19f"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Row.svelte": {
+    "mtime": 1780909715.8102365,
+    "hash": "6db996162e5f4ad8f4176a4936de466e"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Tile.svelte": {
+    "mtime": 1780909715.8102365,
+    "hash": "5fa48851f19bedb886885f8ac52fb3b8"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Tile.test.ts": {
+    "mtime": 1780909715.8102365,
+    "hash": "1dff739251e21e5f066102afaddd245a"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Toast.svelte": {
+    "mtime": 1780909715.8102365,
+    "hash": "391c7edd75fb257169bdcbc2dad122a6"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Toast.test.ts": {
+    "mtime": 1780909715.8102365,
+    "hash": "9d21498c2d21de89a73466d37c2f2d1f"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/components/Modal.test.ts": {
+    "mtime": 1781632870.0600803,
+    "hash": "29516f82df81f2459165c58a47f1c104"
+  },
+  "/home/sbrn/Projects/sutom/src/routes/+layout.svelte": {
+    "mtime": 1780909715.8112519,
+    "hash": "b1530f00a137b51b2d4b801cbaa41f8f"
+  },
+  "/home/sbrn/Projects/sutom/src/routes/+layout.ts": {
+    "mtime": 1780909715.8121803,
+    "hash": "e1724b7407e474d68584adabfd74a473"
+  },
+  "/home/sbrn/Projects/sutom/src/routes/+page.svelte": {
+    "mtime": 1781632186.262822,
+    "hash": "daa98092f600b09c87fb587571a5cac7"
+  },
+  "/home/sbrn/Projects/sutom/src/tests/setup.ts": {
+    "mtime": 1780909715.8121803,
+    "hash": "b6047cb48430aab17d0c9a3cec1e4bb5"
+  },
+  "/home/sbrn/Projects/sutom/CLAUDE.md": {
+    "mtime": 1780909715.8086314,
+    "hash": "f07b9404a71a45b783c9ebe550db4459"
+  },
+  "/home/sbrn/Projects/sutom/src/app.html": {
+    "mtime": 1780909715.8101404,
+    "hash": "6c3b1033ca45954bb7f6d6cd46d27839"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/dictionary.txt": {
+    "mtime": 1780909715.8102365,
+    "hash": "1f534ed096d6b2616c71d4620d61cab7"
+  },
+  "/home/sbrn/Projects/sutom/src/lib/valid-guesses.txt": {
+    "mtime": 1780909715.8112519,
+    "hash": "731056738a27211c06681ecc443ab6d9"
+  },
+  "/home/sbrn/Projects/sutom/static/apple-touch-icon.png": {
+    "mtime": 1780909715.8123071,
+    "hash": "cc5fbbad3c24234a58311eb2715955d4"
+  },
+  "/home/sbrn/Projects/sutom/static/favicon-512.png": {
+    "mtime": 1780909715.8123071,
+    "hash": "7255c0addd9f1ec08d20619832285d3b"
+  },
+  "/home/sbrn/Projects/sutom/static/favicon.svg": {
+    "mtime": 1780909715.8123071,
+    "hash": "a10d122e846f13980adab5a3422045eb"
+  },
+  "/home/sbrn/Projects/sutom/static/og-image.png": {
+    "mtime": 1780909715.8123071,
+    "hash": "f2d69359d14ac631e03e228a71c7e684"
+  }
 }

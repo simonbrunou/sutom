@@ -174,12 +174,15 @@ export function getGridData(state: GameState): TileData[][] {
 	return rows;
 }
 
-export function getDailyWord(words: string[]): string {
+/** Puzzle number: whole days elapsed since 2024-01-01 (local time). Stable for a calendar day. */
+export function getDayIndex(date: Date = new Date()): number {
 	const epoch = new Date(2024, 0, 1).getTime();
-	const now = new Date();
-	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-	const dayIndex = Math.floor((today - epoch) / 86400000);
-	return words[dayIndex % words.length].toUpperCase();
+	const today = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+	return Math.floor((today - epoch) / 86400000);
+}
+
+export function getDailyWord(words: string[], date: Date = new Date()): string {
+	return words[getDayIndex(date) % words.length].toUpperCase();
 }
 
 export function isValidLength(guess: string, solution: string): boolean {
