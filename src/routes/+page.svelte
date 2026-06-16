@@ -9,9 +9,11 @@
 		getGridData,
 		getKeyboardState,
 		getDailyWord,
+		getDayIndex,
 		type GameState
 	} from '$lib/game';
 	import { ANSWER_WORDS, isValidWord } from '$lib/words';
+	import { loadStats, saveStats, recordResult, winPercent } from '$lib/stats';
 	import Header from '$lib/components/Header.svelte';
 	import Board from '$lib/components/Board.svelte';
 	import Keyboard from '$lib/components/Keyboard.svelte';
@@ -19,6 +21,9 @@
 	import Toast from '$lib/components/Toast.svelte';
 
 	let gameState: GameState = $state(createInitialState(getDailyWord(ANSWER_WORDS)));
+	// Persistent play stats. Safe at init: loadStats() returns empty stats when
+	// localStorage is absent (prerender), then reads the real values on the client.
+	let stats = $state(loadStats());
 	let shakeRow = $state(-1);
 	let bounceRow = $state(-1);
 	let toastMessage = $state('');
@@ -35,6 +40,9 @@
 	const keyStates = $derived(getKeyboardState(gameState.guesses, gameState.solution));
 	const currentRowIndex = $derived(gameState.guesses.length);
 	const initialLetter = $derived(gameState.solution[0] ?? '');
+	// Stats histogram: tallest bucket scales the bars; today's winning row is highlighted.
+	const distributionMax = $derived(Math.max(1, ...stats.distribution));
+	const todayAttempt = $derived(gameState.gameStatus === 'won' ? gameState.guesses.length : -1);
 
 	// Precomputed confetti bits so we don't re-randomize on each render
 	const confettiPieces = Array.from({ length: 60 }, (_, i) => ({
@@ -232,7 +240,18 @@
 			if (saved) {
 				const parsed = JSON.parse(saved);
 				const todayWord = getDailyWord(ANSWER_WORDS);
-				if (parsed.solution === todayWord) {
+				// Only trust a save that is today's word AND has the expected shape, so a
+				// corrupted/tampered entry can't inject malformed guesses into the board.
+				if (
+					parsed?.solution === todayWord &&
+					Array.isArray(parsed.guesses) &&
+					parsed.guesses.every((g: unknown) => typeof g === 'string') &&
+					typeof parsed.currentGuess === 'string' &&
+					(parsed.gameStatus === 'playing' ||
+						parsed.gameStatus === 'won' ||
+						parsed.gameStatus === 'lost') &&
+					typeof parsed.maxAttempts === 'number'
+				) {
 					gameState = parsed;
 				}
 			}
@@ -253,6 +272,22 @@
 			localStorage.setItem('sutom-state', JSON.stringify(gameState));
 		} catch {
 			// Ignore storage errors
+		}
+	});
+
+	// Fold each finished game into the persistent stats exactly once. recordResult is
+	// idempotent by day and returns the same reference on a no-op, so this settles
+	// after the first record instead of looping.
+	$effect(() => {
+		if (gameState.gameStatus === 'playing') return;
+		const next = recordResult(stats, {
+			dayIndex: getDayIndex(),
+			won: gameState.gameStatus === 'won',
+			attempts: gameState.guesses.length
+		});
+		if (next !== stats) {
+			stats = next;
+			saveStats(next);
 		}
 	});
 </script>
@@ -324,7 +359,7 @@
 		</div>
 	</Modal>
 
-	<Modal open={showStats} title="Partie du jour" onClose={() => (showStats = false)}>
+	<Modal open={showStats} title="Statistiques" onClose={() => (showStats = false)}>
 		<div class="stats">
 			{#if gameState.gameStatus !== 'playing'}
 				<div class="stats-headline stats-headline-{gameState.gameStatus}">
@@ -374,6 +409,47 @@
 					{/each}
 				</div>
 			{/if}
+
+			<div class="lifetime">
+				<div class="lifetime-stats">
+					<div class="lstat">
+						<span class="lstat-value">{stats.played}</span>
+						<span class="lstat-label">Parties</span>
+					</div>
+					<div class="lstat">
+						<span class="lstat-value">{winPercent(stats)}</span>
+						<span class="lstat-label">% vict.</span>
+					</div>
+					<div class="lstat">
+						<span class="lstat-value">{stats.currentStreak}</span>
+						<span class="lstat-label">Série</span>
+					</div>
+					<div class="lstat">
+						<span class="lstat-value">{stats.maxStreak}</span>
+						<span class="lstat-label">Record</span>
+					</div>
+				</div>
+
+				{#if stats.played > 0}
+					<div class="dist">
+						<div class="dist-title">Répartition des essais</div>
+						{#each stats.distribution as count, i (i)}
+							<div class="dist-row">
+								<span class="dist-index">{i + 1}</span>
+								<div class="dist-bar-track">
+									<div
+										class="dist-bar"
+										class:dist-bar-today={todayAttempt === i + 1}
+										style="width: {count === 0 ? 0 : Math.round((count / distributionMax) * 100)}%"
+									>
+										<span class="dist-count">{count}</span>
+									</div>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			</div>
 
 			<div class="countdown">
 				<span class="countdown-label">Prochain mot dans</span>
@@ -651,6 +727,110 @@
 
 	.emoji-line {
 		letter-spacing: 0.02em;
+	}
+
+	/* Lifetime stats + guess distribution */
+	.lifetime {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.lifetime-stats {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
+	}
+
+	.lstat {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 5px;
+		padding: 12px 4px;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid var(--color-border);
+		border-radius: 14px;
+	}
+
+	.lstat-value {
+		font-size: 1.45rem;
+		font-weight: 900;
+		color: var(--color-accent);
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.lstat-label {
+		font-size: 0.62rem;
+		color: var(--color-text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		font-weight: 600;
+		text-align: center;
+	}
+
+	.dist {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.dist-title {
+		font-size: 0.7rem;
+		font-weight: 700;
+		color: var(--color-text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		margin-bottom: 2px;
+	}
+
+	.dist-row {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.dist-index {
+		width: 0.9rem;
+		flex-shrink: 0;
+		font-size: 0.85rem;
+		font-weight: 800;
+		color: var(--color-text-muted);
+		text-align: center;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.dist-bar-track {
+		flex: 1;
+		display: flex;
+	}
+
+	.dist-bar {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		min-width: 1.75rem;
+		padding: 3px 8px;
+		border-radius: 7px;
+		background: var(--color-absent);
+		transition: width 0.5s var(--ease-spring, ease);
+	}
+
+	.dist-bar-today {
+		background: linear-gradient(135deg, #8778f5, #6c5ce7);
+		box-shadow: 0 2px 10px rgba(108, 92, 231, 0.4);
+	}
+
+	.dist-count {
+		font-size: 0.78rem;
+		font-weight: 800;
+		color: var(--color-text);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.dist-bar-today .dist-count {
+		color: #fff;
 	}
 
 	.countdown {

@@ -8,9 +8,7 @@ import {
 	getKeyboardState,
 	getGridData,
 	getDailyWord,
-	isValidLength,
-	type LetterState,
-	type GameState
+	isValidLength
 } from './game';
 
 describe('evaluateGuess', () => {
