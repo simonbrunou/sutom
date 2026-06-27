@@ -12,3 +12,6 @@ coverage
 # graphify local cache (regeneratable; the graph outputs in graphify-out/ are tracked)
 graphify-out/cache/
 graphify-out/.graphify_root
+
+.direnv/
+result
