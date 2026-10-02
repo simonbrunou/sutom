@@ -1,3 +1,6 @@
+# Runs on the self-hosted Forgejo (git.sbrn.eu), the source of truth; the GitHub
+# repository is a push mirror and runs no CI. Production deploys stay with the
+# Cloudflare Pages GitHub integration, which builds every mirrored push to main.
 name: CI
 
 on:
