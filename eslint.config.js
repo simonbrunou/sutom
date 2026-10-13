@@ -13,8 +13,8 @@ export default tseslint.config(
 		}
 	},
 	{
-		// Node-run config + asset scripts.
-		files: ['svelte.config.js', 'scripts/**/*.{js,mjs}'],
+		// Node-run asset scripts.
+		files: ['scripts/**/*.{js,mjs}'],
 		languageOptions: { globals: { console: 'readonly', process: 'readonly' } }
 	},
 	{ ignores: ['.svelte-kit/', 'build/', 'node_modules/'] }

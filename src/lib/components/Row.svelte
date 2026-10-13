@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { TileData } from '$lib/game';
+	import type { TileData } from '#lib/game.js';
 	import Tile from './Tile.svelte';
 
 	let {

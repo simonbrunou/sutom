@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import Board from './Board.svelte';
-import type { TileData } from '$lib/game';
+import type { TileData } from '#lib/game.js';
 
 function makeEmptyRow(length: number): TileData[] {
 	return Array.from({ length }, () => ({ letter: '', state: 'empty' as const }));
