@@ -11,14 +11,14 @@
 		getDailyWord,
 		getDayIndex,
 		type GameState
-	} from '$lib/game';
-	import { ANSWER_WORDS, isValidWord } from '$lib/words';
-	import { loadStats, saveStats, recordResult, winPercent } from '$lib/stats';
-	import Header from '$lib/components/Header.svelte';
-	import Board from '$lib/components/Board.svelte';
-	import Keyboard from '$lib/components/Keyboard.svelte';
-	import Modal from '$lib/components/Modal.svelte';
-	import Toast from '$lib/components/Toast.svelte';
+	} from '#lib/game.js';
+	import { ANSWER_WORDS, isValidWord } from '#lib/words.js';
+	import { loadStats, saveStats, recordResult, winPercent } from '#lib/stats.js';
+	import Header from '#lib/components/Header.svelte';
+	import Board from '#lib/components/Board.svelte';
+	import Keyboard from '#lib/components/Keyboard.svelte';
+	import Modal from '#lib/components/Modal.svelte';
+	import Toast from '#lib/components/Toast.svelte';
 
 	let gameState: GameState = $state(createInitialState(getDailyWord(ANSWER_WORDS)));
 	// Persistent play stats. Safe at init: loadStats() returns empty stats when

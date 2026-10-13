@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LetterState } from '$lib/game';
+	import type { LetterState } from '#lib/game.js';
 
 	let {
 		letter = '',
