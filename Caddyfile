@@ -1,0 +1,49 @@
+# Production web server. Coolify (homelab CT 126) builds sutom with railpack,
+# which serves the static build with Caddy and uses this file instead of its
+# default SPA template. Railpack renders it as a Go template: {{.DIST_DIR}} is
+# the build output (/app/build, from RAILPACK_SPA_OUTPUT_DIR=build).
+#
+# Same as railpack's template except for unknown paths: they get 404.html with
+# status 404, as on Cloudflare Pages, instead of index.html with status 200.
+
+{
+	admin off
+	persist_config off
+	auto_https off
+
+	log {
+		format json
+	}
+
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:{$PORT:80} {
+	log {
+		format json
+	}
+
+	respond /health 200
+
+	header {
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	root * {{.DIST_DIR}}
+
+	encode gzip zstd
+
+	try_files {path} {path}.html {path}/index.html
+
+	file_server {
+		hide .git .env*
+	}
+
+	handle_errors 404 {
+		rewrite * /404.html
+		file_server
+	}
+}
