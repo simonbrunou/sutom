@@ -32,6 +32,12 @@
 		-Server
 	}
 
+	# SvelteKit puts a content hash in every /_app/immutable/ file name, so a new
+	# build never reuses a URL: browsers and Cloudflare may keep them for a year.
+	# Without this, Cloudflare's 4 h Browser Cache TTL applied instead.
+	@immutable path /_app/immutable/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
 	root * {{.DIST_DIR}}
 
 	encode gzip zstd
