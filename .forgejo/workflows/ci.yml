@@ -1,6 +1,9 @@
 # Runs on the self-hosted Forgejo (git.sbrn.eu), the source of truth; the GitHub
-# repository is a push mirror and runs no CI. Production deploys stay with the
-# Cloudflare Pages GitHub integration, which builds every mirrored push to main.
+# repository is a push mirror and runs no CI. Production deploys are separate:
+# a Forgejo webhook makes Coolify (homelab CT 126) build every push to main with
+# railpack, which serves build/ with Caddy (RAILPACK_SPA_OUTPUT_DIR=build,
+# PUBLIC_SITE_URL=https://sutom.sbrn.eu). Cloudflare Pages served sutom.sbrn.eu
+# until 2026-10-19. Runbook: homelab-stacks docs/operations/runbooks/ct-126-sutom.md.
 name: CI
 
 on:
