@@ -1,5 +1,8 @@
 import { defineEnvVars } from '@sveltejs/kit/env';
 
+// Declare here every %sveltekit.env.PUBLIC_X% that src/app.html uses. SvelteKit 3
+// substitutes only declared variables: an undeclared one still builds, and the
+// page ships an empty value (a canonical URL of "/").
 export const variables = defineEnvVars({
 	PUBLIC_SITE_URL: {
 		public: true,
