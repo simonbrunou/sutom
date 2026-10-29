@@ -13,6 +13,11 @@
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor"],
       "automerge": true
+    },
+    {
+      "description": "One Node version for CI and production (#168): .nvmrc (the Node that CI's setup-node and railpack both read) and @types/node move in one PR, so scripts/check-node-pins.sh stays green. config:recommended's group:nodeJs preset sets only a commit message topic, no group name, and does not match the npm package @types/node.",
+      "matchPackageNames": ["node", "@types/node"],
+      "groupName": "Node.js"
     }
   ]
 }

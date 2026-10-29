@@ -21,6 +21,12 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain.md`.
 
+## Node version
+
+`.nvmrc` is the one Node pin: CI's `actions/setup-node` reads it through `node-version-file`, and railpack builds production on it. `scripts/check-node-pins.sh` runs in CI before `npm ci` and fails when a workflow hardcodes `node-version` or when `.nvmrc` and `@types/node` name different majors; its header lists every rule. Renovate's `Node.js` group moves `.nvmrc` and `@types/node` in one PR.
+
+Railpack reads `engines.node` and `devEngines.runtime` in `package.json`, and a `RAILPACK_NODE_VERSION` variable on the Coolify app, before `.nvmrc`, so set Node in `.nvmrc` only. The dev shell's Node comes from `flake.nix` (`nodejs_<major>`), which Renovate does not update: change it by hand after a Node major lands, while the check warns that the shell runs another major.
+
 ## Merge authority
 
 Agents may merge their own PR without asking once all three hold:
