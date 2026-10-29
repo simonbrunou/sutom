@@ -193,6 +193,12 @@ describe('check-node-pins.sh passes', () => {
 		}
 	);
 
+	it('on a backslash in plain or single-quoted text, which YAML reads as written', () => {
+		setLine(CI, 1, "name: 'CI \\ main'");
+		setLine(CI, 11, '      - run: echo "a\\b"');
+		passesWith(ALL);
+	});
+
 	it('on a second workflow without a setup-node step', () => {
 		write('.forgejo/workflows/pdf.yaml', 'jobs:\n  pdf:\n    steps:\n      - run: echo pdf\n');
 		passesWith(ALL);
@@ -356,6 +362,61 @@ describe('check-node-pins.sh fails when a setup-node step does not read .nvmrc',
 			'      - with:\n          node-version-file: .nvmrc\n        uses: actions/setup-node@v7'
 		);
 		failsWith(`${CI}:10 actions/setup-node step reads no node-version-file: .nvmrc`);
+	});
+});
+
+// YAML decodes these forms into text other than the line spells, so a
+// node-version or a setup-node step written with them would pass unread.
+describe('check-node-pins.sh fails on a YAML form that can spell a key or value as other text', () => {
+	it('an escaped node-version key beside node-version-file', () => {
+		setLine(CI, 10, '          node-version-file: .nvmrc\n          "node\\x2dversion": 26');
+		failsWith(`${CI}:11 holds an escape in a double-quoted string, which this check cannot read`);
+	});
+
+	it('an escaped setup-node in uses:', () => {
+		setLine(CI, 8, '      - uses: "actions/setup\\x2dnode@v7"');
+		failsWith(`${CI}:8 holds an escape in a double-quoted string`);
+	});
+
+	it('a step written as one flow mapping with escaped keys', () => {
+		setLine(CI, 10, '');
+		setLine(CI, 9, '');
+		setLine(
+			CI,
+			8,
+			'      - { "us\\x65s": "actions/setup\\x2dnode@v7", with: { "node\\x2dversion": 26 } }'
+		);
+		failsWith(`${CI}:8 holds an escape in a double-quoted string`);
+	});
+
+	it('an escaped node-version key in a flow mapping outside any step', () => {
+		setLine(CI, 5, '    env: { "node\\x2dversion": 26 }');
+		failsWith(`${CI}:5 holds an escape in a double-quoted string`);
+	});
+
+	it('an alias as an input key', () => {
+		setLine(CI, 1, 'name: &key node-version');
+		setLine(CI, 10, '          node-version-file: .nvmrc\n          *key : 26');
+		failsWith(`${CI}:11 uses a YAML alias, which this check cannot read`);
+	});
+
+	it('an alias as the action of uses:, and the anchor that names setup-node', () => {
+		setLine(CI, 1, 'name: &action actions/setup-node@v7');
+		setLine(CI, 8, '      - uses: *action');
+		failsWith(
+			`${CI}:1 actions/setup-node step is not written as a block mapping`,
+			`${CI}:8 uses a YAML alias`
+		);
+	});
+
+	it('an explicit node-version key beside node-version-file', () => {
+		setLine(CI, 10, '          node-version-file: .nvmrc\n          ? node-version\n          : 26');
+		failsWith(`${CI}:11 uses a YAML explicit key (?), which this check cannot read`);
+	});
+
+	it('a tag before the action of uses:', () => {
+		setLine(CI, 8, '      - uses: !!str actions/setup-node@v7');
+		failsWith(`${CI}:8 actions/setup-node step is not written as a block mapping`);
 	});
 });
 

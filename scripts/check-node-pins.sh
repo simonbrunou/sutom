@@ -20,8 +20,12 @@
 #     anchor or a tag may name the `with:`); the inputs are the keys at the
 #     indentation of the first line under `with:`, and the body of a block
 #     scalar (run: |) is skipped. A step or `with:` in flow style
-#     (with: { node-version-file: .nvmrc }) or an alias fails, since reading
-#     those would take a YAML parser.
+#     (with: { node-version-file: .nvmrc }) fails, and so does any line that
+#     names actions/setup-node@ outside a `uses:` this reader opens a step
+#     on. So does, anywhere in a workflow, an escape in a double-quoted
+#     string ("node\x2dversion"), an alias (*name) or an explicit key (? ),
+#     which can spell a key or a value as other text: reading those would
+#     take a YAML parser.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
 #     in devDependencies or dependencies; one of them must list it. Railpack
 #     reads `engines.node` and `devEngines.runtime` before .nvmrc, so an
@@ -118,6 +122,9 @@ read_workflow() {
       nopin) fail "$rel:$line actions/setup-node step reads no node-version-file: $NVMRC" ;;
       twice) fail "$rel:$line actions/setup-node step sets $value twice" ;;
       stray) fail "$rel:$line hardcodes node-version outside an actions/setup-node input: $value" ;;
+      escape) fail "$rel:$line holds an escape in a double-quoted string, which this check cannot read" ;;
+      alias) fail "$rel:$line uses a YAML alias, which this check cannot read" ;;
+      explicit) fail "$rel:$line uses a YAML explicit key (?), which this check cannot read" ;;
       unread)
         steps=$((steps + 1))
         fail "$rel:$line actions/setup-node step is not written as a block mapping, which this check cannot read"
@@ -209,9 +216,12 @@ read_workflow() {
       else step = (ind in dash) ? dash[ind] : ind - 2
       next
     }
-    # Anything else that runs setup-node, such as a step written as one flow
-    # mapping (- { uses: actions/setup-node@v7, ... }), prints `unread`.
-    low ~ ("uses[\"" q "]?[ \t]*:[ \t]*[\"" q "]?([^ \t\"" q ",]*/)?actions/setup-node@") {
+    # Any other line that names setup-node prints `unread`: a step written as
+    # one flow mapping (- { uses: actions/setup-node@v7, ... }), a tag before
+    # the action (uses: !!str actions/setup-node@v7), an anchor that an
+    # alias reuses. A step this reader does not open is never read, so it
+    # fails rather than pass unread.
+    low ~ /actions\/setup-node@/ {
       print "unread", NR
       next
     }
@@ -224,6 +234,14 @@ read_workflow() {
     # Any other with: of a setup-node step ({ ... }, an alias, another tag)
     # prints `flow`: reading those forms would take a YAML parser.
     open && /^[ \t]*with[ \t]*:/ { print "flow", NR; open = 0; inwith = 0; next }
+    # Three YAML forms let a key or a value read as text other than what the
+    # line spells, so the patterns above would miss a node-version or a
+    # setup-node step written with them: an escape in a double-quoted
+    # string ("node\x2dversion"), an alias (*name) and an explicit key (? ).
+    # Each prints its kind, wherever in the file it is.
+    /(^[ \t]*(- +)*|[:?][ \t]+|[{,[][ \t]*|[&!][^ \t]*[ \t]+)"[^"\\]*\\/ { print "escape", NR; next }
+    /(^[ \t]*(- +)*|[:?][ \t]+|[{,[][ \t]*)\*[^ \t]/ { print "alias", NR; next }
+    /^[ \t]*(- +)*\?([ \t]|$)/ { print "explicit", NR; next }
     # The inputs are the keys at the indentation of the first line under
     # with:. A node-version nested deeper is no input, and fails as stray.
     inwith {
