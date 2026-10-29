@@ -18,10 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # .nvmrc is the one Node pin: railpack builds production on it too.
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
+
+      # Before npm ci, so a Node pin that moved alone fails here, by name.
+      - name: Check Node pins
+        run: scripts/check-node-pins.sh
 
       - name: Install dependencies
         run: npm ci
