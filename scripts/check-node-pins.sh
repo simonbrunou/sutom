@@ -21,11 +21,12 @@
 #     indentation of the first line under `with:`, and the body of a block
 #     scalar (run: |) is skipped. A step or `with:` in flow style
 #     (with: { node-version-file: .nvmrc }) fails, and so does any line that
-#     names actions/setup-node@ outside a `uses:` this reader opens a step
-#     on. So does, anywhere in a workflow, an escape in a double-quoted
-#     string ("node\x2dversion"), an alias (*name) or an explicit key (? ),
-#     which can spell a key or a value as other text: reading those would
-#     take a YAML parser.
+#     names actions/setup-node@ outside its comment and outside a `uses:`
+#     this reader opens a step on. So does, anywhere in a workflow, an
+#     escape in a double-quoted string ("node\x2dversion"), an alias
+#     (*name), an explicit key (? ) or a quoted string that runs onto the
+#     next line, which can spell a key or a value as other text: reading
+#     those would take a YAML parser.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
 #     in devDependencies or dependencies; one of them must list it. Railpack
 #     reads `engines.node` and `devEngines.runtime` before .nvmrc, so an
@@ -125,6 +126,7 @@ read_workflow() {
       escape) fail "$rel:$line holds an escape in a double-quoted string, which this check cannot read" ;;
       alias) fail "$rel:$line uses a YAML alias, which this check cannot read" ;;
       explicit) fail "$rel:$line uses a YAML explicit key (?), which this check cannot read" ;;
+      unclosed) fail "$rel:$line leaves a quoted string open onto the next line, which this check cannot read" ;;
       unread)
         steps=$((steps + 1))
         fail "$rel:$line actions/setup-node step is not written as a block mapping, which this check cannot read"
@@ -182,6 +184,57 @@ read_workflow() {
       sub(/^[ \t]+/, "", s)
       return s
     }
+    # Read one line as YAML does, far enough to drop its comment and to see
+    # the forms that spell a key or a value as other text than the line
+    # shows: an escape in a double-quoted string ("node\x2dversion"), an
+    # alias (*name) and an explicit key (? ). A quote, a * or a ? is syntax
+    # only where a node starts: at the line start, after `- `, `? ` or `: `,
+    # after a tag or an anchor, and in a flow collection after [, { or ,.
+    # Anywhere else, as in run: echo "a\b" or a double quote inside a
+    # single-quoted string, it is text. Sets code (the line without its
+    # comment), escape, alias, explicit, and unclosed for a quoted string
+    # still open at the line end.
+    function scan(s,   n, i, c, nx, start, depth, inq) {
+      escape = 0; alias = 0; explicit = 0; unclosed = 0
+      n = length(s); start = 1; depth = 0; inq = ""
+      for (i = 1; i <= n; i++) {
+        c = substr(s, i, 1)
+        nx = substr(s, i + 1, 1)
+        if (inq != "") {
+          if (inq == "\"" && c == "\\") { escape = 1; i++ }
+          else if (c == inq && inq == q && nx == q) i++
+          else if (c == inq) inq = ""
+          continue
+        }
+        if (c == " " || c == "\t") continue
+        if (c == "#" && (i == 1 || substr(s, i - 1, 1) ~ /[ \t]/)) {
+          code = substr(s, 1, i - 1)
+          sub(/[ \t]+$/, "", code)
+          return
+        }
+        if (start) {
+          if (c == "\"" || c == q) { inq = c; start = 0; continue }
+          if ((c == "-" || c == "?") && (nx == "" || nx ~ /[ \t]/)) {
+            if (c == "?") explicit = 1
+            continue
+          }
+          if (c == "[" || c == "{") { depth++; continue }
+          if (depth && (c == "]" || c == "}")) { depth--; start = 0; continue }
+          if (c == "!" || c == "&" || c == "*") {
+            while (i < n && substr(s, i + 1, 1) !~ /[] \t,{}[]/) i++
+            if (c == "*") { alias = 1; start = 0 }
+            continue
+          }
+          # A plain scalar starts here.
+          start = 0
+        }
+        if (c == ":" && (nx == "" || nx ~ /[ \t]/ || (depth && nx ~ /[],{}[]/))) start = 1
+        else if (depth && c == ",") start = 1
+        else if (depth && (c == "]" || c == "}")) depth--
+      }
+      code = s
+      unclosed = (inq != "")
+    }
     { sub(/\r$/, "") }
     /^[ \t]*(#|$)/ { next }
     {
@@ -205,7 +258,8 @@ read_workflow() {
         match($0, /^ *(- +)*/)
         body = RLENGTH
       }
-      low = tolower($0)
+      scan($0)
+      low = tolower(code)
     }
     # actions/setup-node@<ref>, or a full URL to it.
     low ~ ("^[ \t-]*[\"" q "]?uses[\"" q "]?[ \t]*:[ \t]*[\"" q "]?([^ \t\"" q "]*/)?actions/setup-node@") {
@@ -216,11 +270,12 @@ read_workflow() {
       else step = (ind in dash) ? dash[ind] : ind - 2
       next
     }
-    # Any other line that names setup-node prints `unread`: a step written as
-    # one flow mapping (- { uses: actions/setup-node@v7, ... }), a tag before
-    # the action (uses: !!str actions/setup-node@v7), an anchor that an
-    # alias reuses. A step this reader does not open is never read, so it
-    # fails rather than pass unread.
+    # Any other line that names setup-node outside its comment prints
+    # `unread`: a step written as one flow mapping (- { uses:
+    # actions/setup-node@v7, ... }), a tag before the action (uses: !!str
+    # actions/setup-node@v7), an anchor that an alias reuses. A step this
+    # reader does not open is never read, so it fails rather than pass
+    # unread.
     low ~ /actions\/setup-node@/ {
       print "unread", NR
       next
@@ -234,14 +289,14 @@ read_workflow() {
     # Any other with: of a setup-node step ({ ... }, an alias, another tag)
     # prints `flow`: reading those forms would take a YAML parser.
     open && /^[ \t]*with[ \t]*:/ { print "flow", NR; open = 0; inwith = 0; next }
-    # Three YAML forms let a key or a value read as text other than what the
-    # line spells, so the patterns above would miss a node-version or a
-    # setup-node step written with them: an escape in a double-quoted
-    # string ("node\x2dversion"), an alias (*name) and an explicit key (? ).
-    # Each prints its kind, wherever in the file it is.
-    /(^[ \t]*(- +)*|[:?][ \t]+|[{,[][ \t]*|[&!][^ \t]*[ \t]+)"[^"\\]*\\/ { print "escape", NR; next }
-    /(^[ \t]*(- +)*|[:?][ \t]+|[{,[][ \t]*)\*[^ \t]/ { print "alias", NR; next }
-    /^[ \t]*(- +)*\?([ \t]|$)/ { print "explicit", NR; next }
+    # The patterns here would miss a node-version or a setup-node step
+    # written with a form scan() flags, so each prints its kind, wherever in
+    # the file it is. So does a quoted string that runs onto the next line,
+    # whose next line this reader would read as keys.
+    escape { print "escape", NR; next }
+    alias { print "alias", NR; next }
+    explicit { print "explicit", NR; next }
+    unclosed { print "unclosed", NR; next }
     # The inputs are the keys at the indentation of the first line under
     # with:. A node-version nested deeper is no input, and fails as stray.
     inwith {
@@ -258,7 +313,7 @@ read_workflow() {
       }
     }
     # A node-version key on any other line, a flow mapping included.
-    $0 ~ ("node-version[\"" q "]?[ \t]*:") { print "stray", NR, trimmed($0) }
+    code ~ ("node-version[\"" q "]?[ \t]*:") { print "stray", NR, trimmed(code) }
     END { close_step() }
   ' "$ROOT/$rel")
 }

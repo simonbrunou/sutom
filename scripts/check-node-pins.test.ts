@@ -199,6 +199,16 @@ describe('check-node-pins.sh passes', () => {
 		passesWith(ALL);
 	});
 
+	it.each([
+		['a comment that names setup-node', 1, 'name: CI # example actions/setup-node@v7'],
+		['a comment that names node-version', 5, '    runs-on: ubuntu-latest # node-version: 26'],
+		['a double-quoted backslash inside a single-quoted string', 1, `name: 'Example: "a\\b"'`],
+		['a * and a ? inside plain text', 11, '      - run: ls *.md && test "$x" = a?b']
+	])('on %s, which YAML reads as text', (_name, at, text) => {
+		setLine(CI, at, text);
+		passesWith(ALL);
+	});
+
 	it('on a second workflow without a setup-node step', () => {
 		write('.forgejo/workflows/pdf.yaml', 'jobs:\n  pdf:\n    steps:\n      - run: echo pdf\n');
 		passesWith(ALL);
@@ -412,6 +422,11 @@ describe('check-node-pins.sh fails on a YAML form that can spell a key or value 
 	it('an explicit node-version key beside node-version-file', () => {
 		setLine(CI, 10, '          node-version-file: .nvmrc\n          ? node-version\n          : 26');
 		failsWith(`${CI}:11 uses a YAML explicit key (?), which this check cannot read`);
+	});
+
+	it('a quoted string that runs onto the next line', () => {
+		setLine(CI, 1, 'name: "CI\n  main"');
+		failsWith(`${CI}:1 leaves a quoted string open onto the next line, which this check cannot read`);
 	});
 
 	it('a tag before the action of uses:', () => {
