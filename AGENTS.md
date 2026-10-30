@@ -5,7 +5,8 @@ This project has a graphify knowledge graph at graphify-out/.
 Rules:
 - Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
 - If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
+- Leave `graphify-out/` out of feature and fix PRs. A graph refresh lands only in a PR about the graph (a `chore:` refresh, or work on the graphify setup), as its own commit, last on the branch. This overrides the "Run `graphify update .` after code changes" line that graphify rewrites into GRAPH_REPORT.md on every refresh. Undo a stray `graphify update` with `git restore graphify-out`: `.gitignore` already keeps the per-run files it leaves out of git
+- Refresh with `scripts/refresh-graph.sh`, from any checkout, a T3 worktree included, once every other change on the branch is committed. graphify titles GRAPH_REPORT.md with the name of the directory it updates, so `graphify update .` in a worktree writes the worktree's name; the script hands graphify a path through a symlink named `sutom`, then fails when the report has another title or graphify wrote a file git neither tracks nor ignores. Commit what it wrote under `graphify-out/` and nothing else
 
 ## Agent skills
 
