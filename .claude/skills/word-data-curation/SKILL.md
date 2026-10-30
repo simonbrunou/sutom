@@ -25,7 +25,8 @@ description: Curate the French word lists and regenerate static assets for the s
 ## After editing word data
 1. `npm run test` — `words.test.ts` / `game.test.ts` assert parsing + daily-word behavior.
 2. `npm run check` (svelte-check) and `npm run lint`.
-3. `graphify update .` if you also touched `.ts` source.
+3. Leave `graphify-out/` out of the PR, even if you also touched `.ts` source: the graph is
+   refreshed only in a PR of its own (AGENTS.md, `## graphify`).
 
 ## Static assets (favicon / OG image)
 - Source of truth = the inline SVG in `scripts/generate-assets.mjs`. Edit the SVG there, never

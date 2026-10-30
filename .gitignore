@@ -9,9 +9,13 @@ coverage
 *.log
 .DS_Store
 
-# graphify local cache (regeneratable; the graph outputs in graphify-out/ are tracked)
+# graphify's per-clone files: its cache and the state each run rewrites. The
+# graph outputs in graphify-out/ are tracked, .graphify_labels.json and its
+# .sig included.
 graphify-out/cache/
 graphify-out/.graphify_root
+graphify-out/.graphify_build_state.json
+graphify-out/.graphify_labels.pending.json
 
 .direnv/
 result
