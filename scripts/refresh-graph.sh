@@ -33,7 +33,7 @@
 # neither tracks nor ignores. Exit 1: a file outside graphify-out/ has
 # uncommitted changes, graphify failed, the report has another title,
 # graphify wrote a file git neither tracks nor ignores (track it, or add it to
-# the graphify block of .gitignore), or graph.json names no built_at_commit.
+# the graphify block of .gitignore), or graph.json names no full built_at_commit.
 # Exit 2: a wrong call, a <checkout> that
 # is not the top of a git checkout, or no graphify on PATH.
 # scripts/refresh-graph.test.ts runs it against a stub graphify.
@@ -111,8 +111,9 @@ if [ -n "$untracked" ]; then
   status=1
 fi
 built=$(sed -n 's/.*"built_at_commit": *"\([0-9a-f]*\)".*/\1/p' "$OUT/graph.json" 2>/dev/null)
-if [ -z "$built" ]; then
-  echo "refresh-graph: $OUT/graph.json names no built_at_commit, so whether graphify rebuilt it from HEAD is unknown" >&2
+# A full SHA-1 or SHA-256 commit id.
+if [ "${#built}" -ne 40 ] && [ "${#built}" -ne 64 ]; then
+  echo "refresh-graph: $OUT/graph.json names no full built_at_commit, so whether graphify rebuilt it from HEAD is unknown" >&2
   status=1
 fi
 [ "$status" -eq 0 ] || exit 1

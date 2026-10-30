@@ -233,11 +233,15 @@ describe('refresh-graph.sh fails', () => {
 		expect(err).toContain('graphify-out/.graphify_new.json');
 	});
 
-	it('when graph.json names no built_at_commit, instead of calling the graph unchanged', () => {
-		write('graphify-out/graph.json', '{"nodes": []}');
+	it.each([
+		['no built_at_commit', '{"nodes": []}'],
+		['an empty one', '{"built_at_commit": "", "nodes": []}'],
+		['a short one', '{"built_at_commit": "abc", "nodes": []}']
+	])('when graph.json names %s, instead of calling the graph unchanged', (_, graph) => {
+		write('graphify-out/graph.json', graph);
 		const { code, out, err } = run([checkout], 'unchanged');
 		expect(code).toBe(1);
-		expect(err).toContain('graphify-out/graph.json names no built_at_commit');
+		expect(err).toContain('graphify-out/graph.json names no full built_at_commit');
 		expect(out).not.toContain('no refresh to commit');
 	});
 
