@@ -33,9 +33,10 @@
 #     engines.node is read as one more pin, and a devEngines.runtime fails.
 # Railpack also reads a RAILPACK_NODE_VERSION variable before all of these,
 # set on the Coolify app, which this check cannot see. The Node.js group in
-# renovate.json moves .nvmrc and @types/node together. The dev shell's Node
-# comes from flake.nix, which Renovate does not update, so a `node --version`
-# with another major prints a warning only.
+# renovate.json moves .nvmrc and @types/node together. The dev shell
+# (flake.nix) reads its Node major from .nvmrc too, so a `node --version` with
+# another major prints a warning only: the shell has not reloaded since .nvmrc
+# changed, or nix-direnv kept the previous shell after a failed evaluation.
 # Exit 0: every setup-node step reads .nvmrc and every pin reads the same
 # major. Exit 1: a workflow hardcodes node-version, the pins differ, or one
 # cannot be read, and the output names each file, line and value. Exit 2: a
@@ -428,5 +429,5 @@ running=$(node --version)
 running=${running#v}
 if [ "${running%%.*}" != "$expected" ]; then
   echo "check-node-pins: warning: this shell runs Node $running, not $expected." \
-    "The dev shell's Node comes from flake.nix, which Renovate does not update." >&2
+    "The dev shell reads $NVMRC: reload it (direnv reload, or a new nix develop)." >&2
 fi
