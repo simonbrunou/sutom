@@ -31,9 +31,10 @@
 #
 # Exit 0: the report is titled sutom and graphify-out/ holds no file that git
 # neither tracks nor ignores. Exit 1: a file outside graphify-out/ has
-# uncommitted changes, graphify failed, the report has another title, or
+# uncommitted changes, graphify failed, the report has another title,
 # graphify wrote a file git neither tracks nor ignores (track it, or add it to
-# the graphify block of .gitignore). Exit 2: a wrong call, a <checkout> that
+# the graphify block of .gitignore), or graph.json names no built_at_commit.
+# Exit 2: a wrong call, a <checkout> that
 # is not the top of a git checkout, or no graphify on PATH.
 # scripts/refresh-graph.test.ts runs it against a stub graphify.
 set -uo pipefail
@@ -109,10 +110,14 @@ if [ -n "$untracked" ]; then
   printf '%s\n' "$untracked" | sed 's/^/  /' >&2
   status=1
 fi
+built=$(sed -n 's/.*"built_at_commit": *"\([0-9a-f]*\)".*/\1/p' "$OUT/graph.json" 2>/dev/null)
+if [ -z "$built" ]; then
+  echo "refresh-graph: $OUT/graph.json names no built_at_commit, so whether graphify rebuilt it from HEAD is unknown" >&2
+  status=1
+fi
 [ "$status" -eq 0 ] || exit 1
 
 head=$(git rev-parse HEAD)
-built=$(sed -n 's/.*"built_at_commit": *"\([0-9a-f]*\)".*/\1/p' "$OUT/graph.json")
 if [ "$built" = "$head" ]; then
   echo "refresh-graph: $OUT/ rebuilt from ${head:0:8} and titled $NAME. Commit it alone, last on the branch."
 else

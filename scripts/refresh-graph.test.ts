@@ -233,6 +233,14 @@ describe('refresh-graph.sh fails', () => {
 		expect(err).toContain('graphify-out/.graphify_new.json');
 	});
 
+	it('when graph.json names no built_at_commit, instead of calling the graph unchanged', () => {
+		write('graphify-out/graph.json', '{"nodes": []}');
+		const { code, out, err } = run([checkout], 'unchanged');
+		expect(code).toBe(1);
+		expect(err).toContain('graphify-out/graph.json names no built_at_commit');
+		expect(out).not.toContain('no refresh to commit');
+	});
+
 	it('on a directory that is not the top of a git checkout', () => {
 		mkdirSync(path.join(checkout, 'sub'));
 		const { code, err } = run([path.join(checkout, 'sub')]);
