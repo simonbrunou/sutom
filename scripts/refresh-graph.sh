@@ -17,13 +17,17 @@
 # clone named sutom. --force goes on to graphify, which otherwise refuses to
 # replace graph.json with a rebuild that has fewer nodes.
 #
+# When the code graph has not changed since graph.json was built, graphify
+# leaves graph.json and GRAPH_REPORT.md as they are, so the report keeps the
+# title of a stray `graphify update .`; `git restore graphify-out` brings back
+# the tracked report. The script then names the older commit graph.json was
+# built from, and there is no refresh to commit.
+#
 # Next to the graph, graphify writes per-clone files that .gitignore keeps out
 # of git: cache/, .graphify_build_state.json, .graphify_labels.pending.json
-# and .graphify_root. The script deletes .graphify_build_state.json first:
-# when it matches the checkout, as it does after a stray `graphify update .`,
-# graphify skips the rebuild and keeps that run's report and title. It deletes
-# .graphify_root last: it names the symlink, which is gone once the script
-# exits, and a bare `graphify update` would read that path and fail.
+# and .graphify_root. The script deletes .graphify_root on exit, whether
+# graphify succeeded or not: it names the symlink, which is gone once the
+# script exits, and a bare `graphify update` would read that path and fail.
 #
 # Exit 0: the report is titled sutom and graphify-out/ holds no file that git
 # neither tracks nor ignores. Exit 1: a file outside graphify-out/ has
@@ -77,25 +81,25 @@ fi
 
 tmp=$(mktemp -d) || exit 1
 cleanup() {
+  rm -f "$OUT/.graphify_root"
   rm -f "$tmp/$NAME"
   rmdir "$tmp"
 }
 trap cleanup EXIT
 ln -s "$ROOT" "$tmp/$NAME" || exit 1
 
-rm -f "$OUT/.graphify_build_state.json"
 if ! graphify update $force "$tmp/$NAME"; then
   echo "refresh-graph: graphify update failed" >&2
   exit 1
 fi
-rm -f "$OUT/.graphify_root"
 
 status=0
 title=$(head -n 1 "$REPORT" 2>/dev/null)
 case "$title" in
   "# Graph Report - $NAME "*) ;;
   *)
-    echo "refresh-graph: $REPORT starts with \"$title\", not \"# Graph Report - $NAME\"" >&2
+    echo "refresh-graph: $REPORT starts with \"$title\", not \"# Graph Report - $NAME\"." >&2
+    echo "  graphify keeps the report when the code graph is unchanged: run \`git restore graphify-out\`, then this script again." >&2
     status=1
     ;;
 esac
@@ -107,4 +111,10 @@ if [ -n "$untracked" ]; then
 fi
 [ "$status" -eq 0 ] || exit 1
 
-echo "refresh-graph: $OUT/ rebuilt from $(git rev-parse --short HEAD) and titled $NAME. Commit it alone, last on the branch."
+head=$(git rev-parse HEAD)
+built=$(sed -n 's/.*"built_at_commit": *"\([0-9a-f]*\)".*/\1/p' "$OUT/graph.json")
+if [ "$built" = "$head" ]; then
+  echo "refresh-graph: $OUT/ rebuilt from ${head:0:8} and titled $NAME. Commit it alone, last on the branch."
+else
+  echo "refresh-graph: the code graph has not changed since ${built:0:8}, which graph.json was built from, so there is no refresh to commit: undo this run with \`git restore graphify-out\`."
+fi
