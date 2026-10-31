@@ -7,6 +7,7 @@
 // and asserts the exit code and the message that names the file and value.
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
+	copyFileSync,
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
@@ -703,5 +704,121 @@ describe('check-node-pins.sh exits 2', () => {
 		const { code, err } = run([dir], { PATH: bin });
 		expect(code).toBe(2);
 		expect(err).toMatch(/needs node on PATH/);
+	});
+});
+
+// flake.nix reads the dev shell's Node major from .nvmrc with its own
+// builtins.match (#171), written to take the forms read_nvmrc takes (#181).
+// Each case writes one form to .nvmrc beside a copy of the flake, evaluates
+// the flake's outputs with a stand-in for nixpkgs, and runs the check on the
+// same copy: both must read the same major, or both refuse the file. The
+// cases need nix-instantiate on PATH, as in the dev shell, and no network.
+// CI has no nix (#171), so they are skipped there.
+const hasNix = spawnSync('nix-instantiate', ['--version']).error === undefined;
+
+// Today both read a major from the forms before `2\r4` and refuse the rest.
+// The cases assert only that the two agree, so a change to the forms both
+// take still passes here; the cases above pin what the check takes.
+const nvmrcForms = [
+	'24\n',
+	'24',
+	'v24',
+	'24.12.0',
+	'  24  \n',
+	'\n24\n\n',
+	'24\r\n',
+	'\r\n24\r\n\r\n',
+	'  v24.12.0  \r\n',
+	'\v24\f',
+	'\t24\t',
+	'24\r',
+	'24\r\r\n',
+	'24 ',
+	'024',
+	'26',
+	'v26',
+	'26.4.0',
+	'2\r4',
+	'24.x',
+	'V24',
+	'24 # c',
+	'lts/*',
+	'24\n26\n',
+	'',
+	'\n \n',
+	'# the one pin\n24\n',
+	'24.12.0.1',
+	'24.',
+	'.24',
+	'v 24'
+];
+
+// mkShell returns its argument, and nodejs_<n> is the string n for every
+// digit run in the forms, so the shell's one package names the major the
+// flake's match takes, whichever part of a form that is.
+const majors = [...new Set(nvmrcForms.flatMap((text) => text.match(/[0-9]+/g) ?? []))];
+const nixpkgsStandIn = `{ ... }: { mkShell = shell: shell; ${majors.map((n) => `nodejs_${n} = "${n}";`).join(' ')} }\n`;
+const devShellPackages =
+	'((import ./flake.nix).outputs { self = { }; nixpkgs = ./nixpkgs; }).devShells.x86_64-linux.default.packages';
+
+// The major the check reads from .nvmrc, or null when it refuses the file.
+// It lists each pin only when it fails, as for 024, which differs from the
+// fixture's @types/node 24.
+function checkReads(): string | null {
+	const { code, out, err } = run();
+	if (code === 0) {
+		const read = /pins read Node (\S+) \(\.nvmrc[,)]/.exec(out);
+		if (read) return read[1]!;
+	} else if (code === 1) {
+		const listed = /^ {2}\.nvmrc {2}(\S+) \(/m.exec(err);
+		if (listed) return listed[1]!;
+		if (/^check-node-pins: \.nvmrc /m.test(err)) return null;
+	}
+	throw new Error(
+		`check-node-pins.sh exited ${code} and neither read nor refused .nvmrc:\n${out}${err}`
+	);
+}
+
+// The major of the flake's dev shell, or null when the flake throws its own
+// .nvmrc message. Any other evaluation error throws, with nix's output.
+function flakeReads(text: string): string | null {
+	const p = spawnSync(
+		'nix-instantiate',
+		['--eval', '--strict', '--json', '--expr', devShellPackages],
+		{
+			cwd: dir,
+			encoding: 'utf8',
+			env: { ...process.env, NO_COLOR: '1' }
+		}
+	);
+	if (p.status === 0) {
+		const packages: unknown = JSON.parse(p.stdout);
+		if (Array.isArray(packages) && packages.length === 1 && typeof packages[0] === 'string') {
+			return packages[0];
+		}
+	} else {
+		// Nix also prints the source line of the throw, so match the message
+		// it evaluated, which holds .nvmrc as JSON, and read that back.
+		const refused =
+			/^\s*error: flake\.nix: \.nvmrc holds (".*"), not one Node version such as 24 or 24\.12\.0$/m.exec(
+				p.stderr
+			);
+		if (refused) {
+			expect(JSON.parse(refused[1]!), 'the .nvmrc the flake read').toBe(text);
+			return null;
+		}
+	}
+	throw new Error(
+		`nix-instantiate exited ${p.status} on an .nvmrc of ${JSON.stringify(text)}:\n${p.stdout}${p.stderr}`
+	);
+}
+
+describe.skipIf(!hasNix)('flake.nix reads .nvmrc as check-node-pins.sh does', () => {
+	it.each(nvmrcForms)('on an .nvmrc of %j', (text) => {
+		write('.nvmrc', text);
+		copyFileSync(path.join(repo, 'flake.nix'), path.join(dir, 'flake.nix'));
+		mkdirSync(path.join(dir, 'nixpkgs'));
+		write('nixpkgs/default.nix', nixpkgsStandIn);
+		expect(flakeReads(text), 'the major the flake reads, null when it refuses').toBe(checkReads());
 	});
 });

@@ -8,7 +8,8 @@
       # The Node major comes from .nvmrc, the pin CI and production read and
       # Renovate's Node.js group moves (#171). The match takes what
       # scripts/check-node-pins.sh takes: one version line (24, v24,
-      # 24.12.0), blank lines and spaces around it, a CR at a line end.
+      # 24.12.0), blank lines and spaces around it, a CR at a line end. A
+      # case in scripts/check-node-pins.test.ts fails when the two disagree.
       nvmrc = builtins.readFile ./.nvmrc;
       version = builtins.match "[[:space:]]*v?([0-9]+)(\\.[0-9]+){0,2}[[:space:]]*" nvmrc;
       major =
