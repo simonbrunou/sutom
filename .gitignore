@@ -16,9 +16,9 @@ graphify-out/cache/
 graphify-out/.graphify_root
 graphify-out/.graphify_build_state.json
 graphify-out/.graphify_labels.pending.json
-# The graphify skill's own runs write these two, `graphify update` neither: the
-# interpreter path the skill resolved on this host, and the token log of a full
-# build.
+# `graphify update` writes neither of these two. The graphify skill writes
+# .graphify_python, the interpreter path it resolved on this host. The skill's
+# full build and `graphify extract` add each run's token use to cost.json.
 graphify-out/.graphify_python
 graphify-out/cost.json
 
