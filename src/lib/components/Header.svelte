@@ -24,10 +24,20 @@
 
 <header class="header">
 	<button class="header-btn" onclick={onShowRules} aria-label="Règles du jeu">
-		<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-			<circle cx="12" cy="12" r="10"/>
-			<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-			<line x1="12" y1="17" x2="12.01" y2="17"/>
+		<svg
+			width="22"
+			height="22"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2.2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<circle cx="12" cy="12" r="10" />
+			<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+			<line x1="12" y1="17" x2="12.01" y2="17" />
 		</svg>
 	</button>
 
@@ -47,10 +57,20 @@
 	</div>
 
 	<button class="header-btn" onclick={onShowStats} aria-label="Statistiques">
-		<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-			<line x1="18" y1="20" x2="18" y2="10"/>
-			<line x1="12" y1="20" x2="12" y2="4"/>
-			<line x1="6" y1="20" x2="6" y2="14"/>
+		<svg
+			width="22"
+			height="22"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2.2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<line x1="18" y1="20" x2="18" y2="10" />
+			<line x1="12" y1="20" x2="12" y2="4" />
+			<line x1="6" y1="20" x2="6" y2="14" />
 		</svg>
 	</button>
 </header>
@@ -79,7 +99,10 @@
 		border-radius: 10px;
 		background: var(--color-surface);
 		color: var(--color-text-muted);
-		transition: transform 0.2s var(--ease-spring), background 0.2s ease, color 0.2s ease;
+		transition:
+			transform 0.2s var(--ease-spring),
+			background 0.2s ease,
+			color 0.2s ease;
 	}
 
 	.header-btn:hover {
@@ -109,13 +132,7 @@
 
 	.title-letter {
 		display: inline-block;
-		background: linear-gradient(
-			135deg,
-			#e84393 0%,
-			#a29bfe 40%,
-			#6c5ce7 70%,
-			#fdcb6e 100%
-		);
+		background: linear-gradient(135deg, #e84393 0%, #a29bfe 40%, #6c5ce7 70%, #fdcb6e 100%);
 		-webkit-background-clip: text;
 		background-clip: text;
 		-webkit-text-fill-color: transparent;
@@ -133,7 +150,9 @@
 		height: 6px;
 		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.18);
-		transition: background 0.3s ease, transform 0.3s ease;
+		transition:
+			background 0.3s ease,
+			transform 0.3s ease;
 	}
 
 	.dot-used {

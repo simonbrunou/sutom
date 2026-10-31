@@ -3,6 +3,7 @@
 This project has a graphify knowledge graph at graphify-out/.
 
 Rules:
+
 - Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
 - If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
 - Leave `graphify-out/` out of feature and fix PRs. A graph refresh lands only in a PR about the graph (a `chore:` refresh, or work on the graphify setup), as its own commit, last on the branch. This overrides the "Run `graphify update .` after code changes" line that graphify rewrites into GRAPH_REPORT.md on every refresh. Undo a stray `graphify update` with `git restore graphify-out`: `.gitignore` already keeps the per-run files it leaves out of git

@@ -106,7 +106,9 @@
 			box-shadow 0.2s ease;
 		-webkit-tap-highlight-color: transparent;
 		touch-action: manipulation;
-		box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.18);
+		box-shadow:
+			inset 0 -2px 0 rgba(0, 0, 0, 0.18),
+			0 1px 1px rgba(0, 0, 0, 0.18);
 	}
 
 	.key:hover {
