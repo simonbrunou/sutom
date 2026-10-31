@@ -38,6 +38,11 @@
 # (flake.nix) reads its Node major from .nvmrc too, so a `node --version` with
 # another major prints a warning only: the shell has not reloaded since .nvmrc
 # changed, or nix-direnv kept the previous shell after a failed evaluation.
+# flake.nix parses .nvmrc with its own builtins.match, which must take the
+# forms read_nvmrc takes, so an edit to one needs the same edit to the other.
+# A case in scripts/check-node-pins.test.ts reads each form with both and
+# fails when they disagree. It runs where nix-instantiate is on PATH, as in
+# the dev shell, and is skipped in CI, which has no nix.
 # Exit 0: every setup-node step reads .nvmrc and every pin reads the same
 # major. Exit 1: a workflow hardcodes node-version, the pins differ, or one
 # cannot be read, and the output names each file, line and value. Exit 2: a
