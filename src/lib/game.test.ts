@@ -33,10 +33,10 @@ describe('evaluateGuess', () => {
 		const result = evaluateGuess('BRISE', 'ARBRE');
 		// ARBRE = A,R,B,R,E  BRISE = B,R,I,S,E
 		expect(result[0].state).toBe('misplaced'); // B is in ARBRE but not at pos 0
-		expect(result[1].state).toBe('correct');   // R matches R at pos 1
-		expect(result[2].state).toBe('absent');    // I not in ARBRE
-		expect(result[3].state).toBe('absent');    // S not in ARBRE
-		expect(result[4].state).toBe('correct');   // E matches E at pos 4
+		expect(result[1].state).toBe('correct'); // R matches R at pos 1
+		expect(result[2].state).toBe('absent'); // I not in ARBRE
+		expect(result[3].state).toBe('absent'); // S not in ARBRE
+		expect(result[4].state).toBe('correct'); // E matches E at pos 4
 	});
 
 	it('handles duplicate letters in guess with single in solution', () => {
@@ -57,11 +57,11 @@ describe('evaluateGuess', () => {
 	it('handles duplicate letters in solution', () => {
 		// ARBRE = A,R,B,R,E  ARRRE = A,R,R,R,E
 		const result = evaluateGuess('ARRRE', 'ARBRE');
-		expect(result[0].state).toBe('correct');    // A at pos 0
-		expect(result[1].state).toBe('correct');    // R at pos 1 matches
-		expect(result[2].state).toBe('absent');     // R at pos 2, solution has B here, no more R left
-		expect(result[3].state).toBe('correct');    // R at pos 3 matches R at pos 3
-		expect(result[4].state).toBe('correct');    // E at pos 4
+		expect(result[0].state).toBe('correct'); // A at pos 0
+		expect(result[1].state).toBe('correct'); // R at pos 1 matches
+		expect(result[2].state).toBe('absent'); // R at pos 2, solution has B here, no more R left
+		expect(result[3].state).toBe('correct'); // R at pos 3 matches R at pos 3
+		expect(result[4].state).toBe('correct'); // E at pos 4
 	});
 
 	it('prioritizes correct matches over misplaced', () => {

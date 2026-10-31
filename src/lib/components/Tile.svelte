@@ -131,7 +131,7 @@
 		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 	}
 
-.tile-animate {
+	.tile-animate {
 		animation: flip-in var(--flip-duration) var(--ease-out);
 		animation-delay: var(--delay);
 		animation-fill-mode: both;

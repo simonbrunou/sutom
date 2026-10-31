@@ -51,10 +51,7 @@ describe('Board', () => {
 	});
 
 	it('displays letters in tiles', () => {
-		const grid = [
-			makeRow('AB', ['tbd', 'tbd']),
-			makeEmptyRow(2)
-		];
+		const grid = [makeRow('AB', ['tbd', 'tbd']), makeEmptyRow(2)];
 		render(Board, { props: { grid } });
 		expect(screen.getByText('A')).toBeInTheDocument();
 		expect(screen.getByText('B')).toBeInTheDocument();

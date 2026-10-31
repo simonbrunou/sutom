@@ -9,7 +9,10 @@ export default tseslint.config(
 	{
 		rules: {
 			// Allow intentionally-unused args/vars prefixed with `_`.
-			'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+			]
 		}
 	},
 	{

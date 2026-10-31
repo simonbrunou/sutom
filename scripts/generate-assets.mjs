@@ -133,31 +133,31 @@ const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" 
 </svg>`;
 
 async function svgToPng(svg, width, height, outputPath) {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.setViewportSize({ width, height });
-  await page.setContent(`
+	const browser = await chromium.launch();
+	const page = await browser.newPage();
+	await page.setViewportSize({ width, height });
+	await page.setContent(`
     <!DOCTYPE html>
     <html>
     <head><style>* { margin: 0; padding: 0; } body { background: transparent; }</style></head>
     <body>${svg}</body>
     </html>
   `);
-  const screenshot = await page.screenshot({
-    clip: { x: 0, y: 0, width, height },
-    omitBackground: false,
-  });
-  await browser.close();
-  writeFileSync(outputPath, screenshot);
-  console.log(`✓ Generated ${outputPath}`);
+	const screenshot = await page.screenshot({
+		clip: { x: 0, y: 0, width, height },
+		omitBackground: false
+	});
+	await browser.close();
+	writeFileSync(outputPath, screenshot);
+	console.log(`✓ Generated ${outputPath}`);
 }
 
 (async () => {
-  const faviconSvg180 = faviconSvg.replace('width="512" height="512"', 'width="180" height="180"');
-  const faviconSvg512 = faviconSvg;
+	const faviconSvg180 = faviconSvg.replace('width="512" height="512"', 'width="180" height="180"');
+	const faviconSvg512 = faviconSvg;
 
-  await svgToPng(ogImageSvg, 1200, 630, `${staticDir}/og-image.png`);
-  await svgToPng(faviconSvg512, 512, 512, `${staticDir}/favicon-512.png`);
-  await svgToPng(faviconSvg180, 180, 180, `${staticDir}/apple-touch-icon.png`);
-  console.log('All assets generated!');
+	await svgToPng(ogImageSvg, 1200, 630, `${staticDir}/og-image.png`);
+	await svgToPng(faviconSvg512, 512, 512, `${staticDir}/favicon-512.png`);
+	await svgToPng(faviconSvg180, 180, 180, `${staticDir}/apple-touch-icon.png`);
+	console.log('All assets generated!');
 })();

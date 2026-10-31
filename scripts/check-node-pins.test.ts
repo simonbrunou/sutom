@@ -273,10 +273,13 @@ describe('check-node-pins.sh fails when a workflow hardcodes node-version', () =
 	it.each([
 		['after', '          node-version-file: .nvmrc\n          node-version: 26', 11],
 		['before', '          node-version: 26\n          node-version-file: .nvmrc', 10]
-	])('%s a node-version-file in the same step, which setup-node ignores then', (_order, text, at) => {
-		setLine(CI, 10, text);
-		failsWith(`${CI}:${at} actions/setup-node step hardcodes node-version '26'`);
-	});
+	])(
+		'%s a node-version-file in the same step, which setup-node ignores then',
+		(_order, text, at) => {
+			setLine(CI, 10, text);
+			failsWith(`${CI}:${at} actions/setup-node step hardcodes node-version '26'`);
+		}
+	);
 
 	it.each(['"node-version": 26', "'node-version': 26"])('as a quoted key: %s', (key) => {
 		setLine(CI, 10, `          node-version-file: .nvmrc\n          ${key}`);
@@ -284,8 +287,14 @@ describe('check-node-pins.sh fails when a workflow hardcodes node-version', () =
 	});
 
 	it('nested deeper than the inputs of with:', () => {
-		setLine(CI, 10, '          node-version-file: .nvmrc\n          extra:\n            node-version: 26');
-		failsWith(`${CI}:12 hardcodes node-version outside an actions/setup-node input: node-version: 26`);
+		setLine(
+			CI,
+			10,
+			'          node-version-file: .nvmrc\n          extra:\n            node-version: 26'
+		);
+		failsWith(
+			`${CI}:12 hardcodes node-version outside an actions/setup-node input: node-version: 26`
+		);
 	});
 
 	it("under the step's env: instead of with:", () => {
@@ -299,7 +308,9 @@ describe('check-node-pins.sh fails when a workflow hardcodes node-version', () =
 
 	it('in a matrix', () => {
 		setLine(CI, 5, `${ciLines[4]}\n    strategy:\n      matrix:\n        node-version: [24]`);
-		failsWith(`${CI}:8 hardcodes node-version outside an actions/setup-node input: node-version: [24]`);
+		failsWith(
+			`${CI}:8 hardcodes node-version outside an actions/setup-node input: node-version: [24]`
+		);
 	});
 
 	it('in a flow mapping outside any setup-node step', () => {
@@ -379,7 +390,11 @@ describe('check-node-pins.sh fails when a setup-node step does not read .nvmrc',
 	});
 
 	it('a node-version-file nested deeper than the inputs of with:', () => {
-		setLine(CI, 10, '          cache: npm\n          extra:\n            node-version-file: .nvmrc');
+		setLine(
+			CI,
+			10,
+			'          cache: npm\n          extra:\n            node-version-file: .nvmrc'
+		);
 		failsWith(`${CI}:8 actions/setup-node step reads no node-version-file: .nvmrc`);
 	});
 
@@ -440,13 +455,19 @@ describe('check-node-pins.sh fails on a YAML form that can spell a key or value 
 	});
 
 	it('an explicit node-version key beside node-version-file', () => {
-		setLine(CI, 10, '          node-version-file: .nvmrc\n          ? node-version\n          : 26');
+		setLine(
+			CI,
+			10,
+			'          node-version-file: .nvmrc\n          ? node-version\n          : 26'
+		);
 		failsWith(`${CI}:11 uses a YAML explicit key (?), which this check cannot read`);
 	});
 
 	it('a quoted string that runs onto the next line', () => {
 		setLine(CI, 1, 'name: "CI\n  main"');
-		failsWith(`${CI}:1 leaves a quoted string open onto the next line, which this check cannot read`);
+		failsWith(
+			`${CI}:1 leaves a quoted string open onto the next line, which this check cannot read`
+		);
 	});
 
 	it('a tag before the action of uses:', () => {
@@ -565,10 +586,13 @@ describe('check-node-pins.sh fails when it cannot read a pin', () => {
 		failsWith('.nvmrc is empty');
 	});
 
-	it.each(['# the one pin\n24\n', '24\n26\n'])('an .nvmrc of %j, which holds a second line', (text) => {
-		write('.nvmrc', text);
-		failsWith('.nvmrc holds more than one line');
-	});
+	it.each(['# the one pin\n24\n', '24\n26\n'])(
+		'an .nvmrc of %j, which holds a second line',
+		(text) => {
+			write('.nvmrc', text);
+			failsWith('.nvmrc holds more than one line');
+		}
+	);
 
 	it.each(['lts/*', 'lts/krypton', 'node', '24.12.0.1', '24 # the one pin'])(
 		'an .nvmrc that reads %s',
@@ -615,25 +639,33 @@ describe('check-node-pins.sh fails when it cannot read a pin', () => {
 		['a JSON null', 'null']
 	])('a package.json with %s', (_name, text) => {
 		write('package.json', text);
-		expect(failsWith('package.json has no @types/node in devDependencies or dependencies')).not.toMatch(
-			/TypeError/
-		);
+		expect(
+			failsWith('package.json has no @types/node in devDependencies or dependencies')
+		).not.toMatch(/TypeError/);
 	});
 
-	it.each(['>=24', '^24 || ^26', '*', 'latest'])('@types/node %s, which pins no one major', (range) => {
-		writeTypesNode(range);
-		failsWith(`package.json devDependencies @types/node '${range}' does not pin one Node major`);
-	});
+	it.each(['>=24', '^24 || ^26', '*', 'latest'])(
+		'@types/node %s, which pins no one major',
+		(range) => {
+			writeTypesNode(range);
+			failsWith(`package.json devDependencies @types/node '${range}' does not pin one Node major`);
+		}
+	);
 
 	it('an @types/node that is not a string', () => {
 		writeTypesNode(24);
 		failsWith('package.json devDependencies @types/node is not a string');
 	});
 
-	it.each(['>=20', '^24 || ^26', 'lts/*'])('an engines.node of %s, which pins no one major', (range) => {
-		writePackage({ engines: { node: range }, devDependencies: { '@types/node': '^24.0.0' } });
-		failsWith(`package.json engines.node '${range}' does not pin one Node major, and railpack reads it`);
-	});
+	it.each(['>=20', '^24 || ^26', 'lts/*'])(
+		'an engines.node of %s, which pins no one major',
+		(range) => {
+			writePackage({ engines: { node: range }, devDependencies: { '@types/node': '^24.0.0' } });
+			failsWith(
+				`package.json engines.node '${range}' does not pin one Node major, and railpack reads it`
+			);
+		}
+	);
 
 	it('an engines.node that is not a string', () => {
 		writePackage({ engines: { node: 24 }, devDependencies: { '@types/node': '^24.0.0' } });

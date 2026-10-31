@@ -27,9 +27,16 @@
 <div class="row" class:row-shake={shake} role="row" aria-label={rowLabel} data-testid="row">
 	{#each tiles as tile, i}
 		{#if i === 0 && isUnsubmitted && initialLetter}
-			<Tile letter={initialLetter} state="tbd" index={0} animate={false} bounce={bounce} initial={true} />
+			<Tile letter={initialLetter} state="tbd" index={0} animate={false} {bounce} initial={true} />
 		{:else}
-			<Tile letter={tile.letter} state={tile.state} index={i} animate={animate} bounce={bounce} placeholder={tile.placeholder ?? false} />
+			<Tile
+				letter={tile.letter}
+				state={tile.state}
+				index={i}
+				{animate}
+				{bounce}
+				placeholder={tile.placeholder ?? false}
+			/>
 		{/if}
 	{/each}
 </div>

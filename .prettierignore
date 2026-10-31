@@ -1,0 +1,14 @@
+# Prettier also skips what .gitignore lists (build/, .svelte-kit/,
+# node_modules/) and reads this file on top of it.
+
+# npm writes the lockfile.
+package-lock.json
+
+# Served as they are: images, the favicon and .nojekyll.
+/static/
+
+# graphify writes the graph, and only a graph refresh PR changes it (AGENTS.md).
+graphify-out/
+
+# Claude Code's project config: its hook, skill and settings.
+.claude/

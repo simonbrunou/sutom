@@ -170,7 +170,14 @@
 			gameState = submitGuess(gameState);
 
 			if (gameState.gameStatus === 'won') {
-				const messages = ['Génial !', 'Magnifique !', 'Superbe !', 'Bien joué !', 'De justesse !', 'Ouf !'];
+				const messages = [
+					'Génial !',
+					'Magnifique !',
+					'Superbe !',
+					'Bien joué !',
+					'De justesse !',
+					'Ouf !'
+				];
 				const idx = Math.min(gameState.guesses.length - 1, messages.length - 1);
 				bounceRow = gameState.guesses.length - 1;
 				const animDelay = gameState.solution.length * 150 + 500;
@@ -293,7 +300,13 @@
 </script>
 
 <svelte:head>
-	<title>{gameState.gameStatus === 'won' ? 'Gagné !' : gameState.gameStatus === 'lost' ? 'Perdu' : `Essai ${gameState.guesses.length + 1}/${gameState.maxAttempts}`} - SUTOM</title>
+	<title
+		>{gameState.gameStatus === 'won'
+			? 'Gagné !'
+			: gameState.gameStatus === 'lost'
+				? 'Perdu'
+				: `Essai ${gameState.guesses.length + 1}/${gameState.maxAttempts}`} - SUTOM</title
+	>
 </svelte:head>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -322,7 +335,8 @@
 			{#each confettiPieces as p, i (i)}
 				<span
 					class="confetti-piece"
-					style="left:{p.left}%; background:{p.color}; width:{p.size}px; height:{p.size * 1.6}px; animation-delay:{p.delay}s; animation-duration:{p.duration}s; transform:rotate({p.rotate}deg);"
+					style="left:{p.left}%; background:{p.color}; width:{p.size}px; height:{p.size *
+						1.6}px; animation-delay:{p.delay}s; animation-duration:{p.duration}s; transform:rotate({p.rotate}deg);"
 				></span>
 			{/each}
 		</div>
@@ -333,7 +347,9 @@
 	<Modal open={showRules} title="Comment jouer" onClose={() => (showRules = false)}>
 		<div class="rules">
 			<p>Trouvez le mot du jour en <strong>6 essais</strong>.</p>
-			<p>La <strong>première lettre</strong> vous est offerte. Chaque essai doit être un mot valide.</p>
+			<p>
+				La <strong>première lettre</strong> vous est offerte. Chaque essai doit être un mot valide.
+			</p>
 
 			<div class="rules-section" role="list">
 				<h3>Indices</h3>
@@ -367,7 +383,9 @@
 						<span class="stats-icon">🎉</span>
 						<div>
 							<div class="stats-title">Bravo !</div>
-							<div class="stats-subtitle">Trouvé en {gameState.guesses.length} essai{gameState.guesses.length > 1 ? 's' : ''}</div>
+							<div class="stats-subtitle">
+								Trouvé en {gameState.guesses.length} essai{gameState.guesses.length > 1 ? 's' : ''}
+							</div>
 						</div>
 					{:else}
 						<span class="stats-icon">💡</span>
@@ -458,12 +476,22 @@
 
 			{#if gameState.gameStatus !== 'playing'}
 				<button class="share-btn" onclick={shareResult}>
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<circle cx="18" cy="5" r="3"/>
-						<circle cx="6" cy="12" r="3"/>
-						<circle cx="18" cy="19" r="3"/>
-						<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-						<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+					<svg
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<circle cx="18" cy="5" r="3" />
+						<circle cx="6" cy="12" r="3" />
+						<circle cx="18" cy="19" r="3" />
+						<line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+						<line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
 					</svg>
 					Partager
 				</button>
@@ -873,7 +901,9 @@
 		font-size: 1rem;
 		font-weight: 800;
 		letter-spacing: 0.02em;
-		transition: transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
+		transition:
+			transform 0.2s var(--ease-spring),
+			box-shadow 0.2s ease;
 		box-shadow: 0 10px 24px rgba(108, 92, 231, 0.35);
 	}
 

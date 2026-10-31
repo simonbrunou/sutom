@@ -3,14 +3,7 @@
 	"compilerOptions": {
 		"sourceMap": true,
 		"strict": true,
-		"types": [
-			"$app/types",
-			"vitest/globals"
-		]
+		"types": ["$app/types", "vitest/globals"]
 	},
-	"include": [
-		"src",
-		"scripts/**/*.ts",
-		"vite.config.ts"
-	]
+	"include": ["src", "scripts/**/*.ts", "vite.config.ts"]
 }
