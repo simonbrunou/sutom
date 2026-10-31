@@ -209,6 +209,26 @@ describe('check-node-pins.sh passes', () => {
 		passesWith(ALL);
 	});
 
+	it.each([
+		['echo "done!"', '      - run: echo "done!"'],
+		['${{ !cancelled() }}', '      - if: ${{ !cancelled() }}\n        run: npm ci']
+	])('on a ! inside the plain text %s, which is no tag', (_name, text) => {
+		setLine(CI, 11, text);
+		passesWith(ALL);
+	});
+
+	it.each([
+		['after an anchor on the with: of a setup-node step', 9, '        with: &inputs !!map'],
+		[
+			'on the with: of another step',
+			7,
+			'      - uses: actions/checkout@v7\n        with: !!map\n          fetch-depth: 0'
+		]
+	])('on the !!map tag %s', (_name, at, text) => {
+		setLine(CI, at, text);
+		passesWith(ALL);
+	});
+
 	it('on a second workflow without a setup-node step', () => {
 		write('.forgejo/workflows/pdf.yaml', 'jobs:\n  pdf:\n    steps:\n      - run: echo pdf\n');
 		passesWith(ALL);
@@ -432,6 +452,53 @@ describe('check-node-pins.sh fails on a YAML form that can spell a key or value 
 	it('a tag before the action of uses:', () => {
 		setLine(CI, 8, '      - uses: !!str actions/setup-node@v7');
 		failsWith(`${CI}:8 actions/setup-node step is not written as a block mapping`);
+	});
+
+	// YWN0aW9ucy9zZXR1cC1ub2RlQHY3 is base64 for actions/setup-node@v7, and
+	// bm9kZS12ZXJzaW9u for node-version. Line `at` becomes `text`, whose tag
+	// is on line `line`.
+	it.each([
+		[
+			'a !!binary uses: that decodes to setup-node, added as a step',
+			11,
+			'      - uses: !!binary YWN0aW9ucy9zZXR1cC1ub2RlQHY3',
+			11
+		],
+		[
+			'a verbatim tag on uses:',
+			11,
+			'      - uses: !<tag:yaml.org,2002:binary> YWN0aW9ucy9zZXR1cC1ub2RlQHY3',
+			11
+		],
+		[
+			'a !!binary key that decodes to node-version, beside node-version-file',
+			10,
+			'          node-version-file: .nvmrc\n          !!binary bm9kZS12ZXJzaW9u: 26',
+			11
+		],
+		[
+			'a !!str node-version key',
+			10,
+			'          node-version-file: .nvmrc\n          !!str node-version: 26',
+			11
+		],
+		[
+			'a !!binary key in a flow mapping outside any step',
+			5,
+			'    env: { !!binary bm9kZS12ZXJzaW9u: 26 }',
+			5
+		]
+	])('%s', (_name, at, text, line) => {
+		setLine(CI, at, text);
+		failsWith(`${CI}:${line} uses a YAML tag other than !!map, which this check cannot read`);
+	});
+
+	it('a local tag on the node-version-file value, which leaves the step reading none', () => {
+		setLine(CI, 10, '          node-version-file: !pin .nvmrc');
+		failsWith(
+			`${CI}:10 uses a YAML tag other than !!map, which this check cannot read`,
+			`${CI}:8 actions/setup-node step reads no node-version-file: .nvmrc`
+		);
 	});
 });
 

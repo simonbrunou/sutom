@@ -17,16 +17,17 @@
 #     setup-node prefers over the file. A `node-version` anywhere else in a
 #     workflow (a matrix, an env:) fails too. The step and its `with:` must
 #     be block mappings, `uses:` before `with:`, as in this repo's ci.yml (an
-#     anchor or a tag may name the `with:`); the inputs are the keys at the
+#     anchor or !!map may name the `with:`); the inputs are the keys at the
 #     indentation of the first line under `with:`, and the body of a block
 #     scalar (run: |) is skipped. A step or `with:` in flow style
 #     (with: { node-version-file: .nvmrc }) fails, and so does any line that
 #     names actions/setup-node@ outside its comment and outside a `uses:`
 #     this reader opens a step on. So does, anywhere in a workflow, an
 #     escape in a double-quoted string ("node\x2dversion"), an alias
-#     (*name), an explicit key (? ) or a quoted string that runs onto the
-#     next line, which can spell a key or a value as other text: reading
-#     those would take a YAML parser.
+#     (*name), an explicit key (? ), a tag other than !!map (!!binary,
+#     !pin) or a quoted string that runs onto the next line, which can
+#     spell a key or a value as other text: reading those would take a YAML
+#     parser.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
 #     in devDependencies or dependencies; one of them must list it. Railpack
 #     reads `engines.node` and `devEngines.runtime` before .nvmrc, so an
@@ -127,6 +128,7 @@ read_workflow() {
       escape) fail "$rel:$line holds an escape in a double-quoted string, which this check cannot read" ;;
       alias) fail "$rel:$line uses a YAML alias, which this check cannot read" ;;
       explicit) fail "$rel:$line uses a YAML explicit key (?), which this check cannot read" ;;
+      tag) fail "$rel:$line uses a YAML tag other than !!map, which this check cannot read" ;;
       unclosed) fail "$rel:$line leaves a quoted string open onto the next line, which this check cannot read" ;;
       unread)
         steps=$((steps + 1))
@@ -188,15 +190,15 @@ read_workflow() {
     # Read one line as YAML does, far enough to drop its comment and to see
     # the forms that spell a key or a value as other text than the line
     # shows: an escape in a double-quoted string ("node\x2dversion"), an
-    # alias (*name) and an explicit key (? ). A quote, a * or a ? is syntax
-    # only where a node starts: at the line start, after `- `, `? ` or `: `,
-    # after a tag or an anchor, and in a flow collection after [, { or ,.
-    # Anywhere else, as in run: echo "a\b" or a double quote inside a
-    # single-quoted string, it is text. Sets code (the line without its
-    # comment), escape, alias, explicit, and unclosed for a quoted string
-    # still open at the line end.
-    function scan(s,   n, i, c, nx, start, depth, inq) {
-      escape = 0; alias = 0; explicit = 0; unclosed = 0
+    # alias (*name), an explicit key (? ) and a tag (!!binary). A quote, a *,
+    # a ! or a ? is syntax only where a node starts: at the line start, after
+    # `- `, `? ` or `: `, after a tag or an anchor, and in a flow collection
+    # after [, { or ,. Anywhere else, as in run: echo "a\b" or a double quote
+    # inside a single-quoted string, it is text. Sets code (the line without
+    # its comment), escape, alias, explicit, tag (one other than !!map), and
+    # unclosed for a quoted string still open at the line end.
+    function scan(s,   n, i, j, c, nx, start, depth, inq) {
+      escape = 0; alias = 0; explicit = 0; tag = 0; unclosed = 0
       n = length(s); start = 1; depth = 0; inq = ""
       for (i = 1; i <= n; i++) {
         c = substr(s, i, 1)
@@ -222,7 +224,9 @@ read_workflow() {
           if (c == "[" || c == "{") { depth++; continue }
           if (depth && (c == "]" || c == "}")) { depth--; start = 0; continue }
           if (c == "!" || c == "&" || c == "*") {
+            j = i
             while (i < n && substr(s, i + 1, 1) !~ /[] \t,{}[]/) i++
+            if (c == "!" && substr(s, j, i - j + 1) != "!!map") tag = 1
             if (c == "*") { alias = 1; start = 0 }
             continue
           }
@@ -297,6 +301,7 @@ read_workflow() {
     escape { print "escape", NR; next }
     alias { print "alias", NR; next }
     explicit { print "explicit", NR; next }
+    tag { print "tag", NR; next }
     unclosed { print "unclosed", NR; next }
     # The inputs are the keys at the indentation of the first line under
     # with:. A node-version nested deeper is no input, and fails as stray.
