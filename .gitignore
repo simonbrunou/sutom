@@ -9,13 +9,18 @@ coverage
 *.log
 .DS_Store
 
-# graphify's per-clone files: its cache and the state each run rewrites. The
-# graph outputs in graphify-out/ are tracked, .graphify_labels.json and its
-# .sig included.
+# graphify's per-clone files: its cache and the state each `graphify update`
+# rewrites. The graph outputs in graphify-out/ are tracked,
+# .graphify_labels.json and its .sig included.
 graphify-out/cache/
 graphify-out/.graphify_root
 graphify-out/.graphify_build_state.json
 graphify-out/.graphify_labels.pending.json
+# The graphify skill's own runs write these two, `graphify update` neither: the
+# interpreter path the skill resolved on this host, and the token log of a full
+# build.
+graphify-out/.graphify_python
+graphify-out/cost.json
 
 .direnv/
 result
