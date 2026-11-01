@@ -26,8 +26,9 @@
 #     escape in a double-quoted string ("node\x2dversion"), an alias
 #     (*name), an explicit key (? ), a tag other than !!map (!!binary,
 #     !pin) or a quoted string that runs onto the next line, which can
-#     spell a key or a value as other text: reading those would take a YAML
-#     parser.
+#     spell a key or a value as other text, and a flow mapping or sequence
+#     left open at the end of its line (scope: {a: 1,), which puts the lines
+#     after it inside a value: reading those would take a YAML parser.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
 #     in devDependencies or dependencies; one of them must list it. Railpack
 #     reads `engines.node` and `devEngines.runtime` before .nvmrc, so an
@@ -135,6 +136,7 @@ read_workflow() {
       explicit) fail "$rel:$line uses a YAML explicit key (?), which this check cannot read" ;;
       tag) fail "$rel:$line uses a YAML tag other than !!map, which this check cannot read" ;;
       unclosed) fail "$rel:$line leaves a quoted string open onto the next line, which this check cannot read" ;;
+      openflow) fail "$rel:$line leaves a flow mapping or sequence open onto the next line, which this check cannot read" ;;
       unread)
         steps=$((steps + 1))
         fail "$rel:$line actions/setup-node step is not written as a block mapping, which this check cannot read"
@@ -201,9 +203,11 @@ read_workflow() {
     # after [, { or ,. Anywhere else, as in run: echo "a\b" or a double quote
     # inside a single-quoted string, it is text. Sets code (the line without
     # its comment), escape, alias, explicit, tag (one other than !!map), and
-    # unclosed for a quoted string still open at the line end.
+    # unclosed for a quoted string still open at the line end, and openflow
+    # for a flow collection ([ or {) still open there or where the comment
+    # starts.
     function scan(s,   n, i, j, c, nx, start, depth, inq) {
-      escape = 0; alias = 0; explicit = 0; tag = 0; unclosed = 0
+      escape = 0; alias = 0; explicit = 0; tag = 0; unclosed = 0; openflow = 0
       n = length(s); start = 1; depth = 0; inq = ""
       for (i = 1; i <= n; i++) {
         c = substr(s, i, 1)
@@ -218,6 +222,7 @@ read_workflow() {
         if (c == "#" && (i == 1 || substr(s, i - 1, 1) ~ /[ \t]/)) {
           code = substr(s, 1, i - 1)
           sub(/[ \t]+$/, "", code)
+          openflow = (depth > 0)
           return
         }
         if (start) {
@@ -244,6 +249,7 @@ read_workflow() {
       }
       code = s
       unclosed = (inq != "")
+      openflow = (!unclosed && depth > 0)
     }
     { sub(/\r$/, "") }
     /^[ \t]*(#|$)/ { next }
@@ -301,13 +307,14 @@ read_workflow() {
     open && /^[ \t]*with[ \t]*:/ { print "flow", NR; open = 0; inwith = 0; next }
     # The patterns here would miss a node-version or a setup-node step
     # written with a form scan() flags, so each prints its kind, wherever in
-    # the file it is. So does a quoted string that runs onto the next line,
-    # whose next line this reader would read as keys.
+    # the file it is. So does a quoted string or a flow collection that runs
+    # onto the next line, whose next line this reader would read as keys.
     escape { print "escape", NR; next }
     alias { print "alias", NR; next }
     explicit { print "explicit", NR; next }
     tag { print "tag", NR; next }
     unclosed { print "unclosed", NR; next }
+    openflow { print "openflow", NR; next }
     # The inputs are the keys at the indentation of the first line under
     # with:. A node-version nested deeper is no input, and fails as stray.
     inwith {
