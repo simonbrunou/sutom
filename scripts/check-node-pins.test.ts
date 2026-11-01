@@ -208,7 +208,12 @@ describe('check-node-pins.sh passes', () => {
 		['a [ and a { left open in plain text', 5, `${ciLines[4]}\n    env:\n      X: echo [a, {b,`],
 		['a [ and a { left open in a quoted string', 1, "name: 'CI [a, {b,'"],
 		['a [ and a { left open in a comment', 19, '          cache: npm # {a, [b,'],
-		['a [ and a { left open in a run: | body', 11, '      - run: |\n          echo [a, {b,']
+		['a [ and a { left open in a run: | body', 11, '      - run: |\n          echo [a, {b,'],
+		[
+			'a plain key with no blank after its colon in a flow mapping',
+			5,
+			`${ciLines[4]}\n    env: {A:"b\\x2d"}`
+		]
 	])('on %s, which YAML reads as text', (_name, at, text) => {
 		setLine(CI, at, text);
 		passesWith(ALL);
@@ -444,6 +449,21 @@ describe('check-node-pins.sh fails on a YAML form that can spell a key or value 
 		failsWith(`${CI}:8 holds an escape in a double-quoted string`);
 	});
 
+	// In a flow collection, a colon right after a quoted key or a closed
+	// collection starts a value even with no blank after it.
+	it.each([
+		['a double-quoted key', '      - {"uses":"actions/setup\\x2dnode@v2"}'],
+		['a double-quoted key and a blank', '      - {"uses" :"actions/setup\\x2dnode@v2"}'],
+		['a single-quoted key', `      - {'uses':"actions/setup\\x2dnode@v2"}`],
+		['a closed flow sequence', '      - {[a]:"actions/setup\\x2dnode@v2"}']
+	])(
+		'an escaped setup-node in a flow mapping, after %s then a colon with no blank after it',
+		(_name, text) => {
+			setLine(CI, 11, text);
+			failsWith(`${CI}:11 holds an escape in a double-quoted string, which this check cannot read`);
+		}
+	);
+
 	it('an escaped node-version key in a flow mapping outside any step', () => {
 		setLine(CI, 5, '    env: { "node\\x2dversion": 26 }');
 		failsWith(`${CI}:5 holds an escape in a double-quoted string`);
@@ -518,6 +538,12 @@ describe('check-node-pins.sh fails on a YAML form that can spell a key or value 
 			5,
 			'    env: { !!binary bm9kZS12ZXJzaW9u: 26 }',
 			5
+		],
+		[
+			'a !!binary uses: after a JSON-style key with no blank after its colon',
+			11,
+			'      - {"uses":!!binary YWN0aW9ucy9zZXR1cC1ub2RlQHY3}',
+			11
 		]
 	])('%s', (_name, at, text, line) => {
 		setLine(CI, at, text);
@@ -575,6 +601,29 @@ describe('check-node-pins.sh fails on a flow mapping or sequence left open at th
 		setLine(CI, 10, `${ciLines[9]}\n          scope: {a: "x\n          y"}`);
 		const err = failsWith(`${CI}:11 leaves a quoted string open onto the next line`);
 		expect(err).not.toContain('leaves a flow mapping or sequence open');
+	});
+});
+
+// This reader skips the body of a block scalar, so a uses: written as one
+// would hide the action it names.
+describe('check-node-pins.sh fails on a uses: written as a block scalar', () => {
+	const blockUses = (line: number) =>
+		`${CI}:${line} uses: names its action in a block scalar (| or >), which this check cannot read`;
+
+	it.each([
+		['- uses: >-', '      - uses: >-', 11],
+		['- uses: |', '      - uses: |', 11],
+		['- "uses": >-', '      - "uses": >-', 11],
+		["- 'uses': |-", "      - 'uses': |-", 11],
+		['uses: > under - name:', '      - name: Set up Node\n        uses: >', 12]
+	])('%s that names setup-node', (_name, header, line) => {
+		setLine(CI, 11, `${header}\n          actions/setup-node@v7`);
+		failsWith(blockUses(line));
+	});
+
+	it('that names another action, which this reader cannot tell', () => {
+		setLine(CI, 11, '      - uses: >-\n          actions/checkout@v7');
+		failsWith(blockUses(11));
 	});
 });
 
