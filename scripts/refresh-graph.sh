@@ -24,8 +24,10 @@
 # built from, and there is no refresh to commit.
 #
 # Next to the graph, graphify writes per-clone files that .gitignore keeps out
-# of git: cache/, .graphify_build_state.json, .graphify_labels.pending.json
-# and .graphify_root. The script deletes .graphify_root on exit, whether
+# of git: cache/, .graphify_build_state.json, .graphify_labels.pending.json,
+# .graphify_root, and the dated backups (2026-10-30/ and the like) it copies
+# the graph into before an overwrite once the graph is semantic or its
+# communities are named. The script deletes .graphify_root on exit, whether
 # graphify succeeded or not: it names the symlink, which is gone once the
 # script exits, and a bare `graphify update` would read that path and fail.
 #
