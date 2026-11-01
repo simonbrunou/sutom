@@ -43,6 +43,13 @@
 	// Stats histogram: tallest bucket scales the bars; today's winning row is highlighted.
 	const distributionMax = $derived(Math.max(1, ...stats.distribution));
 	const todayAttempt = $derived(gameState.gameStatus === 'won' ? gameState.guesses.length : -1);
+	const pageTitle = $derived(
+		gameState.gameStatus === 'won'
+			? 'Gagné !'
+			: gameState.gameStatus === 'lost'
+				? 'Perdu'
+				: `Essai ${gameState.guesses.length + 1}/${gameState.maxAttempts}`
+	);
 
 	// Precomputed confetti bits so we don't re-randomize on each render
 	const confettiPieces = Array.from({ length: 60 }, (_, i) => ({
@@ -300,13 +307,7 @@
 </script>
 
 <svelte:head>
-	<title
-		>{gameState.gameStatus === 'won'
-			? 'Gagné !'
-			: gameState.gameStatus === 'lost'
-				? 'Perdu'
-				: `Essai ${gameState.guesses.length + 1}/${gameState.maxAttempts}`} - SUTOM</title
-	>
+	<title>{pageTitle} - SUTOM</title>
 </svelte:head>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -335,8 +336,8 @@
 			{#each confettiPieces as p, i (i)}
 				<span
 					class="confetti-piece"
-					style="left:{p.left}%; background:{p.color}; width:{p.size}px; height:{p.size *
-						1.6}px; animation-delay:{p.delay}s; animation-duration:{p.duration}s; transform:rotate({p.rotate}deg);"
+					style="left:{p.left}%; background:{p.color}; width:{p.size}px; animation-delay:{p.delay}s; animation-duration:{p.duration}s; transform:rotate({p.rotate}deg);"
+					style:height="{p.size * 1.6}px"
 				></span>
 			{/each}
 		</div>
