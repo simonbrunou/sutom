@@ -204,7 +204,11 @@ describe('check-node-pins.sh passes', () => {
 		['a comment that names setup-node', 1, 'name: CI # example actions/setup-node@v7'],
 		['a comment that names node-version', 5, '    runs-on: ubuntu-latest # node-version: 26'],
 		['a double-quoted backslash inside a single-quoted string', 1, `name: 'Example: "a\\b"'`],
-		['a * and a ? inside plain text', 11, '      - run: ls *.md && test "$x" = a?b']
+		['a * and a ? inside plain text', 11, '      - run: ls *.md && test "$x" = a?b'],
+		['a [ and a { left open in plain text', 5, `${ciLines[4]}\n    env:\n      X: echo [a, {b,`],
+		['a [ and a { left open in a quoted string', 1, "name: 'CI [a, {b,'"],
+		['a [ and a { left open in a comment', 19, '          cache: npm # {a, [b,'],
+		['a [ and a { left open in a run: | body', 11, '      - run: |\n          echo [a, {b,']
 	])('on %s, which YAML reads as text', (_name, at, text) => {
 		setLine(CI, at, text);
 		passesWith(ALL);
@@ -227,6 +231,11 @@ describe('check-node-pins.sh passes', () => {
 		]
 	])('on the !!map tag %s', (_name, at, text) => {
 		setLine(CI, at, text);
+		passesWith(ALL);
+	});
+
+	it('on a flow mapping opened and closed on one line, under the with: of a setup-node step', () => {
+		setLine(CI, 10, `${ciLines[9]}\n          scope: {a: 1, b: 2}`);
 		passesWith(ALL);
 	});
 
@@ -521,6 +530,51 @@ describe('check-node-pins.sh fails on a YAML form that can spell a key or value 
 			`${CI}:10 uses a YAML tag other than !!map, which this check cannot read`,
 			`${CI}:8 actions/setup-node step reads no node-version-file: .nvmrc`
 		);
+	});
+});
+
+// YAML reads the lines after an open [ or { inside the flow collection, where
+// this reader would read them as keys: a node-version-file there would count
+// as an input that setup-node never gets (#186).
+describe('check-node-pins.sh fails on a flow mapping or sequence left open at the end of its line', () => {
+	const openFlow = (line: number) =>
+		`${CI}:${line} leaves a flow mapping or sequence open onto the next line, which this check cannot read`;
+
+	it.each([
+		['a flow mapping', '          scope: {a: 1,'],
+		['a flow sequence', '          scope: [a,'],
+		['a flow mapping whose comment starts before it closes', '          scope: {a: 1, # note']
+	])('%s that holds the node-version-file of a setup-node step', (_name, opening) => {
+		const closing = opening.includes('[') ? ']' : '}';
+		setLine(
+			CI,
+			10,
+			`${opening}\n          node-version-file: .nvmrc\n          ${closing}\n          cache: npm`
+		);
+		failsWith(openFlow(10));
+	});
+
+	// YAML reads no node-version input here. The check may still say that
+	// line 12 hardcodes one: it does not read the collection across lines, so
+	// it takes line 12 for an input.
+	it('a flow mapping that holds node-version, beside a real node-version-file', () => {
+		setLine(
+			CI,
+			10,
+			`${ciLines[9]}\n          scope: {a: 1,\n          node-version: 26\n          }`
+		);
+		failsWith(openFlow(11));
+	});
+
+	it("a flow mapping under a job's env:, outside any setup-node step", () => {
+		setLine(CI, 5, `${ciLines[4]}\n    env: {A: 1,\n      B: 2}`);
+		failsWith(openFlow(6));
+	});
+
+	it('a flow mapping holding a quoted string left open, as the quoted string only', () => {
+		setLine(CI, 10, `${ciLines[9]}\n          scope: {a: "x\n          y"}`);
+		const err = failsWith(`${CI}:11 leaves a quoted string open onto the next line`);
+		expect(err).not.toContain('leaves a flow mapping or sequence open');
 	});
 });
 
