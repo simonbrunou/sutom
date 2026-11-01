@@ -22,13 +22,16 @@
 #     scalar (run: |) is skipped. A step or `with:` in flow style
 #     (with: { node-version-file: .nvmrc }) fails, and so does any line that
 #     names actions/setup-node@ outside its comment and outside a `uses:`
-#     this reader opens a step on. So does, anywhere in a workflow, an
-#     escape in a double-quoted string ("node\x2dversion"), an alias
-#     (*name), an explicit key (? ), a tag other than !!map (!!binary,
-#     !pin) or a quoted string that runs onto the next line, which can
-#     spell a key or a value as other text, and a flow mapping or sequence
-#     left open at the end of its line (scope: {a: 1,), which puts the lines
-#     after it inside a value: reading those would take a YAML parser.
+#     this reader opens a step on, and so does a `uses:` whose value is a
+#     block scalar (uses: >-), whatever action its skipped body names. So
+#     does, anywhere in a workflow, an escape in a double-quoted string
+#     ("node\x2dversion", or {"uses":"actions/setup\x2dnode@v7"}, where a
+#     JSON-style key needs no blank after its colon), an alias (*name), an
+#     explicit key (? ), a tag other than !!map (!!binary, !pin) or a quoted
+#     string that runs onto the next line, which can spell a key or a value
+#     as other text, and a flow mapping or sequence left open at the end of
+#     its line (scope: {a: 1,), which puts the lines after it inside a
+#     value: reading those would take a YAML parser.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
 #     in devDependencies or dependencies; one of them must list it. Railpack
 #     reads `engines.node` and `devEngines.runtime` before .nvmrc, so an
@@ -137,6 +140,7 @@ read_workflow() {
       tag) fail "$rel:$line uses a YAML tag other than !!map, which this check cannot read" ;;
       unclosed) fail "$rel:$line leaves a quoted string open onto the next line, which this check cannot read" ;;
       openflow) fail "$rel:$line leaves a flow mapping or sequence open onto the next line, which this check cannot read" ;;
+      blockuses) fail "$rel:$line uses: names its action in a block scalar (| or >), which this check cannot read" ;;
       unread)
         steps=$((steps + 1))
         fail "$rel:$line actions/setup-node step is not written as a block mapping, which this check cannot read"
@@ -201,21 +205,24 @@ read_workflow() {
     # a ! or a ? is syntax only where a node starts: at the line start, after
     # `- `, `? ` or `: `, after a tag or an anchor, and in a flow collection
     # after [, { or ,. Anywhere else, as in run: echo "a\b" or a double quote
-    # inside a single-quoted string, it is text. Sets code (the line without
+    # inside a single-quoted string, it is text. In a flow collection, a :
+    # right after a quoted scalar or a closed collection starts a value even
+    # with no blank after it, as in {"uses":"actions/setup\x2dnode@v7"};
+    # outside one, a : needs a blank after it. Sets code (the line without
     # its comment), escape, alias, explicit, tag (one other than !!map), and
     # unclosed for a quoted string still open at the line end, and openflow
     # for a flow collection ([ or {) still open there or where the comment
     # starts.
-    function scan(s,   n, i, j, c, nx, start, depth, inq) {
+    function scan(s,   n, i, j, c, nx, start, depth, inq, json, wasjson) {
       escape = 0; alias = 0; explicit = 0; tag = 0; unclosed = 0; openflow = 0
-      n = length(s); start = 1; depth = 0; inq = ""
+      n = length(s); start = 1; depth = 0; inq = ""; json = 0
       for (i = 1; i <= n; i++) {
         c = substr(s, i, 1)
         nx = substr(s, i + 1, 1)
         if (inq != "") {
           if (inq == "\"" && c == "\\") { escape = 1; i++ }
           else if (c == inq && inq == q && nx == q) i++
-          else if (c == inq) inq = ""
+          else if (c == inq) { inq = ""; json = 1 }
           continue
         }
         if (c == " " || c == "\t") continue
@@ -225,6 +232,7 @@ read_workflow() {
           openflow = (depth > 0)
           return
         }
+        wasjson = json; json = 0
         if (start) {
           if (c == "\"" || c == q) { inq = c; start = 0; continue }
           if ((c == "-" || c == "?") && (nx == "" || nx ~ /[ \t]/)) {
@@ -232,7 +240,7 @@ read_workflow() {
             continue
           }
           if (c == "[" || c == "{") { depth++; continue }
-          if (depth && (c == "]" || c == "}")) { depth--; start = 0; continue }
+          if (depth && (c == "]" || c == "}")) { depth--; start = 0; json = 1; continue }
           if (c == "!" || c == "&" || c == "*") {
             j = i
             while (i < n && substr(s, i + 1, 1) !~ /[] \t,{}[]/) i++
@@ -243,9 +251,9 @@ read_workflow() {
           # A plain scalar starts here.
           start = 0
         }
-        if (c == ":" && (nx == "" || nx ~ /[ \t]/ || (depth && nx ~ /[],{}[]/))) start = 1
+        if (c == ":" && (nx == "" || nx ~ /[ \t]/ || (depth && (wasjson || nx ~ /[],{}[]/)))) start = 1
         else if (depth && c == ",") start = 1
-        else if (depth && (c == "]" || c == "}")) depth--
+        else if (depth && (c == "]" || c == "}")) { depth--; json = 1 }
       }
       code = s
       unclosed = (inq != "")
@@ -273,6 +281,11 @@ read_workflow() {
       if ($0 ~ /^ *(- +)*[^ \t#:]+[ \t]*:[ \t]*[|>][-+0-9]*[ \t]*(#.*)?$/) {
         match($0, /^ *(- +)*/)
         body = RLENGTH
+        # The body is skipped, so a uses: written as one (uses: >-) would
+        # hide its action: it prints `blockuses`, whatever the body names.
+        # The key is matched in lower case, as the rule that opens a step
+        # matches it.
+        if (tolower($0) ~ ("^ *(- +)*[\"" q "]?uses[\"" q "]?[ \t]*:")) print "blockuses", NR
       }
       scan($0)
       low = tolower(code)
