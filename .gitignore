@@ -16,11 +16,20 @@ graphify-out/cache/
 graphify-out/.graphify_root
 graphify-out/.graphify_build_state.json
 graphify-out/.graphify_labels.pending.json
-# `graphify update` writes neither of these two. The graphify skill writes
+# Before `graphify update` or `graphify extract` overwrites graph.json,
+# graphify's backup_if_protected copies the graph into a folder named for the
+# day, such as 2026-10-30/, when .graphify_semantic_marker exists or
+# .graphify_labels.json holds a label other than `Community <n>`. Git history
+# already keeps every graph this repo tracks.
+graphify-out/20*/
+# `graphify update` writes none of these three. The graphify skill writes
 # .graphify_python, the interpreter path it resolved on this host. The skill's
 # full build and `graphify extract` add each run's token use to cost.json.
+# `graphify extract` writes .graphify_semantic_marker when its LLM backend
+# returned output tokens.
 graphify-out/.graphify_python
 graphify-out/cost.json
+graphify-out/.graphify_semantic_marker
 
 .direnv/
 result

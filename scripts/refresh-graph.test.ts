@@ -3,8 +3,9 @@
 // named like a T3 worktree that each test builds afresh. The stub writes what
 // graphify 0.9.97 writes that the script checks: the report titled with the
 // name of the path it was given, graph.json built from HEAD, the two tracked
-// label files and the three per-clone files the repo's own .gitignore must
-// keep out of git. A test
+// label files and the per-clone files the repo's own .gitignore must keep out
+// of git: three on every run, and in backup mode a dated backup of the graph
+// and .graphify_semantic_marker too. A test
 // changes the stub or the checkout into one failure and asserts the exit code
 // and the message.
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -31,7 +32,10 @@ const REPORT = 'graphify-out/GRAPH_REPORT.md';
 // STUB_MODE: ok, cwd-title (titles the report after the cwd, as `graphify
 // update .` does), sidecar (also writes a file the .gitignore does not know),
 // unchanged (leaves graph.json and the report as they are, as graphify does
-// when the code graph has not changed), fail (after writing .graphify_root).
+// when the code graph has not changed), backup (also writes
+// .graphify_semantic_marker and, before overwriting the graph, copies it into
+// 2026-10-30/, as graphify does for a semantic or labelled graph), fail (after
+// writing .graphify_root).
 // Every call appends its arguments to $STUB_LOG and the physical path its path
 // argument leads to to $STUB_LOG.where.
 const stub = `#!/usr/bin/env bash
@@ -46,6 +50,11 @@ printf '%s' "$1" > "$out/.graphify_root"
 echo '{}' > "$out/.graphify_build_state.json"
 [ "$STUB_MODE" = fail ] && exit 1
 [ "$STUB_MODE" = unchanged ] && exit 0
+if [ "$STUB_MODE" = backup ]; then
+	echo '{"output_tokens": 1}' > "$out/.graphify_semantic_marker"
+	mkdir -p "$out/2026-10-30"
+	cp "$out/graph.json" "$out/GRAPH_REPORT.md" "$out/.graphify_labels.json" "$out/.graphify_semantic_marker" "$out/2026-10-30/"
+fi
 label=$(basename "$1")
 [ "$STUB_MODE" = cwd-title ] && label=$(basename "$PWD")
 printf '# Graph Report - %s  (2026-10-30)\\n' "$label" > "$out/GRAPH_REPORT.md"
@@ -160,6 +169,14 @@ describe('refresh-graph.sh passes', () => {
 		expect(git('status', '--porcelain', '--', 'graphify-out')).toContain(
 			'graphify-out/.graphify_labels.json.sig'
 		);
+	});
+
+	it('when graphify backs up a semantic graph, which .gitignore keeps out of git', () => {
+		const { code, err } = run([checkout], 'backup');
+		expect(code, err).toBe(0);
+		expect(existsSync(path.join(checkout, 'graphify-out/2026-10-30/graph.json'))).toBe(true);
+		expect(existsSync(path.join(checkout, 'graphify-out/.graphify_semantic_marker'))).toBe(true);
+		expect(untracked()).toBe('');
 	});
 
 	it('deleting .graphify_root, which names the removed symlink', () => {
