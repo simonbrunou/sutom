@@ -22,8 +22,13 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseDocument } from 'yaml';
+
+// Every test here runs the script, which a loaded CI runner can slow to
+// seconds: on main at 8fdb037 a comparison case took longer than vitest's
+// 5 s default (140 s of tests on the shared runner, against 16 s on sbrn).
+vi.setConfig({ testTimeout: 60_000 });
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const scriptPath = path.join(repo, 'scripts', 'check-node-pins.sh');
@@ -1383,7 +1388,8 @@ function parserViolations(text: string): string[] {
 
 function runAsync(target: string): Promise<{ code: number | null; out: string; err: string }> {
 	return new Promise((resolve) => {
-		execFile(scriptPath, [target], { encoding: 'utf8' }, (error, out, err) => {
+		// A run still going after 30 s is stuck: killed, it exits with no code.
+		execFile(scriptPath, [target], { encoding: 'utf8', timeout: 30_000 }, (error, out, err) => {
 			const code = error === null ? 0 : typeof error.code === 'number' ? error.code : null;
 			resolve({ code, out, err });
 		});
