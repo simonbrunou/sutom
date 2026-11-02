@@ -5,7 +5,7 @@
 // the script must read: three setup-node steps that read .nvmrc, written
 // three ways, and @types/node. A test edits one line into one failure class
 // and asserts the exit code and the message that names the file and value.
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFile, execFileSync, spawnSync } from 'node:child_process';
 import {
 	copyFileSync,
 	mkdirSync,
@@ -20,6 +20,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { parseDocument } from 'yaml';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const scriptPath = path.join(repo, 'scripts', 'check-node-pins.sh');
@@ -878,6 +879,410 @@ describe('check-node-pins.sh exits 2', () => {
 		const { code, err } = run([dir], { PATH: bin });
 		expect(code).toBe(2);
 		expect(err).toMatch(/needs node on PATH/);
+	});
+});
+
+// The check reads workflows with an awk line reader, since CI runs it before
+// `npm ci`; each gap in that reader was found by hand (#183, #186, #187). Here
+// a YAML parser reads the same workflows (#197). Each case rewrites one entry
+// of the fixture's setup-node steps in one YAML form, and parses the result
+// with eemeli/yaml, which resolves << merge keys as go-yaml does for Forgejo.
+// The check may refuse any case. It must never exit 0 on one in which the
+// parser finds a setup-node step that reads no .nvmrc or sets node-version.
+
+// A mapping entry: a key and a scalar, or a key and the entries of a block
+// mapping.
+type Entry = [key: string, value: string | Entry[]];
+// One YAML form: the lines of an entry whose key sits at column `at`, or
+// null when the form does not apply to that entry.
+type Form = (entry: Entry, at: number) => string[] | null;
+// One form of a whole step: the lines of the list item whose dash sits at
+// column `dash`.
+type ItemForm = (entries: Entry[], dash: number) => string[];
+
+const pad = (n: number) => ' '.repeat(n);
+const hex = (s: string) => `\\x${s.charCodeAt(0).toString(16).padStart(2, '0')}`;
+
+function block([key, value]: Entry, at: number, writtenKey = key): string[] {
+	return typeof value === 'string'
+		? [`${pad(at)}${writtenKey}: ${value}`]
+		: [`${pad(at)}${writtenKey}:`, ...value.flatMap((entry) => block(entry, at + 2))];
+}
+
+function flow(entries: Entry[]): string {
+	const items = entries.map(([k, v]) => `${k}: ${typeof v === 'string' ? v : flow(v)}`);
+	return `{ ${items.join(', ')} }`;
+}
+
+function json(entries: Entry[]): string {
+	const items = entries.map(
+		([k, v]) => `${JSON.stringify(k)}:${typeof v === 'string' ? JSON.stringify(v) : json(v)}`
+	);
+	return `{${items.join(',')}}`;
+}
+
+// A form that applies to scalar entries only, or to block mappings only.
+const scalar =
+	(write: (key: string, value: string, at: number) => string[]): Form =>
+	([key, value], at) =>
+		typeof value === 'string' ? write(key, value, at) : null;
+const mapping =
+	(write: (key: string, value: Entry[], at: number) => string[]): Form =>
+	([key, value], at) =>
+		typeof value === 'string' ? null : write(key, value, at);
+// The block lines of an entry, with `text` (an anchor or a tag) written
+// after its key.
+const afterKey = (entry: Entry, at: number, text: string) => {
+	const [first, ...rest] = block(entry, at);
+	return [first!.replace(/:( |$)/, `: ${text}$1`), ...rest];
+};
+
+const forms: [name: string, form: Form][] = [
+	['plain', (entry, at) => block(entry, at)],
+	['a double-quoted key', (entry, at) => block(entry, at, `"${entry[0]}"`)],
+	['a single-quoted key', (entry, at) => block(entry, at, `'${entry[0]}'`)],
+	['a double-quoted value', scalar((k, v, at) => [`${pad(at)}${k}: "${v}"`])],
+	['a single-quoted value', scalar((k, v, at) => [`${pad(at)}${k}: '${v}'`])],
+	[
+		'a comment after it',
+		(entry, at) => {
+			const [first, ...rest] = block(entry, at);
+			return [`${first} # node-version: 26 uses: actions/setup-node@v7`, ...rest];
+		}
+	],
+	[
+		'a comment line before it',
+		(entry, at) => [`${pad(at)}# with: { node-version: 26 }`, ...block(entry, at)]
+	],
+	['the !!str tag', scalar((k, v, at) => [`${pad(at)}${k}: !!str ${v}`])],
+	['the !!map tag', mapping((k, v, at) => afterKey([k, v], at, '!!map'))],
+	['the !!binary tag', scalar((k, v, at) => [`${pad(at)}${k}: !!binary ${btoa(v)}`])],
+	['an anchor on the value', (entry, at) => afterKey(entry, at, '&v')],
+	['an anchor on the key', (entry, at) => block(entry, at, `&k ${entry[0]}`)],
+	[
+		'an alias of an anchor on another key',
+		([k, v], at) => [...afterKey([`x-${k}`, v], at, '&v'), `${pad(at)}${k}: *v`]
+	],
+	['a merge key', mapping((k, v, at) => [`${pad(at)}${k}:`, `${pad(at + 2)}<<: ${flow(v)}`])],
+	['a flow mapping', mapping((k, v, at) => [`${pad(at)}${k}: ${flow(v)}`])],
+	['a JSON-style flow mapping', mapping((k, v, at) => [`${pad(at)}${k}: ${json(v)}`])],
+	[
+		'a flow mapping over several lines',
+		mapping((k, v, at) => [
+			`${pad(at)}${k}: {`,
+			...v.map(([ck, cv]) => `${pad(at + 4)}${ck}: ${typeof cv === 'string' ? cv : flow(cv)},`),
+			`${pad(at + 2)}}`
+		])
+	],
+	['a flow sequence', scalar((k, v, at) => [`${pad(at)}${k}: [${v}]`])],
+	['a literal block scalar', scalar((k, v, at) => [`${pad(at)}${k}: |-`, `${pad(at + 2)}${v}`])],
+	['a folded block scalar', scalar((k, v, at) => [`${pad(at)}${k}: >-`, `${pad(at + 2)}${v}`])],
+	[
+		'a block scalar after an anchor',
+		scalar((k, v, at) => [`${pad(at)}${k}: &v |-`, `${pad(at + 2)}${v}`])
+	],
+	['the value on the next line', scalar((k, v, at) => [`${pad(at)}${k}:`, `${pad(at + 2)}${v}`])],
+	[
+		'a double-quoted value over two lines',
+		scalar((k, v, at) => [`${pad(at)}${k}: "${v}`, `${pad(at + 2)}"`])
+	],
+	[
+		'an escape in the key',
+		(entry, at) => block(entry, at, `"${hex(entry[0])}${entry[0].slice(1)}"`)
+	],
+	['an escape in the value', scalar((k, v, at) => [`${pad(at)}${k}: "${hex(v)}${v.slice(1)}"`])],
+	[
+		'an explicit key',
+		([k, v], at) =>
+			typeof v === 'string'
+				? [`${pad(at)}? ${k}`, `${pad(at)}: ${v}`]
+				: [`${pad(at)}? ${k}`, `${pad(at)}:`, ...block([k, v], at).slice(1)]
+	],
+	// #197's forms A to E: the entry under another key, or as text in the body
+	// of a block scalar.
+	['under another key', (entry, at) => [`${pad(at)}other:`, ...block(entry, at + 2)]],
+	[
+		'in the body of a block scalar that is a list item',
+		(entry, at) => [`${pad(at)}args:`, `${pad(at + 2)}- |`, ...block(entry, at + 4)]
+	],
+	[
+		'in the body of a block scalar whose key holds a blank',
+		(entry, at) => [`${pad(at)}my key: |`, ...block(entry, at + 2)]
+	],
+	[
+		'in the body of a block scalar after an anchor',
+		(entry, at) => [`${pad(at)}notes: &n |`, ...block(entry, at + 2)]
+	],
+	[
+		'in the body of a block scalar whose quoted key holds a blank',
+		(entry, at) => [`${pad(at)}"my key": |`, ...block(entry, at + 2)]
+	]
+];
+
+const itemForms: [name: string, form: ItemForm][] = [
+	['a flow mapping', (entries, dash) => [`${pad(dash)}- ${flow(entries)}`]],
+	['a JSON-style flow mapping', (entries, dash) => [`${pad(dash)}- ${json(entries)}`]],
+	// #187: {"uses":"actions/setup\x2dnode@v7"}.
+	[
+		'a JSON-style flow mapping with its dashes escaped',
+		(entries, dash) => [`${pad(dash)}- ${json(entries).replaceAll('-', '\\x2d')}`]
+	],
+	[
+		'a flow mapping over several lines',
+		(entries, dash) => [
+			`${pad(dash)}- {`,
+			...entries.map(([k, v]) => `${pad(dash + 4)}${k}: ${typeof v === 'string' ? v : flow(v)},`),
+			`${pad(dash + 2)}}`
+		]
+	],
+	[
+		'an anchor on the item',
+		(entries, dash) => [`${pad(dash)}- &step`, ...entries.flatMap((e) => block(e, dash + 2))]
+	],
+	[
+		'the !!map tag on the item',
+		(entries, dash) => [`${pad(dash)}- !!map`, ...entries.flatMap((e) => block(e, dash + 2))]
+	],
+	['a merge key', (entries, dash) => [`${pad(dash)}- <<: ${flow(entries)}`]]
+];
+
+// The lines of a list item whose keys sit at column dash + 2, with the dash
+// on its first line that is no comment.
+function dashed(lines: string[], dash: number): string[] {
+	const first = lines.findIndex((line) => !/^\s*#/.test(line));
+	return lines.map((line, i) => (i === first ? `${pad(dash)}- ${line.slice(dash + 2)}` : line));
+}
+
+// The fixture's setup-node steps: the first line of the item, the column of
+// its dash, the lines of its uses:, with: and node-version-file input (the
+// last line of the step), the entries before uses:, the action and the
+// inputs.
+const NVF = 'node-version-file';
+type Step = {
+	item: number;
+	dash: number;
+	uses: number;
+	with: number;
+	input: number;
+	entries: Entry[];
+	action: string;
+	inputs: Entry[];
+};
+const steps: Step[] = [
+	{
+		item: 8,
+		dash: 6,
+		uses: 8,
+		with: 9,
+		input: 10,
+		entries: [],
+		action: 'actions/setup-node@v7',
+		inputs: [[NVF, '.nvmrc']]
+	},
+	{
+		item: 14,
+		dash: 6,
+		uses: 15,
+		with: 16,
+		input: 20,
+		entries: [['name', 'Set up Node']],
+		action: 'actions/setup-node@v7',
+		inputs: [
+			['cache', 'npm'],
+			[NVF, '.nvmrc']
+		]
+	},
+	{
+		item: 24,
+		dash: 4,
+		uses: 28,
+		with: 29,
+		input: 30,
+		entries: [['name', 'Set up Node']],
+		action: 'https://data.forgejo.org/actions/setup-node@v7',
+		inputs: [[NVF, './.nvmrc']]
+	}
+];
+
+// The fixture's ci.yml with line `at` (1-based) replaced by edits[at], which
+// may hold no line or several.
+function edited(edits: Record<number, string[]>): string {
+	return `${ciLines.flatMap((line, i) => edits[i + 1] ?? [line]).join('\n')}\n`;
+}
+
+// Lines `from` to `to` replaced by `lines`.
+function replaced(from: number, to: number, lines: string[]): Record<number, string[]> {
+	const edits: Record<number, string[]> = { [from]: lines };
+	for (let at = from + 1; at <= to; at++) edits[at] = [];
+	return edits;
+}
+
+// A setup-node step that reads no .nvmrc, added after step a (line 10), in
+// the fixture's layout: `- ` at column 6.
+const addedStep = (lines: string[]) => edited({ 10: [ciLines[9]!, ...dashed(lines, 6)] });
+const ADDED = 'a setup-node step added after line 10 that reads no .nvmrc';
+const addedUses: Entry = ['uses', 'actions/setup-node@v7'];
+
+type Case = { name: string; form: string; text: string };
+const cases: Case[] = [{ name: 'the unmodified fixture', form: 'none', text: fixture[CI]! }];
+function add(form: string, where: string, text: string | null): void {
+	if (text !== null) cases.push({ name: `${form}: ${where}`, form, text });
+}
+
+for (const [name, form] of forms) {
+	for (const step of steps) {
+		// The step's keys sit two columns right of its dash, and its inputs two
+		// more.
+		const keys = step.dash + 2;
+		const inputAt = keys + 2;
+		const nvf = step.inputs.at(-1)![1] as string;
+		// The uses: line, the first line of the item in step a.
+		const uses = form(['uses', step.action], keys);
+		const usesLines = uses && (step.uses === step.item ? dashed(uses, step.dash) : uses);
+		add(name, `the uses: on line ${step.uses}`, usesLines && edited({ [step.uses]: usesLines }));
+		// The with: block.
+		const withBlock = (inputs: Entry[]) => {
+			const lines = form(['with', inputs], keys);
+			return lines && edited(replaced(step.with, step.input, lines));
+		};
+		add(name, `the with: on line ${step.with}`, withBlock(step.inputs));
+		add(
+			name,
+			`the with: on line ${step.with}, plus node-version: 26`,
+			withBlock([...step.inputs, ['node-version', '26']])
+		);
+		add(
+			name,
+			`the with: on line ${step.with}, with ${NVF} nested under extra:`,
+			withBlock(step.inputs.map((e) => (e[0] === NVF ? ['extra', [e]] : e)))
+		);
+		// The node-version-file input.
+		const input = form([NVF, nvf], inputAt);
+		add(name, `the input on line ${step.input}`, input && edited({ [step.input]: input }));
+		const pin = form(['node-version', '26'], inputAt);
+		add(
+			name,
+			`node-version: 26 added after line ${step.input}`,
+			pin && edited({ [step.input]: [ciLines[step.input - 1]!, ...pin] })
+		);
+		const nested = form([NVF, nvf], inputAt + 2);
+		add(
+			name,
+			`the input on line ${step.input}, nested under extra:`,
+			nested && edited({ [step.input]: [`${pad(inputAt)}extra:`, ...nested] })
+		);
+		// A line added to the step, before its with:.
+		const id = form(['id', 'setup'], keys);
+		add(
+			name,
+			`a line added after line ${step.uses}`,
+			id && edited({ [step.uses]: [ciLines[step.uses - 1]!, ...id] })
+		);
+	}
+	const uses = form(addedUses, 8);
+	add(
+		name,
+		`the uses: of ${ADDED}`,
+		uses && addedStep([...uses, ...block(['with', [['cache', 'npm']]], 8)])
+	);
+	const inputs = form(['with', [['cache', 'npm']]], 8);
+	add(name, `the with: of ${ADDED}`, inputs && addedStep([...block(addedUses, 8), ...inputs]));
+	const input = form([NVF, '.node-version'], 10);
+	add(
+		name,
+		`the input of ${ADDED}`,
+		input && addedStep([...block(addedUses, 8), '        with:', ...input])
+	);
+}
+
+for (const [name, form] of itemForms) {
+	const item = `the step as ${name}`;
+	for (const step of steps) {
+		const lines = form([...step.entries, ['uses', step.action], ['with', step.inputs]], step.dash);
+		add(item, `on line ${step.item}`, edited(replaced(step.item, step.input, lines)));
+	}
+	add(
+		item,
+		ADDED,
+		edited({ 10: [ciLines[9]!, ...form([addedUses, ['with', [['cache', 'npm']]]], 6)] })
+	);
+}
+
+// The setup-node steps the parser reads that do not read .nvmrc, as
+// `<job> step <n>`. A !!binary scalar is bytes here, which go-yaml hands
+// Forgejo as text, so it is read as text. A workflow the parser rejects
+// throws: the generator wrote no YAML.
+function parserViolations(text: string): string[] {
+	const doc = parseDocument(text, { merge: true });
+	if (doc.errors.length > 0) {
+		throw new Error(`the parser rejects this case: ${doc.errors[0]!.message}\n${text}`);
+	}
+	const asText = (v: unknown) =>
+		typeof v === 'string' ? v : v instanceof Uint8Array ? new TextDecoder().decode(v) : undefined;
+	const keys = (node: unknown) => (node instanceof Map ? [...node.keys()].map(asText) : []);
+	const get = (node: unknown, key: string): unknown =>
+		node instanceof Map ? [...node].find(([k]) => asText(k) === key)?.[1] : undefined;
+	const violations: string[] = [];
+	const jobs = get(doc.toJS({ mapAsMap: true }), 'jobs');
+	for (const [job, body] of jobs instanceof Map ? jobs : []) {
+		const jobSteps = get(body, 'steps');
+		(Array.isArray(jobSteps) ? jobSteps : []).forEach((step: unknown, i) => {
+			const uses = asText(get(step, 'uses'))?.toLowerCase();
+			if (uses === undefined || !/^(.*\/)?actions\/setup-node@/.test(uses)) return;
+			const inputs = get(step, 'with');
+			const file = asText(get(inputs, NVF));
+			if ((file !== '.nvmrc' && file !== './.nvmrc') || keys(inputs).includes('node-version')) {
+				violations.push(`${asText(job)} step ${i + 1}`);
+			}
+		});
+	}
+	return violations;
+}
+
+function runAsync(target: string): Promise<{ code: number | null; out: string; err: string }> {
+	return new Promise((resolve) => {
+		execFile(scriptPath, [target], { encoding: 'utf8' }, (error, out, err) => {
+			const code = error === null ? 0 : typeof error.code === 'number' ? error.code : null;
+			resolve({ code, out, err });
+		});
+	});
+}
+
+describe('check-node-pins.sh compared with a YAML parser', () => {
+	it('reads the unmodified fixture as the parser does: every step reads .nvmrc', () => {
+		expect(parserViolations(fixture[CI]!)).toEqual([]);
+		passesWith(ALL);
+	});
+
+	it('generates, for every form, a case the parser reads as a violation, each under its own name', () => {
+		const names = [
+			...forms.map(([name]) => name),
+			...itemForms.map(([name]) => `the step as ${name}`)
+		];
+		const found = new Set(
+			cases.filter((c) => parserViolations(c.text).length > 0).map((c) => c.form)
+		);
+		expect(names.filter((name) => !found.has(name))).toEqual([]);
+		expect(new Set(cases.map((c) => c.name)).size).toBe(cases.length);
+	});
+
+	// Each case runs in its own directory, so the cases run side by side.
+	describe.concurrent('never passes a case the parser reads as a violation', () => {
+		// One it() per case rather than it.each, whose $name vitest cuts at 40
+		// characters, before the line the name gives.
+		for (const [i, { name, text }] of cases.entries()) {
+			it(name, async ({ expect }) => {
+				const violations = parserViolations(text);
+				const at = path.join(base, 'yaml', String(i));
+				mkdirSync(path.join(at, '.forgejo', 'workflows'), { recursive: true });
+				for (const [file, content] of Object.entries({ ...fixture, [CI]: text })) {
+					writeFileSync(path.join(at, file), content);
+				}
+				const { code, out, err } = await runAsync(at);
+				expect([0, 1], `check-node-pins.sh exited ${code}:\n${out}${err}`).toContain(code);
+				if (code === 0) expect(violations, `check-node-pins.sh passed on\n${text}`).toEqual([]);
+			});
+		}
 	});
 });
 
