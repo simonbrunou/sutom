@@ -25,7 +25,13 @@ export default defineConfig({
 		environment: 'jsdom',
 		setupFiles: ['src/tests/setup.ts'],
 		globals: true,
-		css: true
+		css: true,
+		// The shared CI runner, loaded by other jobs, ran the tests in 140 s
+		// against 16 s on sbrn, and one test took longer than vitest's 5 s
+		// default (main at 8fdb037, #206). A minute, for tests and for hooks
+		// such as a beforeEach that runs git, leaves room for that load.
+		testTimeout: 60_000,
+		hookTimeout: 60_000
 	},
 	resolve: {
 		conditions: ['browser']
