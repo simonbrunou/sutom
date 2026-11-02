@@ -945,6 +945,31 @@ describe('check-node-pins.sh exits 2', () => {
 	});
 });
 
+// The script holds two programs in single quotes: the awk workflow reader
+// and the node package.json reader. An apostrophe in either, in a comment
+// too, ends that quoting. One alone leaves bash a syntax error at a later
+// line, which names neither the apostrophe nor its line; a pair splices
+// shell text into the program and fails nowhere. The awk program spells a
+// quote as `q`.
+describe('check-node-pins.sh source', () => {
+	it.each([
+		['awk', `awk -v q="'" '`, `  ' "$ROOT/$rel")`],
+		['node', `node -e '`, `  ') || {`]
+	])('holds no apostrophe inside its single-quoted %s program', (_name, opening, closing) => {
+		const lines = readFileSync(scriptPath, 'utf8').split('\n');
+		const start = lines.findIndex((line) => line.endsWith(opening));
+		const end = lines.findIndex((line, i) => i > start && line.startsWith(closing));
+		// An apostrophe on the opening or closing line moves its quote, so
+		// that line no longer matches.
+		expect(start, `a line ending in ${opening}`).toBeGreaterThan(-1);
+		expect(end, `a line after it starting with ${closing.trim()}`).toBeGreaterThan(start);
+		const stray = lines
+			.slice(start + 1, end)
+			.flatMap((line, i) => (line.includes("'") ? [`line ${start + i + 2}: ${line.trim()}`] : []));
+		expect(stray, 'write these without an apostrophe').toEqual([]);
+	});
+});
+
 // The check reads workflows with an awk line reader, since CI runs it before
 // `npm ci`; each gap in that reader was found by hand (#183, #186, #187). Here
 // a YAML parser reads the same workflows (#197). Each case writes one entry of

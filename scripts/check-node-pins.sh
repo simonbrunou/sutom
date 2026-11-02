@@ -166,6 +166,8 @@ read_workflow() {
     esac
   done < <(awk -v q="'" '
     BEGIN {
+      # This program sits in single quotes, so it holds no apostrophe, in
+      # comments too: q holds one. scripts/check-node-pins.test.ts checks.
       body = -1
       lonedash = -1
       # The file starts where a node starts, as after `key:`.
