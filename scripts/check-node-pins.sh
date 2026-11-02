@@ -17,13 +17,24 @@
 #     setup-node prefers over the file. A `node-version` anywhere else in a
 #     workflow (a matrix, an env:) fails too. The step and its `with:` must
 #     be block mappings, `uses:` before `with:`, as in this repo's ci.yml (an
-#     anchor or !!map may name the `with:`); the inputs are the keys at the
-#     indentation of the first line under `with:`, and the body of a block
-#     scalar (run: |) is skipped. A step or `with:` in flow style
-#     (with: { node-version-file: .nvmrc }) fails, and so does any line that
-#     names actions/setup-node@ outside its comment and outside a `uses:`
-#     this reader opens a step on, and so does a `uses:` whose value is a
-#     block scalar (uses: >-), whatever action its skipped body names. So
+#     anchor or !!map may name the `with:`). A `with:` counts only at the
+#     column of the step's own keys, so one under another key of the step
+#     (env: then with:) holds no input. The inputs are the keys at the
+#     indentation of the first line under `with:`. The body of a block
+#     scalar is skipped: after a key, plain or quoted, with or without an
+#     anchor or a tag before the | or > (run: |, my key: &n >-), the lines
+#     indented deeper than the key; after dashes only (- |), the lines
+#     indented deeper than the last dash. A | or > on a line with no key and
+#     no dash, after a line whose value is still to come (run:), fails,
+#     since its body may sit shallower than that line; after any other line
+#     it goes on a plain scalar (run: cat file, then | grep x). A step or
+#     `with:` in flow style (with: { node-version-file: .nvmrc }) fails, and
+#     so does any line that names actions/setup-node@ outside its comment
+#     and outside a `uses:` this reader opens a step on, and so does a
+#     setup-node `uses:` under a key of a setup-node step (env: then uses:),
+#     where YAML reads no step, and so does a `uses:` whose value is a block
+#     scalar (uses: >-, &a uses: |), whatever action its skipped body
+#     names. So
 #     does, anywhere in a workflow, an escape in a double-quoted string
 #     ("node\x2dversion", or {"uses":"actions/setup\x2dnode@v7"}, where a
 #     JSON-style key needs no blank after its colon), an alias (*name), an
@@ -52,7 +63,8 @@
 # cannot be read, and the output names each file, line and value. Exit 2: a
 # wrong call, a <repo dir> that does not exist, or no node on PATH.
 # scripts/check-node-pins.test.ts runs it on edited copies of these files,
-# one failure class per test: add a test there when the parsing changes.
+# one failure class per test, and compares it with a YAML parser on
+# generated workflows: add a test there when the parsing changes.
 set -uo pipefail
 
 if [ $# -gt 1 ]; then
@@ -141,6 +153,8 @@ read_workflow() {
       unclosed) fail "$rel:$line leaves a quoted string open onto the next line, which this check cannot read" ;;
       openflow) fail "$rel:$line leaves a flow mapping or sequence open onto the next line, which this check cannot read" ;;
       blockuses) fail "$rel:$line uses: names its action in a block scalar (| or >), which this check cannot read" ;;
+      blockalone) fail "$rel:$line starts a block scalar (| or >) on a line with no key and no -, which this check cannot read" ;;
+      nested) fail "$rel:$line names actions/setup-node@ under a key of another setup-node step, which this check cannot read" ;;
       unread)
         steps=$((steps + 1))
         fail "$rel:$line actions/setup-node step is not written as a block mapping, which this check cannot read"
@@ -153,6 +167,9 @@ read_workflow() {
   done < <(awk -v q="'" '
     BEGIN {
       body = -1
+      lonedash = -1
+      # The file starts where a node starts, as after `key:`.
+      opened = 1
       # The two input keys, plain or quoted. `node-version` does not match
       # the start of `node-version-file`, since the colon must follow.
       NV = "^[ \t]*(node-version|\"node-version\"|" q "node-version" q ")[ \t]*:"
@@ -208,13 +225,18 @@ read_workflow() {
     # inside a single-quoted string, it is text. In a flow collection, a :
     # right after a quoted scalar or a closed collection starts a value even
     # with no blank after it, as in {"uses":"actions/setup\x2dnode@v7"};
-    # outside one, a : needs a blank after it. Sets code (the line without
-    # its comment), escape, alias, explicit, tag (one other than !!map), and
-    # unclosed for a quoted string still open at the line end, and openflow
-    # for a flow collection ([ or {) still open there or where the comment
-    # starts.
+    # outside one, a : needs a blank after it. A | or > where a node starts
+    # outside a flow collection is a block scalar header. Sets code (the line
+    # without its comment), escape, alias, explicit, tag (one other than
+    # !!map), and unclosed for a quoted string still open at the line end,
+    # and openflow for a flow collection ([ or {) still open there or where
+    # the comment starts, block for a block scalar header, keyed for a key
+    # before it on the line and dashed for a `- ` before it, and opened for
+    # a line that ends where a node starts (key:, - , key: &a), whose value
+    # comes on a later line.
     function scan(s,   n, i, j, c, nx, start, depth, inq, json, wasjson) {
       escape = 0; alias = 0; explicit = 0; tag = 0; unclosed = 0; openflow = 0
+      block = 0; keyed = 0; dashed = 0
       n = length(s); start = 1; depth = 0; inq = ""; json = 0
       for (i = 1; i <= n; i++) {
         c = substr(s, i, 1)
@@ -230,6 +252,7 @@ read_workflow() {
           code = substr(s, 1, i - 1)
           sub(/[ \t]+$/, "", code)
           openflow = (depth > 0)
+          opened = (start && !depth)
           return
         }
         wasjson = json; json = 0
@@ -237,8 +260,10 @@ read_workflow() {
           if (c == "\"" || c == q) { inq = c; start = 0; continue }
           if ((c == "-" || c == "?") && (nx == "" || nx ~ /[ \t]/)) {
             if (c == "?") explicit = 1
+            else dashed = 1
             continue
           }
+          if (!depth && (c == "|" || c == ">")) { block = 1; start = 0; continue }
           if (c == "[" || c == "{") { depth++; continue }
           if (depth && (c == "]" || c == "}")) { depth--; start = 0; json = 1; continue }
           if (c == "!" || c == "&" || c == "*") {
@@ -251,13 +276,16 @@ read_workflow() {
           # A plain scalar starts here.
           start = 0
         }
-        if (c == ":" && (nx == "" || nx ~ /[ \t]/ || (depth && (wasjson || nx ~ /[],{}[]/)))) start = 1
-        else if (depth && c == ",") start = 1
+        if (c == ":" && (nx == "" || nx ~ /[ \t]/ || (depth && (wasjson || nx ~ /[],{}[]/)))) {
+          start = 1
+          if (!depth && !block) keyed = 1
+        } else if (depth && c == ",") start = 1
         else if (depth && (c == "]" || c == "}")) { depth--; json = 1 }
       }
       code = s
       unclosed = (inq != "")
       openflow = (!unclosed && depth > 0)
+      opened = (start && !depth && !unclosed)
     }
     { sub(/\r$/, "") }
     /^[ \t]*(#|$)/ { next }
@@ -273,30 +301,53 @@ read_workflow() {
       # its `with:` block at the next line indented no deeper than `with:`.
       if (open && ind <= step) close_step()
       if (inwith && ind <= withind) inwith = 0
-      # A list item: remember its dash by the column its keys start at.
+      # A list item: remember its dash by the column its keys start at. A
+      # dash with no key after it (-, - &step) has its keys on the next
+      # line, at the column that line starts at.
+      if (lonedash >= 0) { dash[ind] = lonedash; lonedash = -1 }
       if (match($0, /^ *- +/)) dash[RLENGTH] = ind
-      # A key whose value is a block scalar (| or >) starts a body on the
-      # next line. The key is matched from the start of the line, so a `: |`
-      # inside a comment (hidden: # note: |) starts none.
-      if ($0 ~ /^ *(- +)*[^ \t#:]+[ \t]*:[ \t]*[|>][-+0-9]*[ \t]*(#.*)?$/) {
+      wasopen = opened
+      scan($0)
+      low = tolower(code)
+      if (dashed && !keyed && opened) lonedash = ind
+      # A block scalar header (| or >) starts a body on the next line, which
+      # scan() finds where a node starts, so a `: |` inside a comment
+      # (hidden: # note: |) starts none. After a key, plain or quoted, with
+      # an anchor or a tag before the indicator or not (my key: &n |), the
+      # body is the lines indented deeper than the key. After dashes only
+      # (- |), it is the lines indented deeper than the last dash. A | or >
+      # with neither before it on its line is a header only after a line
+      # whose value is still to come (run:), and then its body may sit
+      # shallower than the header, so it prints `blockalone`. After any other
+      # line it is text that goes on a plain scalar (run: cat file, then
+      # | grep x), as YAML reads it.
+      if (block && keyed) {
         match($0, /^ *(- +)*/)
         body = RLENGTH
         # The body is skipped, so a uses: written as one (uses: >-) would
         # hide its action: it prints `blockuses`, whatever the body names.
         # The key is matched in lower case, as the rule that opens a step
-        # matches it.
-        if (tolower($0) ~ ("^ *(- +)*[\"" q "]?uses[\"" q "]?[ \t]*:")) print "blockuses", NR
-      }
-      scan($0)
-      low = tolower(code)
+        # matches it, after any anchor or tag (- &a uses: >-).
+        if (tolower($0) ~ ("^ *(- +)*([&!][^ \t]+[ \t]+)*[\"" q "]?uses[\"" q "]?[ \t]*:")) print "blockuses", NR
+      } else if (block && dashed) {
+        match($0, /^ *(- +)*-/)
+        body = RLENGTH - 1
+      } else if (block && wasopen) print "blockalone", NR
     }
     # actions/setup-node@<ref>, or a full URL to it.
     low ~ ("^[ \t-]*[\"" q "]?uses[\"" q "]?[ \t]*:[ \t]*[\"" q "]?([^ \t\"" q "]*/)?actions/setup-node@") {
+      # A step still open here holds this line under one of its keys (env:,
+      # a list under args:), where YAML reads no step. Opening one would
+      # leave the open step unreported, so it prints `nested`.
+      if (open) { print "nested", NR; next }
       open = NR
       # `- uses:` opens the step; a bare `uses:` belongs to the item whose
-      # keys start at its column.
+      # keys start at its column. Either way the keys of the step, its
+      # with: among them, sit at the column of `uses`.
       if ($0 ~ /^ *- /) step = ind
       else step = (ind in dash) ? dash[ind] : ind - 2
+      match($0, /^ *(- +)*/)
+      keyind = RLENGTH
       next
     }
     # Any other line that names setup-node outside its comment prints
@@ -310,14 +361,15 @@ read_workflow() {
       next
     }
     # A block mapping of inputs, which an anchor (&inputs) or the mapping
-    # tag (!!map) may name first.
-    open && /^[ \t]*with[ \t]*:[ \t]*((&[^ \t#]+|!!map)([ \t]+(&[^ \t#]+|!!map))*)?[ \t]*(#.*)?$/ {
+    # tag (!!map) may name first. A with: deeper than the keys of the step
+    # (env: then with:) is the key of another value, so it holds no input.
+    open && ind == keyind && /^[ \t]*with[ \t]*:[ \t]*((&[^ \t#]+|!!map)([ \t]+(&[^ \t#]+|!!map))*)?[ \t]*(#.*)?$/ {
       inwith = 1; withind = ind; inputind = -1
       next
     }
     # Any other with: of a setup-node step ({ ... }, an alias, another tag)
     # prints `flow`: reading those forms would take a YAML parser.
-    open && /^[ \t]*with[ \t]*:/ { print "flow", NR; open = 0; inwith = 0; next }
+    open && ind == keyind && /^[ \t]*with[ \t]*:/ { print "flow", NR; open = 0; inwith = 0; next }
     # The patterns here would miss a node-version or a setup-node step
     # written with a form scan() flags, so each prints its kind, wherever in
     # the file it is. So does a quoted string or a flow collection that runs
