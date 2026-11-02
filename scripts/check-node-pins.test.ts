@@ -186,6 +186,26 @@ describe('check-node-pins.sh passes', () => {
 		passesWith(ALL);
 	});
 
+	// A with: in such a body is text too, whatever key or list item holds
+	// the body (#197).
+	const withBody = ['with:', '  node-version: 26', 'uses: actions/setup-node@v7'];
+	it.each([
+		[
+			'- | under args:',
+			['        args:', '          - |', ...withBody.map((l) => `            ${l}`)]
+		],
+		[
+			'- &n | under args:',
+			['        args:', '          - &n |', ...withBody.map((l) => `            ${l}`)]
+		],
+		['my key: |', ['        my key: |', ...withBody.map((l) => `          ${l}`)]],
+		['notes: &n >-', ['        notes: &n >-', ...withBody.map((l) => `          ${l}`)]],
+		['"my key": |', ['        "my key": |', ...withBody.map((l) => `          ${l}`)]]
+	])('on a block scalar body (%s) in a setup-node step that mentions with:', (_name, text) => {
+		setLine(CI, 10, `${ciLines[9]}\n${text.join('\n')}`);
+		passesWith(ALL);
+	});
+
 	it.each(['with: &inputs', 'with: !!map # tagged', 'with: !!map &inputs'])(
 		'on a block mapping of inputs named first: %s',
 		(withLine) => {
@@ -413,6 +433,40 @@ describe('check-node-pins.sh fails when a setup-node step does not read .nvmrc',
 		failsWith(`${CI}:8 actions/setup-node step reads no node-version-file: .nvmrc`);
 	});
 
+	// YAML reads no with: in these steps: it is the key of another value, or
+	// text in the body of a block scalar (#197).
+	it.each([
+		[
+			'under another key of the step',
+			['        env:', '          with:', '            node-version-file: .nvmrc']
+		],
+		[
+			'in the body of a block scalar that is a list item',
+			[
+				'        args:',
+				'          - |',
+				'            with:',
+				'              node-version-file: .nvmrc'
+			]
+		],
+		[
+			'in the body of a block scalar whose key holds a blank',
+			['        my key: |', '          with:', '            node-version-file: .nvmrc']
+		],
+		[
+			'in the body of a block scalar after an anchor',
+			['        notes: &n |', '          with:', '            node-version-file: .nvmrc']
+		],
+		[
+			'in the body of a block scalar whose quoted key holds a blank',
+			['        "my key": |', '          with:', '            node-version-file: .nvmrc']
+		]
+	])('a with: %s', (_name, lines) => {
+		setLine(CI, 10, '');
+		setLine(CI, 9, lines.join('\n'));
+		failsWith(`${CI}:8 actions/setup-node step reads no node-version-file: .nvmrc`);
+	});
+
 	it('a step whose with: comes before its uses:', () => {
 		setLine(CI, 10, '');
 		setLine(CI, 9, '');
@@ -615,7 +669,9 @@ describe('check-node-pins.sh fails on a uses: written as a block scalar', () => 
 		['- uses: |', '      - uses: |', 11],
 		['- "uses": >-', '      - "uses": >-', 11],
 		["- 'uses': |-", "      - 'uses': |-", 11],
-		['uses: > under - name:', '      - name: Set up Node\n        uses: >', 12]
+		['uses: > under - name:', '      - name: Set up Node\n        uses: >', 12],
+		['- &a uses: >-, an anchor before the key', '      - &a uses: >-', 11],
+		['- uses: &a |, an anchor before the indicator', '      - uses: &a |', 11]
 	])('%s that names setup-node', (_name, header, line) => {
 		setLine(CI, 11, `${header}\n          actions/setup-node@v7`);
 		failsWith(blockUses(line));
@@ -624,6 +680,21 @@ describe('check-node-pins.sh fails on a uses: written as a block scalar', () => 
 	it('that names another action, which this reader cannot tell', () => {
 		setLine(CI, 11, '      - uses: >-\n          actions/checkout@v7');
 		failsWith(blockUses(11));
+	});
+});
+
+// A block scalar header on a line of its own belongs to the key on the line
+// before, and its body may sit shallower than the header, so this reader
+// cannot tell where the body ends (#197).
+describe('check-node-pins.sh fails on a block scalar header with no key and no dash on its line', () => {
+	it.each([
+		['under a key', '      - run:\n          |\n          npm ci', 12],
+		['after an anchor, under a key', '      - run: &cmd\n          >-\n          npm ci', 12]
+	])('%s', (_name, text, line) => {
+		setLine(CI, 11, text);
+		failsWith(
+			`${CI}:${line} starts a block scalar (| or >) on a line with no key and no -, which this check cannot read`
+		);
 	});
 });
 
