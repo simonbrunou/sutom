@@ -273,6 +273,31 @@ describe('check-node-pins.sh passes', () => {
 		passesWith(ALL);
 	});
 
+	// Job d's item puts its keys at column 8 after a dash at column 4; in job
+	// e, keys at column 8 belong to the dash at column 6 on the line before.
+	it('on a list item whose keys start on the line after its dash', () => {
+		setLine(
+			CI,
+			30,
+			[
+				ciLines[29],
+				'  d:',
+				'    steps:',
+				'    -   uses: actions/checkout@v7',
+				'  e:',
+				'    steps:',
+				'      -',
+				'        uses: actions/setup-node@v7',
+				'        with:',
+				'          node-version-file: .nvmrc',
+				'      - uses: actions/setup-node@v7',
+				'        with:',
+				'          node-version-file: .nvmrc'
+			].join('\n')
+		);
+		passesWith('the 5 actions/setup-node step(s) read .nvmrc');
+	});
+
 	it('on a second workflow without a setup-node step', () => {
 		write('.forgejo/workflows/pdf.yaml', 'jobs:\n  pdf:\n    steps:\n      - run: echo pdf\n');
 		passesWith(ALL);
@@ -1074,7 +1099,7 @@ const forms: [name: string, form: Form][] = [
 	// The entry in a setup-node step nested in another value, which YAML reads
 	// as no step. A second uses: there would be a duplicate key.
 	[
-		'under another key, beside a setup-node uses:',
+		'under another key, beside a uses: of setup-node',
 		(entry, at) =>
 			entry[0] === 'uses'
 				? null

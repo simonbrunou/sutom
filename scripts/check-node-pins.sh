@@ -63,7 +63,8 @@
 # cannot be read, and the output names each file, line and value. Exit 2: a
 # wrong call, a <repo dir> that does not exist, or no node on PATH.
 # scripts/check-node-pins.test.ts runs it on edited copies of these files,
-# one failure class per test: add a test there when the parsing changes.
+# one failure class per test, and compares it with a YAML parser on
+# generated workflows: add a test there when the parsing changes.
 set -uo pipefail
 
 if [ $# -gt 1 ]; then
@@ -166,6 +167,7 @@ read_workflow() {
   done < <(awk -v q="'" '
     BEGIN {
       body = -1
+      lonedash = -1
       # The file starts where a node starts, as after `key:`.
       opened = 1
       # The two input keys, plain or quoted. `node-version` does not match
@@ -299,11 +301,15 @@ read_workflow() {
       # its `with:` block at the next line indented no deeper than `with:`.
       if (open && ind <= step) close_step()
       if (inwith && ind <= withind) inwith = 0
-      # A list item: remember its dash by the column its keys start at.
+      # A list item: remember its dash by the column its keys start at. A
+      # dash with no key after it (-, - &step) has its keys on the next
+      # line, at the column that line starts at.
+      if (lonedash >= 0) { dash[ind] = lonedash; lonedash = -1 }
       if (match($0, /^ *- +/)) dash[RLENGTH] = ind
       wasopen = opened
       scan($0)
       low = tolower(code)
+      if (dashed && !keyed && opened) lonedash = ind
       # A block scalar header (| or >) starts a body on the next line, which
       # scan() finds where a node starts, so a `: |` inside a comment
       # (hidden: # note: |) starts none. After a key, plain or quoted, with
