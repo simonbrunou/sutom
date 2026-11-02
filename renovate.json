@@ -2,6 +2,10 @@
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": ["config:recommended"],
 	"platformAutomerge": true,
+	"lockFileMaintenance": {
+		"description": "Refresh package-lock.json on Renovate's default lockFileMaintenance schedule (#194), so transitive dependencies such as undici pick up fixed releases inside their parents' ranges. OSV vulnerability alerts cover only direct dependencies. The 'Auto-merge low-risk updates' rule automerges these PRs once CI passes.",
+		"enabled": true
+	},
 	"packageRules": [
 		{
 			"description": "Auto-merge low-risk updates once CI passes",
