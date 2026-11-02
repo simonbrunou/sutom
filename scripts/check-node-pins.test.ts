@@ -22,13 +22,8 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { parseDocument } from 'yaml';
-
-// Every test here runs the script, which a loaded CI runner can slow to
-// seconds: on main at 8fdb037 a comparison case took longer than vitest's
-// 5 s default (140 s of tests on the shared runner, against 16 s on sbrn).
-vi.setConfig({ testTimeout: 60_000 });
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const scriptPath = path.join(repo, 'scripts', 'check-node-pins.sh');
