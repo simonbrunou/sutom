@@ -5,6 +5,9 @@
 // the script must read: three setup-node steps that read .nvmrc, written
 // three ways, and @types/node. A test edits one line into one failure class
 // and asserts the exit code and the message that names the file and value.
+// The cases at the end compare the check with a YAML parser instead: they
+// assert only that the check never passes a workflow the parser reads as a
+// violation.
 import { execFile, execFileSync, spawnSync } from 'node:child_process';
 import {
 	copyFileSync,
@@ -234,6 +237,11 @@ describe('check-node-pins.sh passes', () => {
 			'a plain key with no blank after its colon in a flow mapping',
 			5,
 			`${ciLines[4]}\n    env: {A:"b\\x2d"}`
+		],
+		[
+			'a plain scalar that goes on in a line starting with | or >',
+			11,
+			'      - run: cat file\n          | grep x\n      - run: echo hello\n          > out.txt'
 		]
 	])('on %s, which YAML reads as text', (_name, at, text) => {
 		setLine(CI, at, text);
@@ -466,6 +474,36 @@ describe('check-node-pins.sh fails when a setup-node step does not read .nvmrc',
 		setLine(CI, 10, '');
 		setLine(CI, 9, lines.join('\n'));
 		failsWith(`${CI}:8 actions/setup-node step reads no node-version-file: .nvmrc`);
+	});
+
+	// YAML reads no step in a setup-node uses: under a key of a setup-node
+	// step, so the with: beside it is no input of that step either.
+	it.each([
+		[
+			'under env:',
+			[
+				'        env:',
+				'          uses: actions/setup-node@v7',
+				'          with:',
+				'            node-version-file: .nvmrc'
+			]
+		],
+		[
+			'in a list under args:',
+			[
+				'        args:',
+				'          - uses: actions/setup-node@v7',
+				'            with:',
+				'              node-version-file: .nvmrc'
+			]
+		]
+	])('a setup-node uses: %s of a setup-node step, beside a with:', (_name, lines) => {
+		setLine(CI, 10, '');
+		setLine(CI, 9, lines.join('\n'));
+		failsWith(
+			`${CI}:10 names actions/setup-node@ under a key of another setup-node step, which this check cannot read`,
+			`${CI}:8 actions/setup-node step reads no node-version-file: .nvmrc`
+		);
 	});
 
 	it('a step whose with: comes before its uses:', () => {
@@ -884,11 +922,12 @@ describe('check-node-pins.sh exits 2', () => {
 
 // The check reads workflows with an awk line reader, since CI runs it before
 // `npm ci`; each gap in that reader was found by hand (#183, #186, #187). Here
-// a YAML parser reads the same workflows (#197). Each case rewrites one entry
-// of the fixture's setup-node steps in one YAML form, and parses the result
-// with eemeli/yaml, which resolves << merge keys as go-yaml does for Forgejo.
-// The check may refuse any case. It must never exit 0 on one in which the
-// parser finds a setup-node step that reads no .nvmrc or sets node-version.
+// a YAML parser reads the same workflows (#197). Each case writes one entry of
+// the fixture's setup-node steps in one YAML form (or a whole step, or a step
+// it adds), and parses the result with eemeli/yaml, which resolves << merge
+// keys as go-yaml does for Forgejo. The check may refuse any case. It must
+// never exit 0 on one in which the parser finds a setup-node step that reads
+// no .nvmrc or sets node-version.
 
 // A mapping entry: a key and a scalar, or a key and the entries of a block
 // mapping.
@@ -914,6 +953,15 @@ function flow(entries: Entry[]): string {
 	return `{ ${items.join(', ')} }`;
 }
 
+// The lines after a { that ends the line of a key or a dash at column `at`:
+// one entry a line, deeper than the key, as eemeli/yaml requires, then the }.
+function flowLines(entries: Entry[], at: number): string[] {
+	const items = entries.map(
+		([k, v]) => `${pad(at + 4)}${k}: ${typeof v === 'string' ? v : flow(v)},`
+	);
+	return [...items, `${pad(at + 2)}}`];
+}
+
 function json(entries: Entry[]): string {
 	const items = entries.map(
 		([k, v]) => `${JSON.stringify(k)}:${typeof v === 'string' ? JSON.stringify(v) : json(v)}`
@@ -922,11 +970,11 @@ function json(entries: Entry[]): string {
 }
 
 // A form that applies to scalar entries only, or to block mappings only.
-const scalar =
+const scalarOnly =
 	(write: (key: string, value: string, at: number) => string[]): Form =>
 	([key, value], at) =>
 		typeof value === 'string' ? write(key, value, at) : null;
-const mapping =
+const mappingOnly =
 	(write: (key: string, value: Entry[], at: number) => string[]): Form =>
 	([key, value], at) =>
 		typeof value === 'string' ? null : write(key, value, at);
@@ -941,8 +989,8 @@ const forms: [name: string, form: Form][] = [
 	['plain', (entry, at) => block(entry, at)],
 	['a double-quoted key', (entry, at) => block(entry, at, `"${entry[0]}"`)],
 	['a single-quoted key', (entry, at) => block(entry, at, `'${entry[0]}'`)],
-	['a double-quoted value', scalar((k, v, at) => [`${pad(at)}${k}: "${v}"`])],
-	['a single-quoted value', scalar((k, v, at) => [`${pad(at)}${k}: '${v}'`])],
+	['a double-quoted value', scalarOnly((k, v, at) => [`${pad(at)}${k}: "${v}"`])],
+	['a single-quoted value', scalarOnly((k, v, at) => [`${pad(at)}${k}: '${v}'`])],
 	[
 		'a comment after it',
 		(entry, at) => {
@@ -954,43 +1002,49 @@ const forms: [name: string, form: Form][] = [
 		'a comment line before it',
 		(entry, at) => [`${pad(at)}# with: { node-version: 26 }`, ...block(entry, at)]
 	],
-	['the !!str tag', scalar((k, v, at) => [`${pad(at)}${k}: !!str ${v}`])],
-	['the !!map tag', mapping((k, v, at) => afterKey([k, v], at, '!!map'))],
-	['the !!binary tag', scalar((k, v, at) => [`${pad(at)}${k}: !!binary ${btoa(v)}`])],
+	['the !!str tag', scalarOnly((k, v, at) => [`${pad(at)}${k}: !!str ${v}`])],
+	['the !!map tag', mappingOnly((k, v, at) => afterKey([k, v], at, '!!map'))],
+	['the !!binary tag', scalarOnly((k, v, at) => [`${pad(at)}${k}: !!binary ${btoa(v)}`])],
+	['a local tag', (entry, at) => afterKey(entry, at, '!pin')],
 	['an anchor on the value', (entry, at) => afterKey(entry, at, '&v')],
 	['an anchor on the key', (entry, at) => block(entry, at, `&k ${entry[0]}`)],
 	[
 		'an alias of an anchor on another key',
 		([k, v], at) => [...afterKey([`x-${k}`, v], at, '&v'), `${pad(at)}${k}: *v`]
 	],
-	['a merge key', mapping((k, v, at) => [`${pad(at)}${k}:`, `${pad(at + 2)}<<: ${flow(v)}`])],
-	['a flow mapping', mapping((k, v, at) => [`${pad(at)}${k}: ${flow(v)}`])],
-	['a JSON-style flow mapping', mapping((k, v, at) => [`${pad(at)}${k}: ${json(v)}`])],
+	['a merge key', mappingOnly((k, v, at) => [`${pad(at)}${k}:`, `${pad(at + 2)}<<: ${flow(v)}`])],
+	['a flow mapping', mappingOnly((k, v, at) => [`${pad(at)}${k}: ${flow(v)}`])],
+	['a JSON-style flow mapping', mappingOnly((k, v, at) => [`${pad(at)}${k}: ${json(v)}`])],
 	[
 		'a flow mapping over several lines',
-		mapping((k, v, at) => [
-			`${pad(at)}${k}: {`,
-			...v.map(([ck, cv]) => `${pad(at + 4)}${ck}: ${typeof cv === 'string' ? cv : flow(cv)},`),
-			`${pad(at + 2)}}`
-		])
+		mappingOnly((k, v, at) => [`${pad(at)}${k}: {`, ...flowLines(v, at)])
 	],
-	['a flow sequence', scalar((k, v, at) => [`${pad(at)}${k}: [${v}]`])],
-	['a literal block scalar', scalar((k, v, at) => [`${pad(at)}${k}: |-`, `${pad(at + 2)}${v}`])],
-	['a folded block scalar', scalar((k, v, at) => [`${pad(at)}${k}: >-`, `${pad(at + 2)}${v}`])],
+	['a flow sequence', scalarOnly((k, v, at) => [`${pad(at)}${k}: [${v}]`])],
+	[
+		'a literal block scalar',
+		scalarOnly((k, v, at) => [`${pad(at)}${k}: |-`, `${pad(at + 2)}${v}`])
+	],
+	['a folded block scalar', scalarOnly((k, v, at) => [`${pad(at)}${k}: >-`, `${pad(at + 2)}${v}`])],
 	[
 		'a block scalar after an anchor',
-		scalar((k, v, at) => [`${pad(at)}${k}: &v |-`, `${pad(at + 2)}${v}`])
+		scalarOnly((k, v, at) => [`${pad(at)}${k}: &v |-`, `${pad(at + 2)}${v}`])
 	],
-	['the value on the next line', scalar((k, v, at) => [`${pad(at)}${k}:`, `${pad(at + 2)}${v}`])],
+	[
+		'the value on the next line',
+		scalarOnly((k, v, at) => [`${pad(at)}${k}:`, `${pad(at + 2)}${v}`])
+	],
 	[
 		'a double-quoted value over two lines',
-		scalar((k, v, at) => [`${pad(at)}${k}: "${v}`, `${pad(at + 2)}"`])
+		scalarOnly((k, v, at) => [`${pad(at)}${k}: "${v}`, `${pad(at + 2)}"`])
 	],
 	[
 		'an escape in the key',
 		(entry, at) => block(entry, at, `"${hex(entry[0])}${entry[0].slice(1)}"`)
 	],
-	['an escape in the value', scalar((k, v, at) => [`${pad(at)}${k}: "${hex(v)}${v.slice(1)}"`])],
+	[
+		'an escape in the value',
+		scalarOnly((k, v, at) => [`${pad(at)}${k}: "${hex(v)}${v.slice(1)}"`])
+	],
 	[
 		'an explicit key',
 		([k, v], at) =>
@@ -1016,6 +1070,26 @@ const forms: [name: string, form: Form][] = [
 	[
 		'in the body of a block scalar whose quoted key holds a blank',
 		(entry, at) => [`${pad(at)}"my key": |`, ...block(entry, at + 2)]
+	],
+	// The entry in a setup-node step nested in another value, which YAML reads
+	// as no step. A second uses: there would be a duplicate key.
+	[
+		'under another key, beside a setup-node uses:',
+		(entry, at) =>
+			entry[0] === 'uses'
+				? null
+				: [`${pad(at)}other:`, `${pad(at + 2)}uses: actions/setup-node@v7`, ...block(entry, at + 2)]
+	],
+	[
+		'in a setup-node step in a list under another key',
+		(entry, at) =>
+			entry[0] === 'uses'
+				? null
+				: [
+						`${pad(at)}args:`,
+						`${pad(at + 2)}- uses: actions/setup-node@v7`,
+						...block(entry, at + 4)
+					]
 	]
 ];
 
@@ -1029,11 +1103,7 @@ const itemForms: [name: string, form: ItemForm][] = [
 	],
 	[
 		'a flow mapping over several lines',
-		(entries, dash) => [
-			`${pad(dash)}- {`,
-			...entries.map(([k, v]) => `${pad(dash + 4)}${k}: ${typeof v === 'string' ? v : flow(v)},`),
-			`${pad(dash + 2)}}`
-		]
+		(entries, dash) => [`${pad(dash)}- {`, ...flowLines(entries, dash)]
 	],
 	[
 		'an anchor on the item',
@@ -1054,19 +1124,19 @@ function dashed(lines: string[], dash: number): string[] {
 }
 
 // The fixture's setup-node steps: the first line of the item, the column of
-// its dash, the lines of its uses:, with: and node-version-file input (the
-// last line of the step), the entries before uses:, the action and the
-// inputs.
+// its dash, the lines of its uses: and with:, the entries the item forms
+// write before uses: (they leave out step c's env:, a list), the action, and
+// the inputs by line. The last input, node-version-file, is on the last line
+// of the step.
 const NVF = 'node-version-file';
 type Step = {
 	item: number;
 	dash: number;
 	uses: number;
 	with: number;
-	input: number;
 	entries: Entry[];
 	action: string;
-	inputs: Entry[];
+	inputs: [line: number, input: Entry][];
 };
 const steps: Step[] = [
 	{
@@ -1074,22 +1144,20 @@ const steps: Step[] = [
 		dash: 6,
 		uses: 8,
 		with: 9,
-		input: 10,
 		entries: [],
 		action: 'actions/setup-node@v7',
-		inputs: [[NVF, '.nvmrc']]
+		inputs: [[10, [NVF, '.nvmrc']]]
 	},
 	{
 		item: 14,
 		dash: 6,
 		uses: 15,
 		with: 16,
-		input: 20,
 		entries: [['name', 'Set up Node']],
 		action: 'actions/setup-node@v7',
 		inputs: [
-			['cache', 'npm'],
-			[NVF, '.nvmrc']
+			[19, ['cache', 'npm']],
+			[20, [NVF, '.nvmrc']]
 		]
 	},
 	{
@@ -1097,10 +1165,9 @@ const steps: Step[] = [
 		dash: 4,
 		uses: 28,
 		with: 29,
-		input: 30,
 		entries: [['name', 'Set up Node']],
 		action: 'https://data.forgejo.org/actions/setup-node@v7',
-		inputs: [[NVF, './.nvmrc']]
+		inputs: [[30, [NVF, './.nvmrc']]]
 	}
 ];
 
@@ -1125,7 +1192,7 @@ const addedUses: Entry = ['uses', 'actions/setup-node@v7'];
 
 type Case = { name: string; form: string; text: string };
 const cases: Case[] = [{ name: 'the unmodified fixture', form: 'none', text: fixture[CI]! }];
-function add(form: string, where: string, text: string | null): void {
+function addCase(form: string, where: string, text: string | null): void {
 	if (text !== null) cases.push({ name: `${form}: ${where}`, form, text });
 }
 
@@ -1135,60 +1202,83 @@ for (const [name, form] of forms) {
 		// more.
 		const keys = step.dash + 2;
 		const inputAt = keys + 2;
-		const nvf = step.inputs.at(-1)![1] as string;
-		// The uses: line, the first line of the item in step a.
-		const uses = form(['uses', step.action], keys);
-		const usesLines = uses && (step.uses === step.item ? dashed(uses, step.dash) : uses);
-		add(name, `the uses: on line ${step.uses}`, usesLines && edited({ [step.uses]: usesLines }));
-		// The with: block.
-		const withBlock = (inputs: Entry[]) => {
-			const lines = form(['with', inputs], keys);
-			return lines && edited(replaced(step.with, step.input, lines));
+		const inputs = step.inputs.map(([, input]) => input);
+		const [last, [, nvf]] = step.inputs.at(-1)! as [number, [string, string]];
+		// The uses:, a line added to the step before its with:, and each input
+		// but node-version-file, each as it is and with the step's
+		// node-version-file nested under extra:, where the parser reads a
+		// violation.
+		const nesting = { [last]: [`${pad(inputAt)}extra:`, `${pad(inputAt + 2)}${NVF}: ${nvf}`] };
+		for (const [variant, edits] of [
+			['', {}],
+			[`, with ${NVF} nested under extra:`, nesting]
+		] as const) {
+			const uses = form(['uses', step.action], keys);
+			const usesLines = uses && (step.uses === step.item ? dashed(uses, step.dash) : uses);
+			addCase(
+				name,
+				`the uses: on line ${step.uses}${variant}`,
+				usesLines && edited({ ...edits, [step.uses]: usesLines })
+			);
+			const id = form(['id', 'setup'], keys);
+			addCase(
+				name,
+				`a line added after line ${step.uses}${variant}`,
+				id && edited({ ...edits, [step.uses]: [ciLines[step.uses - 1]!, ...id] })
+			);
+			for (const [line, input] of step.inputs.slice(0, -1)) {
+				const lines = form(input, inputAt);
+				addCase(
+					name,
+					`the input on line ${line}${variant}`,
+					lines && edited({ ...edits, [line]: lines })
+				);
+			}
+		}
+		// The with: block, as it is, plus node-version: 26, and with
+		// node-version-file nested under extra:.
+		const withBlock = (written: Entry[]) => {
+			const lines = form(['with', written], keys);
+			return lines && edited(replaced(step.with, last, lines));
 		};
-		add(name, `the with: on line ${step.with}`, withBlock(step.inputs));
-		add(
+		addCase(name, `the with: on line ${step.with}`, withBlock(inputs));
+		addCase(
 			name,
 			`the with: on line ${step.with}, plus node-version: 26`,
-			withBlock([...step.inputs, ['node-version', '26']])
+			withBlock([...inputs, ['node-version', '26']])
 		);
-		add(
+		addCase(
 			name,
 			`the with: on line ${step.with}, with ${NVF} nested under extra:`,
-			withBlock(step.inputs.map((e) => (e[0] === NVF ? ['extra', [e]] : e)))
+			withBlock(inputs.map((e) => (e[0] === NVF ? ['extra', [e]] : e)))
 		);
-		// The node-version-file input.
+		// The node-version-file input, as it is, a node-version: 26 written
+		// after it, and nested under extra:.
 		const input = form([NVF, nvf], inputAt);
-		add(name, `the input on line ${step.input}`, input && edited({ [step.input]: input }));
+		addCase(name, `the input on line ${last}`, input && edited({ [last]: input }));
 		const pin = form(['node-version', '26'], inputAt);
-		add(
+		addCase(
 			name,
-			`node-version: 26 added after line ${step.input}`,
-			pin && edited({ [step.input]: [ciLines[step.input - 1]!, ...pin] })
+			`node-version: 26 added after line ${last}`,
+			pin && edited({ [last]: [ciLines[last - 1]!, ...pin] })
 		);
 		const nested = form([NVF, nvf], inputAt + 2);
-		add(
+		addCase(
 			name,
-			`the input on line ${step.input}, nested under extra:`,
-			nested && edited({ [step.input]: [`${pad(inputAt)}extra:`, ...nested] })
-		);
-		// A line added to the step, before its with:.
-		const id = form(['id', 'setup'], keys);
-		add(
-			name,
-			`a line added after line ${step.uses}`,
-			id && edited({ [step.uses]: [ciLines[step.uses - 1]!, ...id] })
+			`the input on line ${last}, nested under extra:`,
+			nested && edited({ [last]: [`${pad(inputAt)}extra:`, ...nested] })
 		);
 	}
 	const uses = form(addedUses, 8);
-	add(
+	addCase(
 		name,
 		`the uses: of ${ADDED}`,
 		uses && addedStep([...uses, ...block(['with', [['cache', 'npm']]], 8)])
 	);
 	const inputs = form(['with', [['cache', 'npm']]], 8);
-	add(name, `the with: of ${ADDED}`, inputs && addedStep([...block(addedUses, 8), ...inputs]));
+	addCase(name, `the with: of ${ADDED}`, inputs && addedStep([...block(addedUses, 8), ...inputs]));
 	const input = form([NVF, '.node-version'], 10);
-	add(
+	addCase(
 		name,
 		`the input of ${ADDED}`,
 		input && addedStep([...block(addedUses, 8), '        with:', ...input])
@@ -1198,20 +1288,22 @@ for (const [name, form] of forms) {
 for (const [name, form] of itemForms) {
 	const item = `the step as ${name}`;
 	for (const step of steps) {
-		const lines = form([...step.entries, ['uses', step.action], ['with', step.inputs]], step.dash);
-		add(item, `on line ${step.item}`, edited(replaced(step.item, step.input, lines)));
+		const inputs = step.inputs.map(([, input]) => input);
+		const lines = form([...step.entries, ['uses', step.action], ['with', inputs]], step.dash);
+		const last = step.inputs.at(-1)![0];
+		addCase(item, `on line ${step.item}`, edited(replaced(step.item, last, lines)));
 	}
-	add(
+	addCase(
 		item,
 		ADDED,
 		edited({ 10: [ciLines[9]!, ...form([addedUses, ['with', [['cache', 'npm']]]], 6)] })
 	);
 }
 
-// The setup-node steps the parser reads that do not read .nvmrc, as
-// `<job> step <n>`. A !!binary scalar is bytes here, which go-yaml hands
-// Forgejo as text, so it is read as text. A workflow the parser rejects
-// throws: the generator wrote no YAML.
+// The setup-node steps the parser reads that read no .nvmrc or set
+// node-version, as `<job> step <n>`. A !!binary scalar is bytes here, which
+// go-yaml hands Forgejo as text, so it is read as text. A workflow the parser
+// rejects throws: the generator wrote no YAML.
 function parserViolations(text: string): string[] {
 	const doc = parseDocument(text, { merge: true });
 	if (doc.errors.length > 0) {
@@ -1268,8 +1360,8 @@ describe('check-node-pins.sh compared with a YAML parser', () => {
 
 	// Each case runs in its own directory, so the cases run side by side.
 	describe.concurrent('never passes a case the parser reads as a violation', () => {
-		// One it() per case rather than it.each, whose $name vitest cuts at 40
-		// characters, before the line the name gives.
+		// One it() per case: it.for over the case objects would name each by
+		// $name, which vitest cuts at 40 characters, before the line it gives.
 		for (const [i, { name, text }] of cases.entries()) {
 			it(name, async ({ expect }) => {
 				const violations = parserViolations(text);
