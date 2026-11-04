@@ -948,8 +948,10 @@ describe('check-node-pins.sh exits 2', () => {
 // The script holds two programs in single quotes: the awk workflow reader
 // and the node package.json reader. An apostrophe in either, in a comment
 // too, ends that quoting. One alone leaves bash a syntax error at a later
-// line, which names neither the apostrophe nor its line; a pair splices
-// shell text into the program and fails nowhere. The awk program spells a
+// line, which names neither the apostrophe nor its line. A pair splices
+// shell text into the program, which may then fail nowhere; a blank
+// between the two also splits the program into several arguments, and
+// the check may then report some other fault. The awk program spells a
 // quote as `q`.
 describe('check-node-pins.sh source', () => {
 	it.each([
