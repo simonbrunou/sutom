@@ -920,6 +920,80 @@ describe('check-node-pins.sh fails when it cannot read a pin', () => {
 	});
 });
 
+// Put a shim for `name` (awk, sed, node) first on PATH, running `body` in sh
+// with $REAL set to the real command, and return the environment to run the
+// check with. A shim is how these tests make a reader fail: CI runs as root,
+// which reads a mode-000 file.
+function shim(name: string, body: string): NodeJS.ProcessEnv {
+	const bin = path.join(dir, 'bin');
+	mkdirSync(bin, { recursive: true });
+	const real = execFileSync('bash', ['-c', `command -v ${name}`], { encoding: 'utf8' }).trim();
+	writeFileSync(path.join(bin, name), `#!/bin/sh\nREAL='${real}'\n${body}\n`, { mode: 0o755 });
+	return { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` };
+}
+
+// An awk that runs `onCi` on ci.yml, and the real awk on any other workflow.
+function awkOnCi(onCi: string): NodeJS.ProcessEnv {
+	return shim(
+		'awk',
+		`for last; do :; done\ncase "$last" in */ci.yml) ${onCi} ;; esac\nexec "$REAL" "$@"`
+	);
+}
+
+// Run with `env` and expect exit 1, `messages` on stderr and none of `absent`.
+function failsWithEnv(env: NodeJS.ProcessEnv, messages: string[], absent: string[]): void {
+	const { code, err } = run([dir], env);
+	expect(code, err).toBe(1);
+	for (const message of messages) expect(err).toContain(message);
+	for (const message of absent) expect(err).not.toContain(message);
+}
+
+describe('check-node-pins.sh fails, naming the file, when its reader fails', () => {
+	it('an awk that prints nothing on the one workflow, without reporting no setup-node step', () => {
+		failsWithEnv(
+			awkOnCi('echo "awk: shim fails" >&2; exit 2'),
+			['awk: shim fails', `cannot read ${CI}: awk exited 2`],
+			['has no actions/setup-node step']
+		);
+	});
+
+	it('an awk that fails on one workflow, while a second workflow reads .nvmrc', () => {
+		write(
+			'.forgejo/workflows/other.yml',
+			'jobs:\n  a:\n    steps:\n      - uses: actions/setup-node@v7\n        with:\n          node-version-file: .nvmrc\n'
+		);
+		failsWithEnv(awkOnCi('exit 2'), [`cannot read ${CI}: awk exited 2`], []);
+	});
+
+	it('an awk that prints every step of the workflow, then exits non-zero', () => {
+		failsWithEnv(awkOnCi('"$REAL" "$@"; exit 3'), [`cannot read ${CI}: awk exited 3`], []);
+	});
+
+	// A blank line counts as a line, at the end of the output too.
+	it.each([
+		['no line', []],
+		['2 lines', ['-', 's ^24.0.0']],
+		['5 lines', ['-', 's ^24.0.0', '-', '-', '-']],
+		['4 lines, then a blank line', ['-', 's ^24.0.0', '-', '-', '']],
+		['one blank line', ['']]
+	])('a node that prints %s for package.json, and exits 0', (_name, lines) => {
+		const answer = lines.map((line) => `echo '${line}'`).join('\n');
+		failsWithEnv(
+			shim('node', `if [ "$1" = -e ]; then\n${answer}\nexit 0\nfi\nexec "$REAL" "$@"`),
+			[`cannot read package.json: node printed ${lines.length} line(s), not 4`],
+			['is not a string', 'unbound variable']
+		);
+	});
+
+	it('a sed that fails on .nvmrc', () => {
+		failsWithEnv(
+			shim('sed', 'echo "sed: shim fails" >&2; exit 4'),
+			['sed: shim fails', 'cannot read .nvmrc: sed exited 4'],
+			['.nvmrc is empty']
+		);
+	});
+});
+
 describe('check-node-pins.sh exits 2', () => {
 	it('on a directory that does not exist', () => {
 		const { code, err } = run([path.join(base, 'missing')]);
@@ -956,7 +1030,7 @@ describe('check-node-pins.sh exits 2', () => {
 describe('check-node-pins.sh source', () => {
 	it.each([
 		['awk', `awk -v q="'" '`, `  ' "$ROOT/$rel")`],
-		['node', `node -e '`, `  ') || {`]
+		['node', `node -e '`, `  ' && echo .) || {`]
 	])('holds no apostrophe inside its single-quoted %s program', (_name, opening, closing) => {
 		const lines = readFileSync(scriptPath, 'utf8').split('\n');
 		const start = lines.findIndex((line) => line.endsWith(opening));
