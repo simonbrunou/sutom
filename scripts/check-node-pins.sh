@@ -60,7 +60,12 @@
 # the dev shell, and is skipped in CI, which has no nix.
 # Exit 0: every setup-node step reads .nvmrc and every pin reads the same
 # major. Exit 1: a workflow hardcodes node-version, the pins differ, or one
-# cannot be read, and the output names each file, line and value. Exit 2: a
+# cannot be read, and the output names each file, line and value. When awk
+# fails on a workflow, sed fails on .nvmrc, or node prints other than the
+# four lines read_package reads from package.json, the check prints
+# `cannot read <file>` and how the reader ended, after any error the reader
+# printed, and reads nothing the reader printed. It prints `has no
+# actions/setup-node step` only when awk read every workflow. Exit 2: a
 # wrong call, a <repo dir> that does not exist, or no node on PATH.
 # scripts/check-node-pins.test.ts runs it on edited copies of these files,
 # one failure class per test, and compares it with a YAML parser on
@@ -116,7 +121,10 @@ read_nvmrc() {
     fail "$NVMRC not found"
     return
   fi
-  value=$(sed -e 's/\r$//' "$file")
+  value=$(sed -e 's/\r$//' "$file") || {
+    fail "cannot read $NVMRC: sed exited $?"
+    return
+  }
   # Trim the blanks around the version, newlines included.
   value="${value#"${value%%[![:space:]]*}"}"
   value="${value%"${value##*[![:space:]]}"}"
@@ -133,38 +141,8 @@ read_nvmrc() {
 
 # Check the actions/setup-node steps of one workflow file.
 read_workflow() {
-  local rel="$1" kind line value
-  while read -r kind line value; do
-    case "$kind" in
-      step) steps=$((steps + 1)) ;;
-      file)
-        if [ "$value" != "$NVMRC" ] && [ "$value" != "./$NVMRC" ]; then
-          fail "$rel:$line node-version-file '$value' is not $NVMRC"
-        fi
-        ;;
-      pin) fail "$rel:$line actions/setup-node step hardcodes node-version '$value': read $NVMRC with node-version-file instead" ;;
-      nopin) fail "$rel:$line actions/setup-node step reads no node-version-file: $NVMRC" ;;
-      twice) fail "$rel:$line actions/setup-node step sets $value twice" ;;
-      stray) fail "$rel:$line hardcodes node-version outside an actions/setup-node input: $value" ;;
-      escape) fail "$rel:$line holds an escape in a double-quoted string, which this check cannot read" ;;
-      alias) fail "$rel:$line uses a YAML alias, which this check cannot read" ;;
-      explicit) fail "$rel:$line uses a YAML explicit key (?), which this check cannot read" ;;
-      tag) fail "$rel:$line uses a YAML tag other than !!map, which this check cannot read" ;;
-      unclosed) fail "$rel:$line leaves a quoted string open onto the next line, which this check cannot read" ;;
-      openflow) fail "$rel:$line leaves a flow mapping or sequence open onto the next line, which this check cannot read" ;;
-      blockuses) fail "$rel:$line uses: names its action in a block scalar (| or >), which this check cannot read" ;;
-      blockalone) fail "$rel:$line starts a block scalar (| or >) on a line with no key and no -, which this check cannot read" ;;
-      nested) fail "$rel:$line names actions/setup-node@ under a key of another setup-node step, which this check cannot read" ;;
-      unread)
-        steps=$((steps + 1))
-        fail "$rel:$line actions/setup-node step is not written as a block mapping, which this check cannot read"
-        ;;
-      flow)
-        steps=$((steps + 1))
-        fail "$rel:$line actions/setup-node step does not write with: as a block mapping, which this check cannot read"
-        ;;
-    esac
-  done < <(awk -v q="'" '
+  local rel="$1" out kind line value
+  out=$(awk -v q="'" '
     BEGIN {
       # This program sits in single quotes, so it holds no apostrophe, in
       # comments too: q holds one. scripts/check-node-pins.test.ts checks.
@@ -400,12 +378,51 @@ read_workflow() {
     # A node-version key on any other line, a flow mapping included.
     code ~ ("node-version[\"" q "]?[ \t]*:") { print "stray", NR, trimmed(code) }
     END { close_step() }
-  ' "$ROOT/$rel")
+  ' "$ROOT/$rel") || {
+    # The output of an awk that failed may stop anywhere, or never start:
+    # none of it is read, and read_workflows then prints no `has no
+    # actions/setup-node step`, which this file might have disproved.
+    fail "cannot read $rel: awk exited $?"
+    unreadable=1
+    return
+  }
+  while read -r kind line value; do
+    case "$kind" in
+      step) steps=$((steps + 1)) ;;
+      file)
+        if [ "$value" != "$NVMRC" ] && [ "$value" != "./$NVMRC" ]; then
+          fail "$rel:$line node-version-file '$value' is not $NVMRC"
+        fi
+        ;;
+      pin) fail "$rel:$line actions/setup-node step hardcodes node-version '$value': read $NVMRC with node-version-file instead" ;;
+      nopin) fail "$rel:$line actions/setup-node step reads no node-version-file: $NVMRC" ;;
+      twice) fail "$rel:$line actions/setup-node step sets $value twice" ;;
+      stray) fail "$rel:$line hardcodes node-version outside an actions/setup-node input: $value" ;;
+      escape) fail "$rel:$line holds an escape in a double-quoted string, which this check cannot read" ;;
+      alias) fail "$rel:$line uses a YAML alias, which this check cannot read" ;;
+      explicit) fail "$rel:$line uses a YAML explicit key (?), which this check cannot read" ;;
+      tag) fail "$rel:$line uses a YAML tag other than !!map, which this check cannot read" ;;
+      unclosed) fail "$rel:$line leaves a quoted string open onto the next line, which this check cannot read" ;;
+      openflow) fail "$rel:$line leaves a flow mapping or sequence open onto the next line, which this check cannot read" ;;
+      blockuses) fail "$rel:$line uses: names its action in a block scalar (| or >), which this check cannot read" ;;
+      blockalone) fail "$rel:$line starts a block scalar (| or >) on a line with no key and no -, which this check cannot read" ;;
+      nested) fail "$rel:$line names actions/setup-node@ under a key of another setup-node step, which this check cannot read" ;;
+      unread)
+        steps=$((steps + 1))
+        fail "$rel:$line actions/setup-node step is not written as a block mapping, which this check cannot read"
+        ;;
+      flow)
+        steps=$((steps + 1))
+        fail "$rel:$line actions/setup-node step does not write with: as a block mapping, which this check cannot read"
+        ;;
+    esac
+  done <<<"$out"
 }
 
 read_workflows() {
   local file found=0
   steps=0
+  unreadable=0
   if [ ! -d "$ROOT/$WORKFLOWS" ]; then
     fail "$WORKFLOWS not found"
     return
@@ -417,14 +434,14 @@ read_workflows() {
   done
   if [ "$found" -eq 0 ]; then
     fail "$WORKFLOWS has no workflow file"
-  elif [ "$steps" -eq 0 ]; then
+  elif [ "$steps" -eq 0 ] && [ "$unreadable" -eq 0 ]; then
     fail "$WORKFLOWS has no actions/setup-node step"
   fi
 }
 
 read_package() {
   local file="$ROOT/$PACKAGE" values field key types=0 i
-  local -a lines
+  local -a lines=()
   if [ ! -f "$file" ]; then
     fail "$PACKAGE not found"
     return
@@ -448,7 +465,12 @@ read_package() {
     fail "$PACKAGE is not valid JSON"
     return
   }
-  mapfile -t lines <<<"$values"
+  # A here-string of "" gives mapfile one empty line, so no output counts 0.
+  if [ -n "$values" ]; then mapfile -t lines <<<"$values"; fi
+  if [ "${#lines[@]}" -ne 4 ]; then
+    fail "cannot read $PACKAGE: node printed ${#lines[@]} lines, not 4"
+    return
+  fi
   field=${lines[0]}
   case "$field" in
     -) ;;
