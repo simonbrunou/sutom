@@ -969,12 +969,18 @@ describe('check-node-pins.sh fails, naming the file, when its reader fails', () 
 		failsWithEnv(awkOnCi('"$REAL" "$@"; exit 3'), [`cannot read ${CI}: awk exited 3`], []);
 	});
 
-	it.each([0, 2, 5])('a node that prints %i lines for package.json, and exits 0', (count) => {
-		const lines = ['-', 's ^24.0.0', '-', '-', '-'].slice(0, count);
+	// A blank line counts as a line, at the end of the output too.
+	it.each([
+		['no line', []],
+		['2 lines', ['-', 's ^24.0.0']],
+		['5 lines', ['-', 's ^24.0.0', '-', '-', '-']],
+		['4 lines, then a blank line', ['-', 's ^24.0.0', '-', '-', '']],
+		['one blank line', ['']]
+	])('a node that prints %s for package.json, and exits 0', (_name, lines) => {
 		const answer = lines.map((line) => `echo '${line}'`).join('\n');
 		failsWithEnv(
 			shim('node', `if [ "$1" = -e ]; then\n${answer}\nexit 0\nfi\nexec "$REAL" "$@"`),
-			[`cannot read package.json: node printed ${count} lines, not 4`],
+			[`cannot read package.json: node printed ${lines.length} line(s), not 4`],
 			['is not a string', 'unbound variable']
 		);
 	});
@@ -1024,7 +1030,7 @@ describe('check-node-pins.sh exits 2', () => {
 describe('check-node-pins.sh source', () => {
 	it.each([
 		['awk', `awk -v q="'" '`, `  ' "$ROOT/$rel")`],
-		['node', `node -e '`, `  ') || {`]
+		['node', `node -e '`, `  ' && echo .) || {`]
 	])('holds no apostrophe inside its single-quoted %s program', (_name, opening, closing) => {
 		const lines = readFileSync(scriptPath, 'utf8').split('\n');
 		const start = lines.findIndex((line) => line.endsWith(opening));

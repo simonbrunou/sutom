@@ -461,14 +461,17 @@ read_package() {
     console.log(field(pkg?.devDependencies?.["@types/node"]));
     console.log(field(pkg?.dependencies?.["@types/node"]));
     console.log(field(pkg?.devEngines?.runtime));
-  ') || {
+  ' && echo .) || {
     fail "$PACKAGE is not valid JSON"
     return
   }
-  # A here-string of "" gives mapfile one empty line, so no output counts 0.
-  if [ -n "$values" ]; then mapfile -t lines <<<"$values"; fi
+  # $( ) drops the newlines at the end of what it captures, so the blank
+  # lines node printed last would go uncounted: the dot after them keeps
+  # them. printf adds no newline, so mapfile counts the lines node printed.
+  values=${values%.}
+  mapfile -t lines < <(printf '%s' "$values")
   if [ "${#lines[@]}" -ne 4 ]; then
-    fail "cannot read $PACKAGE: node printed ${#lines[@]} lines, not 4"
+    fail "cannot read $PACKAGE: node printed ${#lines[@]} line(s), not 4"
     return
   fi
   field=${lines[0]}
