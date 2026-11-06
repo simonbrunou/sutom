@@ -985,6 +985,51 @@ describe('check-node-pins.sh fails, naming the file, when its reader fails', () 
 		);
 	});
 
+	// A preload that makes readFileSync throw for package.json, as an I/O
+	// error would: root, as in CI, reads a mode-000 file.
+	it('a node that cannot read package.json, printing its error without a stack trace', () => {
+		const preload = path.join(dir, 'unreadable.cjs');
+		writeFileSync(
+			preload,
+			[
+				'const fs = require("node:fs");',
+				'const readFileSync = fs.readFileSync;',
+				'fs.readFileSync = function (file, ...rest) {',
+				'	if (file !== process.env.PIN_FILE) return readFileSync.call(this, file, ...rest);',
+				'	const error = new Error("EIO: shim i/o error, read");',
+				'	error.code = "EIO";',
+				'	throw error;',
+				'};'
+			].join('\n')
+		);
+		failsWithEnv(
+			shim('node', `exec "$REAL" --require '${preload}' "$@"`),
+			['EIO: shim i/o error, read', 'cannot read package.json: node exited'],
+			['is not valid JSON', '    at ']
+		);
+	});
+
+	it('a node that fails on its own, with an exit code of its own', () => {
+		failsWithEnv(
+			shim(
+				'node',
+				'if [ "$1" = -e ]; then\necho "node: shim fails" >&2\nexit 7\nfi\nexec "$REAL" "$@"'
+			),
+			['node: shim fails', 'cannot read package.json: node exited 7'],
+			['is not valid JSON']
+		);
+	});
+
+	// Node exits 1 for an uncaught exception, and for a --require it cannot
+	// find, before the program runs.
+	it('a node that exits 1 before running the program', () => {
+		failsWithEnv(
+			shim('node', `exec "$REAL" --require '${path.join(dir, 'missing.cjs')}' "$@"`),
+			['Cannot find module', 'cannot read package.json: node exited 1'],
+			['is not valid JSON']
+		);
+	});
+
 	it('a sed that fails on .nvmrc', () => {
 		failsWithEnv(
 			shim('sed', 'echo "sed: shim fails" >&2; exit 4'),
