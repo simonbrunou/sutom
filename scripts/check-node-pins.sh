@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Check that CI and the production build read one Node version (#168): the
-# Node of both comes from .nvmrc, and the Node types name the same major. CI
-# runs this script before `npm ci`, so a local run runs the same check.
+# Check that CI and the production build read one Node major (#168): the
+# Node of both comes from .nvmrc, and the Node types name the same major. The
+# production build can run an older patch of it than CI (AGENTS.md, "Node
+# version", says why). CI runs this script before `npm ci`, so a local run
+# runs the same check.
 #
 #   scripts/check-node-pins.sh [<repo dir>]
 #

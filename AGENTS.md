@@ -25,9 +25,17 @@ Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain
 
 ## Node version
 
-`.nvmrc` is the one Node pin: CI's `actions/setup-node` reads it through `node-version-file`, and railpack builds production on it. `scripts/check-node-pins.sh` runs in CI before `npm ci` and fails when a workflow hardcodes `node-version` or when `.nvmrc` and `@types/node` name different majors; its header lists every rule. Renovate's `Node.js` group moves `.nvmrc` and `@types/node` in one PR.
+`.nvmrc` is the one Node pin: CI's `actions/setup-node` reads it through `node-version-file`, and railpack builds production on its major. `scripts/check-node-pins.sh` runs in CI before `npm ci` and fails when a workflow hardcodes `node-version` or when `.nvmrc` and `@types/node` name different majors; its header lists every rule. Renovate's `Node.js` group moves `.nvmrc` and `@types/node` in one PR.
 
 Railpack reads `engines.node` and `devEngines.runtime` in `package.json`, and a `RAILPACK_NODE_VERSION` variable on the Coolify app, before `.nvmrc`, so set Node in `.nvmrc` only. The dev shell reads `.nvmrc` too: `flake.nix` takes `nodejs_<major>` from the locked nixpkgs, and `.envrc` watches `.nvmrc`, so direnv rebuilds the shell on the next entry. When the locked nixpkgs lacks a new major, the shell fails naming `nodejs_<major>`: run `nix flake update`. The check's warning that the shell runs another major means the shell has not reloaded (run `direnv reload`, or start a new `nix develop`), or that nix-direnv kept the previous shell after a failed evaluation, which it reports as `Falling back to previous environment`: fix that error first.
+
+CI and production share the `.nvmrc` major, not always its patch. CI's setup-node downloads the newest release of the major on every run. Railpack's plan names that release too, but the mise config it generates sets `minimum_release_age = "14d"`, and `mise install` installs the newest release of the major that is at least 14 days old. BuildKit caches that install step until Coolify's forced Docker cleanup prunes the railpack builder's cache, every night at 00:00 UTC (the sutom server's `docker_cleanup_frequency`, a Coolify setting outside this repo). The cleanup skips that prune while a deploy is queued or running. So only the first deploy after a prune reinstalls Node, and production misses each new release for its first 14 days, then until the next deploy that follows a prune. Production's patch is the `node@<version>` of the newest deploy that reinstalled Node (its log shows `mise ✓ node@<version>`):
+
+```sh
+ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select q.id, q.created_at, substring(q.logs from 'node@[0-9.]+  extracting') from application_deployment_queues q join applications a on a.id = q.application_id::int where a.uuid = '33k9gghhdlx4kzdivylxuopr' and q.logs ~ 'node@[0-9.]+  extracting' order by q.id desc limit 1\""
+```
+
+Production installs with railpack's `npm install`, CI with `npm ci`. Both install the tree in `package-lock.json` while it matches `package.json`. `npm ci` fails on a lockfile out of sync with `package.json`, and `main` takes a PR only once CI passes, so such a lockfile stops at its PR.
 
 ## Formatting
 
