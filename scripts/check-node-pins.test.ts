@@ -986,7 +986,8 @@ describe('check-node-pins.sh fails, naming the file, when its reader fails', () 
 	});
 
 	// A preload that makes readFileSync throw for package.json, as an I/O
-	// error would: root, as in CI, reads a mode-000 file.
+	// error would: root, as in CI, reads a mode-000 file. The message holds a
+	// newline, which the check prints as a blank, on one line.
 	it('a node that cannot read package.json, printing its error without a stack trace', () => {
 		const preload = path.join(dir, 'unreadable.cjs');
 		writeFileSync(
@@ -996,7 +997,7 @@ describe('check-node-pins.sh fails, naming the file, when its reader fails', () 
 				'const readFileSync = fs.readFileSync;',
 				'fs.readFileSync = function (file, ...rest) {',
 				'	if (file !== process.env.PIN_FILE) return readFileSync.call(this, file, ...rest);',
-				'	const error = new Error("EIO: shim i/o error, read");',
+				'	const error = new Error("EIO: shim i/o error,\\nread");',
 				'	error.code = "EIO";',
 				'	throw error;',
 				'};'

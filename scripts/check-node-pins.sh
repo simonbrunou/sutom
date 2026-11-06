@@ -69,8 +69,8 @@
 # package.json that is not JSON, a code node and bash never use for their
 # own failures, and only that exit prints `package.json is not valid JSON`.
 # It prints `has no actions/setup-node step` only when awk read every
-# workflow. Exit 2: a
-# wrong call, a <repo dir> that does not exist, or no node on PATH.
+# workflow. Exit 2: a wrong call, a <repo dir> that does not exist, or no
+# node on PATH.
 # scripts/check-node-pins.test.ts runs it on edited copies of these files,
 # one failure class per test, and compares it with a YAML parser on
 # generated workflows: add a test there when the parsing changes.
@@ -455,8 +455,8 @@ read_package() {
   # devDependencies and of dependencies, devEngines.runtime. The program
   # exits 65 when the file is not JSON, and 66, after printing the error on
   # one line, when it cannot read the file. The exit codes node documents
-  # for its own failures are 1 to 14, 124 and 128 plus a signal, and bash
-  # adds 126 and 127, so 65 means a parse failure only.
+  # for its own failures are 1, 3 to 7, 9, 10, 12 to 14, 124 and 128 plus a
+  # signal, and bash adds 126 and 127, so 65 means a parse failure only.
   values=$(PIN_FILE="$file" node -e '
     let text, pkg;
     try {
