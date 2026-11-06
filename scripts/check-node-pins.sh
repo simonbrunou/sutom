@@ -61,12 +61,16 @@
 # Exit 0: every setup-node step reads .nvmrc and every pin reads the same
 # major. Exit 1: a workflow hardcodes node-version, the pins differ, or one
 # cannot be read, and the output names each file, line and value. When awk
-# fails on a workflow, sed fails on .nvmrc, or node prints other than the
-# four lines read_package reads from package.json, the check prints
-# `cannot read <file>` and how the reader ended, after any error the reader
-# printed, and reads nothing the reader printed. It prints `has no
-# actions/setup-node step` only when awk read every workflow. Exit 2: a
-# wrong call, a <repo dir> that does not exist, or no node on PATH.
+# fails on a workflow, sed fails on .nvmrc, or node fails on package.json
+# (it cannot read the file, or node itself fails) or prints other than the
+# four lines read_package reads from it, the check prints `cannot read
+# <file>` and how the reader ended, after any error the reader printed, and
+# reads nothing the reader printed. The node program exits 65 only for a
+# package.json that is not JSON, a code node and bash never use for their
+# own failures, and only that exit prints `package.json is not valid JSON`.
+# It prints `has no actions/setup-node step` only when awk read every
+# workflow. Exit 2: a wrong call, a <repo dir> that does not exist, or no
+# node on PATH.
 # scripts/check-node-pins.test.ts runs it on edited copies of these files,
 # one failure class per test, and compares it with a YAML parser on
 # generated workflows: add a test there when the parsing changes.
@@ -440,7 +444,7 @@ read_workflows() {
 }
 
 read_package() {
-  local file="$ROOT/$PACKAGE" values field key types=0 i
+  local file="$ROOT/$PACKAGE" values field key types=0 i code
   local -a lines=()
   if [ ! -f "$file" ]; then
     fail "$PACKAGE not found"
@@ -448,13 +452,23 @@ read_package() {
   fi
   # Four lines, each `-` when the field is absent, `s <text>` for a string
   # and `x` for any other value: engines.node, the @types/node of
-  # devDependencies and of dependencies, devEngines.runtime.
+  # devDependencies and of dependencies, devEngines.runtime. The program
+  # exits 65 when the file is not JSON, and 66, after printing the error on
+  # one line, when it cannot read the file. The exit codes node documents
+  # for its own failures are 1, 3 to 7, 9, 10, 12 to 14, 124 and 128 plus a
+  # signal, and bash adds 126 and 127, so 65 means a parse failure only.
   values=$(PIN_FILE="$file" node -e '
-    let pkg;
+    let text, pkg;
     try {
-      pkg = JSON.parse(require("fs").readFileSync(process.env.PIN_FILE, "utf8"));
+      text = require("fs").readFileSync(process.env.PIN_FILE, "utf8");
+    } catch (error) {
+      console.error(String(error?.message ?? error).replace(/\n/g, " "));
+      process.exit(66);
+    }
+    try {
+      pkg = JSON.parse(text);
     } catch {
-      process.exit(1);
+      process.exit(65);
     }
     const field = (v) => (v === undefined ? "-" : typeof v === "string" ? `s ${v.replace(/\n/g, " ")}` : "x");
     console.log(field(pkg?.engines?.node));
@@ -462,7 +476,14 @@ read_package() {
     console.log(field(pkg?.dependencies?.["@types/node"]));
     console.log(field(pkg?.devEngines?.runtime));
   ' && echo .) || {
-    fail "$PACKAGE is not valid JSON"
+    # $? is the exit code of node, since the echo runs only after node
+    # exits 0. What node printed is not read.
+    code=$?
+    if [ "$code" -eq 65 ]; then
+      fail "$PACKAGE is not valid JSON"
+    else
+      fail "cannot read $PACKAGE: node exited $code"
+    fi
     return
   }
   # $( ) drops the newlines at the end of what it captures, so the blank
