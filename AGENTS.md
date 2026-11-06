@@ -41,7 +41,7 @@ Agents may merge their own PR without asking once all three hold:
 - CI is green on the pushed SHA;
 - the pushed SHA has no conflict with `origin/main`. Run `git fetch origin` right before merging, then check that `git merge-tree --write-tree origin/main <pushed SHA>` exits 0.
 
-When the branch is behind `main` but has no conflict, merge it as it is. The accepted risk is that two PRs that pass on their own can break `main` together. The CI run on the newest `main` commit shows such a break, so check it after the merge and fix a red one in a new PR. Check it only when `git rev-parse <merge sha>^{tree} <pushed SHA>^{tree}` prints two different hashes. One hash twice means the merge commit holds the files CI tested on the pushed SHA, as when `main` had not moved since the branch left it, and the `push` run repeats the job that passed on them (on sutom#213 that wait took 12 minutes).
+When the branch is behind `main` but has no conflict, merge it as it is. The accepted risk is that two PRs that pass on their own can break `main` together. The CI run on the newest `main` commit shows such a break. After the merge, run `git fetch origin`, then `git rev-parse <merge sha>^{tree} <pushed SHA>^{tree}`. Two different hashes mean the merge commit holds files CI has not tested together, so wait for that run and fix a red one in a new PR. The same hash twice means the merge commit holds the files CI already passed on the pushed SHA, and the `push` run repeats that job on them, so skip the wait.
 
 On a conflict, merge `origin/main` into the branch, resolve it, run `npm ci && npm run lint && npm run check && npm run test && npm run build`, push, wait for CI on the new head, and check all three conditions again.
 
