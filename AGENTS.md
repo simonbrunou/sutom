@@ -41,6 +41,12 @@ Production installs with railpack's `npm install`, CI with `npm ci`. Both instal
 
 Prettier formats the repo in the SvelteKit template's style: `.prettierrc` sets tabs, single quotes, no trailing commas and a print width of 100, and `prettier-plugin-svelte` formats `.svelte` files. `npm run lint` runs `prettier --check .` before ESLint, so CI's Lint step fails on any file Prettier would change and names it: run `npm run format` and commit the result. Prettier skips the paths in `.gitignore` and `.prettierignore`, `graphify-out/` included, so `npm run format` leaves the graph alone.
 
+## Review
+
+Paste this paragraph, as it stands, into the brief of every review sub-agent:
+
+> Make a mutation check (a scratch edit to the code under test) only in a checkout of your own, so the author and the other reviewers keep seeing the files under review in the author's checkout. Create it in one shell call, `D=$(mktemp -d) && git worktree add --detach "$D" <head sha> && echo "$D"`, and copy the path it prints. Your next shell call starts back in the author's checkout without `$D`, so start each later call with `cd <that path> &&`: install with `nix develop . -c npm ci`, then run the test file with `nix develop . -c npx vitest run <file>`. Edit files there by that path. When done, delete the checkout with `git worktree remove --force <that path>`.
+
 ## Merge authority
 
 Agents may merge their own PR without asking once all three hold:
