@@ -143,7 +143,18 @@ describe('check-graph-diff.sh passes', () => {
 		commit({ 'src/lib/game.ts': 'export const x = 2;\n' });
 		const parent = commit({ 'src/lib/new.ts': 'export {};\n' });
 		refresh();
-		passesWith(`a refresh built from its parent ${parent.slice(0, 12)} and titled sutom`);
+		passesWith(`the last commit is a refresh, built from its parent ${parent.slice(0, 12)}`);
+	});
+
+	// Decision 2(a) on #178: the check reads the last commit only. #229 asks
+	// whether to fail this shape too.
+	it('when an earlier commit adds a file under graphify-out/ that the last refresh keeps', () => {
+		commit({ 'src/lib/game.ts': 'export const x = 2;\n', 'graphify-out/stray.json': '{}\n' });
+		refresh();
+		const { code, out, err } = run();
+		expect(code, err).toBe(0);
+		expect(out).toContain('the diff changes graphify-out/ and the last commit is a refresh');
+		expect(out).not.toContain('only in the last commit');
 	});
 
 	it('on a PR that is one refresh', () => {
@@ -164,7 +175,9 @@ describe('check-graph-diff.sh passes', () => {
 			[repo]
 		);
 		expect(code, err).toBe(0);
-		expect(out).toContain('to 5974bed0fe54, graphify-out/ changes only in the last commit');
+		expect(out).toContain(
+			'to 5974bed0fe54, the diff changes graphify-out/ and the last commit is a refresh'
+		);
 	});
 });
 
@@ -330,6 +343,24 @@ describe('check-graph-diff.sh refuses a wrong call', () => {
 		const { code, err } = run({ GRAPH_CHECK_HEAD: 'no-such-ref' });
 		expect(code).toBe(2);
 		expect(err).toContain('the head no-such-ref (GRAPH_CHECK_HEAD) names no commit');
+	});
+
+	it('on a head that names a tree, not a commit', () => {
+		const { code, err } = run({ GRAPH_CHECK_HEAD: 'HEAD:src' });
+		expect(code).toBe(2);
+		expect(err).toContain('the head HEAD:src (GRAPH_CHECK_HEAD) names no commit');
+	});
+
+	it('when git cannot read the trees it diffs, instead of finding no change', () => {
+		commit({ [REPORT]: title('t3-issue-178') });
+		// Delete the loose object of the head's graphify-out/ tree: the commits
+		// stay readable, so only the diff fails.
+		const tree = git('rev-parse', 'HEAD:graphify-out');
+		rmSync(path.join(checkout, '.git', 'objects', tree.slice(0, 2), tree.slice(2)));
+		const { code, out, err } = run();
+		expect(code).toBe(2);
+		expect(err).toMatch(/git diff \w{12} \w{12} failed/);
+		expect(out).toBe('');
 	});
 
 	it('on a base with no merge base with the head', () => {

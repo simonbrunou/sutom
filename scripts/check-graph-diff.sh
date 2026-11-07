@@ -132,7 +132,7 @@ else
 fi
 
 if [ "${#fails[@]}" -eq 0 ]; then
-  echo "check-graph-diff: from ${mb:0:12} (the merge base with $base_ref) to ${head:0:12}, $OUT/ changes only in the last commit, a refresh built from its parent ${parent:0:12} and titled sutom"
+  echo "check-graph-diff: from ${mb:0:12} (the merge base with $base_ref) to ${head:0:12}, the diff changes $OUT/ and the last commit is a refresh, built from its parent ${parent:0:12} and titled sutom"
   exit 0
 fi
 
