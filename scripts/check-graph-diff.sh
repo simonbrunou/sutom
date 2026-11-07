@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Check that a PR leaves graphify-out/ out of its diff, or changes it only in
-# a refresh, committed alone and last on the branch (#178). AGENTS.md,
+# Check that a PR leaves graphify-out/ out of its diff, or else ends in a
+# refresh, committed alone and last on the branch (#178). AGENTS.md,
 # `## graphify`, sets the rule: feature and fix PRs leave graphify-out/ out,
 # and a refresh by scripts/refresh-graph.sh lands as the last commit of a PR
 # about the graph. CI runs this on every pull_request to main, and a local

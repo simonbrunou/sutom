@@ -363,6 +363,23 @@ describe('check-graph-diff.sh refuses a wrong call', () => {
 		expect(out).toBe('');
 	});
 
+	it('when git cannot read the trees of the last commit, instead of finding nothing outside graphify-out/', () => {
+		const parent = git('rev-parse', 'HEAD');
+		commit({
+			'src/lib/game.ts': 'export const x = 2;\n',
+			[GRAPH]: graph(parent),
+			[REPORT]: title('sutom')
+		});
+		// The diff under graphify-out/ never reads src/, so only the diff of
+		// the last commit outside graphify-out/ fails.
+		const tree = git('rev-parse', 'HEAD:src');
+		rmSync(path.join(checkout, '.git', 'objects', tree.slice(0, 2), tree.slice(2)));
+		const { code, out, err } = run();
+		expect(code).toBe(2);
+		expect(err).toContain(`git diff ${parent.slice(0, 12)} `);
+		expect(out).toBe('');
+	});
+
 	it('on a base with no merge base with the head', () => {
 		git('checkout', '-q', '--orphan', 'unrelated');
 		commit({ 'other.txt': 'x\n' });
