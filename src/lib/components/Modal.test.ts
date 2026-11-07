@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
+import userEvent from '@testing-library/user-event';
 import ModalTestWrapper from './ModalTestWrapper.svelte';
+import ModalFocusTestWrapper from './ModalFocusTestWrapper.svelte';
 
 describe('Modal', () => {
 	it('renders when open is true', () => {
@@ -68,5 +70,65 @@ describe('Modal', () => {
 		const backdrop = screen.getByTestId('modal');
 		await fireEvent.click(backdrop);
 		expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+	});
+});
+
+describe('Modal focus', () => {
+	// Opens the modal from its trigger and waits for the focus Modal moves to its first
+	// focusable element, the close button, in a requestAnimationFrame.
+	async function openFromTrigger() {
+		const user = userEvent.setup();
+		render(ModalFocusTestWrapper);
+		const trigger = screen.getByRole('button', { name: 'Ouvrir' });
+		await user.click(trigger);
+		const close = screen.getByTestId('modal-close');
+		await waitFor(() => expect(close).toHaveFocus());
+		return {
+			user,
+			trigger,
+			close,
+			input: screen.getByRole('textbox', { name: 'Mot' }),
+			last: screen.getByRole('button', { name: 'Valider' })
+		};
+	}
+
+	it('focuses the close button when it opens', async () => {
+		await openFromTrigger();
+	});
+
+	it('moves focus from the last element to the close button on Tab', async () => {
+		const { user, close, last } = await openFromTrigger();
+		last.focus();
+		expect(last).toHaveFocus();
+		await user.tab();
+		expect(close).toHaveFocus();
+	});
+
+	it('moves focus from the close button to the last element on Shift+Tab', async () => {
+		const { user, last } = await openFromTrigger();
+		await user.tab({ shift: true });
+		expect(last).toHaveFocus();
+	});
+
+	it('leaves Tab between inner elements to the browser', async () => {
+		const { user, input, last } = await openFromTrigger();
+		input.focus();
+		expect(input).toHaveFocus();
+		await user.tab();
+		expect(last).toHaveFocus();
+	});
+
+	it('gives focus back to the trigger when the close button closes it', async () => {
+		const { user, trigger, close } = await openFromTrigger();
+		await user.click(close);
+		expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+		expect(trigger).toHaveFocus();
+	});
+
+	it('gives focus back to the trigger when Escape closes it', async () => {
+		const { user, trigger } = await openFromTrigger();
+		await user.keyboard('{Escape}');
+		expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+		expect(trigger).toHaveFocus();
 	});
 });
