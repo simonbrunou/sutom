@@ -43,7 +43,9 @@ Prettier formats the repo in the SvelteKit template's style: `.prettierrc` sets 
 
 ## Review
 
-Paste this rule into the brief of every review sub-agent: a reviewer makes a mutation check (a scratch edit to the code under test) only in a checkout of its own, so that the author and any other reviewer working in the author's checkout keep seeing the files under review. On cinder#884, one reviewer's `git checkout --` undid the other's mutation in a shared worktree. The reviewer creates its checkout with `D=$(mktemp -d) && git worktree add --detach "$D" <head sha>`, runs `nix develop . -c npm ci` and then the test file it checks in `$D`, and deletes it with `git worktree remove --force "$D"` when done.
+Paste this paragraph, as it stands, into the brief of every review sub-agent:
+
+> Make a mutation check (a scratch edit to the code under test) only in a checkout of your own, so the author and the other reviewers keep seeing the files under review in the author's checkout. Create it in one shell call, `D=$(mktemp -d) && git worktree add --detach "$D" <head sha> && echo "$D"`, and copy the path it prints. Your next shell call starts back in the author's checkout without `$D`, so start each later call with `cd <that path> &&`: install with `nix develop . -c npm ci`, then run the test file with `nix develop . -c npx vitest run <file>`. Edit files there by that path. When done, delete the checkout with `git worktree remove --force <that path>`.
 
 ## Merge authority
 
