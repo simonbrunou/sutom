@@ -118,6 +118,14 @@ describe('Modal focus', () => {
 		expect(last).toHaveFocus();
 	});
 
+	it('leaves Shift+Tab between inner elements to the browser', async () => {
+		const { user, input, last } = await openFromTrigger();
+		last.focus();
+		expect(last).toHaveFocus();
+		await user.tab({ shift: true });
+		expect(input).toHaveFocus();
+	});
+
 	it('gives focus back to the trigger when the close button closes it', async () => {
 		const { user, trigger, close } = await openFromTrigger();
 		await user.click(close);
