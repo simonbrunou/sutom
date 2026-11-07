@@ -16,7 +16,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # The whole history, so the graphify-out/ check finds a PR's merge base
+      # with its base branch.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # A PR changes graphify-out/ only in a refresh by
+      # scripts/refresh-graph.sh, committed alone, last (AGENTS.md,
+      # `## graphify`). The event's head sha, never a merge commit; a push to
+      # main has no base to diff against.
+      - name: Check graphify-out/ changes
+        if: github.event_name == 'pull_request'
+        env:
+          GRAPH_CHECK_BASE: origin/${{ github.base_ref }}
+          GRAPH_CHECK_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: scripts/check-graph-diff.sh
 
       # .nvmrc is the one Node pin: railpack builds production on its major too
       # (an older patch can run there: AGENTS.md, "Node version").
