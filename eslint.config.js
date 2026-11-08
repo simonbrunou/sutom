@@ -9,7 +9,8 @@ export default tseslint.config(
 	{
 		rules: {
 			// ESLint allows intentionally-unused args/vars prefixed with `_`. `noUnusedLocals` in
-			// tsconfig.json still fails `npm run check` on an unused local, `_` prefix or not.
+			// tsconfig.json has its own, narrower `_` exemptions: an unused plain local such as
+			// `const _x = 1` still fails `npm run check`.
 			'@typescript-eslint/no-unused-vars': [
 				'error',
 				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
