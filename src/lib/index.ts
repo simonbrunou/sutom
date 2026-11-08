@@ -11,4 +11,4 @@ export {
 	isValidLength
 } from './game';
 export type { LetterState, TileData, GameStatus, GameState } from './game';
-export { ANSWER_WORDS, VALID_GUESSES, isValidWord } from './words';
+export { ANSWER_WORDS, createValidGuessesLoader, loadValidGuesses, isValidWord } from './words';
