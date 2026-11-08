@@ -30,7 +30,7 @@ Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain
 
 Railpack reads `engines.node` and `devEngines.runtime` in `package.json`, and a `RAILPACK_NODE_VERSION` variable on the Coolify app, before `.nvmrc`, so set Node in `.nvmrc` only. The dev shell reads `.nvmrc` too: `flake.nix` takes `nodejs_<major>` from the locked nixpkgs, and `.envrc` watches `.nvmrc`, so direnv rebuilds the shell on the next entry. When the locked nixpkgs lacks a new major, the shell fails naming `nodejs_<major>`: run `nix flake update`. The check's warning that the shell runs another major means the shell has not reloaded (run `direnv reload`, or start a new `nix develop`), or that nix-direnv kept the previous shell after a failed evaluation, which it reports as `Falling back to previous environment`: fix that error first.
 
-CI and production share the `.nvmrc` major, and production can build on an older patch of it. See `docs/agents/node-version.md` for why production lags CI, the query that reads which patch production runs, and what to check after a Coolify upgrade.
+CI and production share the `.nvmrc` major, and production can build on an older patch of it. Why production lags CI, which patch production runs and the query that reads it, and what to check after a Coolify upgrade are in `docs/agents/node-version.md`.
 
 Production installs with railpack's `npm install`, CI with `npm ci`. Both install the tree in `package-lock.json` while it matches `package.json`. `npm ci` fails on a lockfile out of sync with `package.json`, so CI goes red on a PR that brings one. Branch protection on `main` requires that CI run to pass before a PR merges, a rule that binds neither admins nor direct pushes.
 
