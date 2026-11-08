@@ -177,7 +177,7 @@
 		// the list loaded; the guess belongs to yesterday's word, so drop it.
 		if (gameState.solution !== solution || gameState.currentGuess !== guess) return;
 
-		if (!validGuesses.has(guess)) {
+		if (!validGuesses.has(guess.toUpperCase())) {
 			showToast('Mot non reconnu', 1800, 'error');
 			shakeRow = currentRowIndex;
 			haptic([30, 40, 30]);

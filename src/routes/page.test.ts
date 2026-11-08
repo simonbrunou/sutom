@@ -83,6 +83,24 @@ describe('home page guess check', () => {
 		expect(importText).toHaveBeenCalledTimes(1);
 	});
 
+	it('accepts a restored row whatever its case, as isValidWord does', async () => {
+		localStorage.setItem(
+			'sutom-state',
+			JSON.stringify({
+				solution,
+				guesses: [],
+				currentGuess: guess.toLowerCase(),
+				gameStatus: 'playing',
+				maxAttempts: 6
+			})
+		);
+		render(Page);
+		await pressEnter();
+
+		imports[0].resolve(`${guess}\n`);
+		await waitFor(() => expect(savedGame().guesses).toHaveLength(1));
+	});
+
 	it('rejects an unknown word with "Mot non reconnu" once the pending load resolves', async () => {
 		render(Page);
 		await typeRow(guess);
@@ -133,10 +151,14 @@ describe('home page guess check', () => {
 
 			const nextDay = new Date(2026, 10, 9, 0, 0, 5);
 			vi.setSystemTime(nextDay);
-			await waitFor(() =>
-				expect(JSON.parse(localStorage.getItem('sutom-state') ?? '{}').solution).toBe(
-					getDailyWord(ANSWER_WORDS, nextDay)
-				)
+			// The next countdown tick lands up to 1 s from now, later on a loaded CI
+			// runner, so wait longer than waitFor's 1 s default.
+			await waitFor(
+				() =>
+					expect(JSON.parse(localStorage.getItem('sutom-state') ?? '{}').solution).toBe(
+						getDailyWord(ANSWER_WORDS, nextDay)
+					),
+				{ timeout: 5000 }
 			);
 
 			// The list lacks the guess: checking it would toast "Mot non reconnu" on the new game.
