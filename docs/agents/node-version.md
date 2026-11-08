@@ -1,0 +1,17 @@
+# Node version in production
+
+## Why production lags CI
+
+CI's setup-node downloads the newest release of the `.nvmrc` major. Railpack's plan names that release too and writes it into the mise config it generates, a config that also holds back releases younger than 14 days (`minimum_release_age = "14d"` in the deploy log's `generated-mise-toml`). Mise prefers the bare major in `.nvmrc`, which railpack copies to `/app`, over that exact release, so `mise install` takes the newest release of the major that is at least 14 days old. BuildKit caches that install step. Coolify's forced Docker cleanup prunes the railpack builder's cache every night at 00:00 UTC, and skips the prune while a deploy is queued or running. That schedule is the sutom server's `docker_cleanup_frequency`, a Coolify setting outside this repo. The step reruns on the first deploy after a prune, and on a deploy that changes its inputs: the generated mise config (the release railpack's plan names, among other lines), `.nvmrc` or the builder image. So production misses each new release for its first 14 days, and then until the step next reruns, on the first deploy after the next prune at the latest.
+
+## Which patch production runs
+
+Production runs the image tagged with the commit of the newest finished deploy, and `~/Projects/homelab-stacks/scripts/coolify-deploy-status.sh` prints that tag (`image <uuid>:<commit>`). A deploy that finds an image for its commit skips the build and logs `Build step skipped`, unless the deploy forces a rebuild or Coolify's `should_skip_build()` finds a reason to rebuild, such as a changed build setting. So after a Coolify rollback, an older deploy can have built the running image. The deploy that built it is the newest deploy of that commit whose log holds two Coolify lines, counting no deploy newer than the newest finished one. `Building docker image with Railpack.` means the build started. `Rolling update started.` means the build succeeded, since a failed build stops before that line. A deploy that skips the build writes it too, so the query needs both.
+
+Coolify 4.6.0 writes both lines. It writes the second only on its rolling update path, which sutom takes while it maps no host port, keeps the consistent container name setting off and sets no custom IP. A Coolify upgrade can reword either line, and a reworded line makes the query print no row or an older build's row. After an upgrade, check that the newest deploy that built an image still logs both, and update the query's two patterns when it does not.
+
+The patch is the `mise node@<version>` of the newest deploy whose node step ran, counting deploys up to the one that built the image, a failed deploy included, since a failed build's finished steps stay in the cache:
+
+```sh
+ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select q.id, q.status, q.created_at, substring(q.logs from 'mise node@([0-9]+[.][0-9]+[.][0-9]+)') from application_deployment_queues q join applications a on a.id = q.application_id::int where a.uuid = '33k9gghhdlx4kzdivylxuopr' and q.logs ~ 'mise node@[0-9]' and q.id <= (select max(b.id) from application_deployment_queues b, (select r.id, r.commit from application_deployment_queues r where r.application_id = q.application_id and r.status = 'finished' order by r.id desc limit 1) r where b.application_id = q.application_id and b.commit = r.commit and b.id <= r.id and b.logs ~ 'Building docker image with Railpack' and b.logs ~ 'Rolling update started') order by q.id desc limit 1\""
+```

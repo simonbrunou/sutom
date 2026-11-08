@@ -34,7 +34,7 @@ jobs:
         run: scripts/check-graph-diff.sh
 
       # .nvmrc is the one Node pin: railpack builds production on its major too
-      # (an older patch can run there: AGENTS.md, "Node version").
+      # (an older patch can run there: docs/agents/node-version.md).
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
