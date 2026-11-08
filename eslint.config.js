@@ -8,7 +8,8 @@ export default tseslint.config(
 	...tseslint.configs.recommended,
 	{
 		rules: {
-			// Allow intentionally-unused args/vars prefixed with `_`.
+			// ESLint allows intentionally-unused args/vars prefixed with `_`. `noUnusedLocals` in
+			// tsconfig.json still fails `npm run check` on an unused local, `_` prefix or not.
 			'@typescript-eslint/no-unused-vars': [
 				'error',
 				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
