@@ -2,7 +2,6 @@
 // Valid guesses: the full French dictionary so players can use any real word.
 // Each day's solution is picked at random from ANSWER_WORDS via getDailyWord().
 import dictionaryText from './dictionary.txt?raw';
-import validGuessesText from './valid-guesses.txt?raw';
 
 // dictionary.txt is sorted alphabetically, so the first ~6k entries are A*.
 // Indexing into that lexical order with getDailyWord would give players A-words
@@ -41,8 +40,33 @@ export const ANSWER_WORDS: string[] = deterministicShuffle(
 	0x5_07_07_05
 );
 
-export const VALID_GUESSES: Set<string> = new Set(parseWordList(validGuessesText));
+// Returns a loader that fetches the valid-guesses text once, through
+// importText, and parses it into a Set. Calls made while the load is pending
+// share it, and later calls get the same Set. A failed load is not kept, so the
+// next call runs importText again.
+export function createValidGuessesLoader(
+	importText: () => Promise<string>
+): () => Promise<Set<string>> {
+	let pending: Promise<Set<string>> | undefined;
+	return () => {
+		pending ??= importText().then(
+			(text) => new Set(parseWordList(text)),
+			(error: unknown) => {
+				pending = undefined;
+				throw error;
+			}
+		);
+		return pending;
+	};
+}
 
-export function isValidWord(word: string): boolean {
-	return VALID_GUESSES.has(word.toUpperCase());
+// valid-guesses.txt is 697 kB, so it loads through a dynamic import() into a
+// chunk of its own instead of the home page chunk (#195). The page starts the
+// load after its first render, and only a submitted guess waits for it.
+export const loadValidGuesses = createValidGuessesLoader(() =>
+	import('./valid-guesses.txt?raw').then((module) => module.default)
+);
+
+export async function isValidWord(word: string): Promise<boolean> {
+	return (await loadValidGuesses()).has(word.toUpperCase());
 }

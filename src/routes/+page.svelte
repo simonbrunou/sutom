@@ -12,7 +12,7 @@
 		getDayIndex,
 		type GameState
 	} from '#lib/game.js';
-	import { ANSWER_WORDS, isValidWord } from '#lib/words.js';
+	import { ANSWER_WORDS, loadValidGuesses } from '#lib/words.js';
 	import { loadStats, saveStats, recordResult, winPercent } from '#lib/stats.js';
 	import Header from '#lib/components/Header.svelte';
 	import Board from '#lib/components/Board.svelte';
@@ -35,6 +35,9 @@
 	let countdown = $state('');
 	let toastTimeout: ReturnType<typeof setTimeout> | undefined;
 	let countdownInterval: ReturnType<typeof setInterval> | undefined;
+	// True while Enter waits for the valid-guesses list. handleKey ignores every
+	// key until the guess on the row has been checked.
+	let checkingGuess = false;
 
 	const grid = $derived(getGridData(gameState));
 	const keyStates = $derived(getKeyboardState(gameState.guesses, gameState.solution));
@@ -156,8 +159,73 @@
 		setTimeout(() => (showConfetti = false), 4200);
 	}
 
+	// Checks the guess on the row against the valid-guesses list, waiting for the
+	// list when it has not loaded yet, then submits it or rejects it.
+	async function checkAndSubmitGuess() {
+		const { solution, currentGuess: guess } = gameState;
+		let validGuesses: Set<string>;
+		checkingGuess = true;
+		try {
+			validGuesses = await loadValidGuesses();
+		} catch {
+			showToast('Dictionnaire indisponible, rechargez la page', 4000, 'error');
+			return;
+		} finally {
+			checkingGuess = false;
+		}
+		// A midnight rollover in updateCountdown may have replaced the game while
+		// the list loaded; the guess belongs to yesterday's word, so drop it.
+		if (gameState.solution !== solution || gameState.currentGuess !== guess) return;
+
+		if (!validGuesses.has(guess.toUpperCase())) {
+			showToast('Mot non reconnu', 1800, 'error');
+			shakeRow = currentRowIndex;
+			haptic([30, 40, 30]);
+			setTimeout(() => (shakeRow = -1), 600);
+			return;
+		}
+		gameState = submitGuess(gameState);
+
+		if (gameState.gameStatus === 'won') {
+			const messages = [
+				'Génial !',
+				'Magnifique !',
+				'Superbe !',
+				'Bien joué !',
+				'De justesse !',
+				'Ouf !'
+			];
+			const idx = Math.min(gameState.guesses.length - 1, messages.length - 1);
+			bounceRow = gameState.guesses.length - 1;
+			const animDelay = gameState.solution.length * 150 + 500;
+			setTimeout(() => {
+				showToast(messages[idx], 3000, 'success');
+				bounceRow = -1;
+				triggerConfetti();
+				haptic([40, 50, 40, 50, 80]);
+			}, animDelay);
+			setTimeout(() => {
+				if (gameState.gameStatus !== 'playing') showStats = true;
+			}, animDelay + 2000);
+		} else if (gameState.gameStatus === 'lost') {
+			// Capture solution now; a midnight-rollover reset during animDelay
+			// would otherwise leak tomorrow's word into the reveal toast.
+			const revealedSolution = gameState.solution;
+			const animDelay = revealedSolution.length * 150 + 500;
+			setTimeout(() => {
+				showToast(`Le mot était : ${revealedSolution}`, 5000, 'error');
+				haptic([100, 50, 100]);
+			}, animDelay);
+			setTimeout(() => {
+				if (gameState.gameStatus !== 'playing') showStats = true;
+			}, animDelay + 2000);
+		} else {
+			haptic(15);
+		}
+	}
+
 	function handleKey(key: string) {
-		if (gameState.gameStatus !== 'playing') return;
+		if (gameState.gameStatus !== 'playing' || checkingGuess) return;
 
 		if (key === 'ENTER') {
 			if (gameState.currentGuess.length < gameState.solution.length) {
@@ -167,51 +235,7 @@
 				setTimeout(() => (shakeRow = -1), 600);
 				return;
 			}
-			if (!isValidWord(gameState.currentGuess)) {
-				showToast('Mot non reconnu', 1800, 'error');
-				shakeRow = currentRowIndex;
-				haptic([30, 40, 30]);
-				setTimeout(() => (shakeRow = -1), 600);
-				return;
-			}
-			gameState = submitGuess(gameState);
-
-			if (gameState.gameStatus === 'won') {
-				const messages = [
-					'Génial !',
-					'Magnifique !',
-					'Superbe !',
-					'Bien joué !',
-					'De justesse !',
-					'Ouf !'
-				];
-				const idx = Math.min(gameState.guesses.length - 1, messages.length - 1);
-				bounceRow = gameState.guesses.length - 1;
-				const animDelay = gameState.solution.length * 150 + 500;
-				setTimeout(() => {
-					showToast(messages[idx], 3000, 'success');
-					bounceRow = -1;
-					triggerConfetti();
-					haptic([40, 50, 40, 50, 80]);
-				}, animDelay);
-				setTimeout(() => {
-					if (gameState.gameStatus !== 'playing') showStats = true;
-				}, animDelay + 2000);
-			} else if (gameState.gameStatus === 'lost') {
-				// Capture solution now; a midnight-rollover reset during animDelay
-				// would otherwise leak tomorrow's word into the reveal toast.
-				const revealedSolution = gameState.solution;
-				const animDelay = revealedSolution.length * 150 + 500;
-				setTimeout(() => {
-					showToast(`Le mot était : ${revealedSolution}`, 5000, 'error');
-					haptic([100, 50, 100]);
-				}, animDelay);
-				setTimeout(() => {
-					if (gameState.gameStatus !== 'playing') showStats = true;
-				}, animDelay + 2000);
-			} else {
-				haptic(15);
-			}
+			void checkAndSubmitGuess();
 			return;
 		}
 
@@ -272,6 +296,9 @@
 		} catch {
 			// Ignore parse errors
 		}
+		// Start loading the valid-guesses list now that the grid is on screen. A
+		// failed load is not cached, and Enter reports it and loads again.
+		loadValidGuesses().catch(() => {});
 		updateCountdown();
 		countdownInterval = setInterval(updateCountdown, 1000);
 	});

@@ -20,6 +20,11 @@ export default defineConfig({
 			paths: { base }
 		})
 	],
+	build: {
+		// valid-guesses.txt loads as one lazy chunk of about 697 kB, past Vite's
+		// 500 kB default; the home page waits for none of it (#195).
+		chunkSizeWarningLimit: 750
+	},
 	test: {
 		include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
 		environment: 'jsdom',
