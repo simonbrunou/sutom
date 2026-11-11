@@ -2,6 +2,7 @@
 // Valid guesses: the full French dictionary so players can use any real word.
 // Each day's solution is picked at random from ANSWER_WORDS via getDailyWord().
 import dictionaryText from './dictionary.txt?raw';
+import validGuessesText from './valid-guesses.txt?raw';
 
 // dictionary.txt is sorted alphabetically, so the first ~6k entries are A*.
 // Indexing into that lexical order with getDailyWord would give players A-words
@@ -63,9 +64,7 @@ export function createValidGuessesLoader(
 // valid-guesses.txt is 697 kB, so it loads through a dynamic import() into a
 // chunk of its own instead of the home page chunk (#195). The page starts the
 // load after its first render, and only a submitted guess waits for it.
-export const loadValidGuesses = createValidGuessesLoader(() =>
-	import('./valid-guesses.txt?raw').then((module) => module.default)
-);
+export const loadValidGuesses = createValidGuessesLoader(() => Promise.resolve(validGuessesText));
 
 export async function isValidWord(word: string): Promise<boolean> {
 	return (await loadValidGuesses()).has(word.toUpperCase());
