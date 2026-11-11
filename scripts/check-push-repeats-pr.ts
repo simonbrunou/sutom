@@ -27,8 +27,8 @@
 //
 // It allows the two differences this repo's CI keeps on purpose:
 //
-// - `branches: [main]` under `pull_request`, as under `push`. It limits the PR runs to PRs into
-//   main, the ones whose merge starts a push run on main.
+// - `branches: [main]` under `pull_request`, with `push` filtered the same way or not at all. It
+//   limits the PR runs to PRs into main, the ones whose merge starts a push run on main.
 // - CI's graphify-out guard (#178), a step that runs `scripts/check-graph-diff.sh` with
 //   `if: github.event_name == 'pull_request'`, so the push run skips it. The step may hold that
 //   `if`, `${{ github.base_ref }}` in the value of GRAPH_CHECK_BASE and

@@ -374,6 +374,10 @@ describe('check-push-repeats-pr finds an expression', () => {
 		const ci = ciWith('      - run: >-', '          echo ${{', '          github.event_name }}');
 		expectDifference({ [CI]: ci }, /ci\.yml:21: .*an expression: \$\{\{ github\.event_name \}\}/);
 	});
+	it('an expression split over lines of a literal block, which keeps the line break', () => {
+		const ci = ciWith('      - run: |', '          echo ${{', '          github.event_name }}');
+		expectDifference({ [CI]: ci }, /ci\.yml:21: .*an expression: \$\{\{\ngithub\.event_name \}\}/);
+	});
 	it('an expression in a quoted string that runs onto the next line', () => {
 		const ci = ciWith('      - run: "echo ${{', '          github.event_name }}"');
 		expectDifference({ [CI]: ci }, /ci\.yml:21: .*an expression: \$\{\{ github\.event_name \}\}/);
