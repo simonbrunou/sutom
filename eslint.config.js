@@ -1,9 +1,10 @@
 import js from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
 // Lints the TypeScript game logic; Svelte components are type-checked by `npm run check`
 // (svelte-check), matching the convention used across the other projects here.
-export default tseslint.config(
+export default defineConfig(
 	js.configs.recommended,
 	...tseslint.configs.recommended,
 	{
