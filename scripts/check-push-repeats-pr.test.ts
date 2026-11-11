@@ -464,6 +464,12 @@ describe("check-push-repeats-pr finds a step that is not this repo's guard", () 
 			/\.forgejo\/workflows\/: 2 steps in the graphify-out guard's shape; the allowance covers one/
 		);
 	});
+	it("a step in the guard's shape in each of two workflows", () => {
+		expectDifference(
+			{ '.forgejo/workflows/other.yml': baseCi },
+			/\.forgejo\/workflows\/: 2 steps in the graphify-out guard's shape; the allowance covers one/
+		);
+	});
 	it("the guard's shape in a YAML file under .forgejo that is not a workflow", () => {
 		expectDifference(
 			{ '.forgejo/shared/ci.yml': baseCi },
