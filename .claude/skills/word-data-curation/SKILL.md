@@ -11,6 +11,10 @@ description: Curate the French word lists and regenerate static assets for the s
   The page loads it after the first render, through a dynamic `import()` in `words.ts`, as a
   chunk of its own (697 kB today). `npm run build` warns once that chunk passes the 750 kB
   `build.chunkSizeWarningLimit` in `vite.config.ts` (#195).
+- CI's `scripts/check-valid-guesses-lazy.sh` finds the list in the build by its marker word
+  `ABACULE` (#232). Removing `ABACULE` from `valid-guesses.txt`, or adding a word that contains
+  it to `dictionary.txt`, fails that check: pick another marker found only in
+  `valid-guesses.txt` and set it as `MARKER` in the script.
 - `words.ts` parses both with `parseWordList`: keeps only length **5–8** and `^[A-Z]+$`.
   Anything outside that range (e.g. existing 4-letter entries) is **silently dropped** — it
   will never appear as an answer.
