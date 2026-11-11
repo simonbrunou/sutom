@@ -22,7 +22,11 @@ export default defineConfig({
 	],
 	build: {
 		// valid-guesses.txt loads as one lazy chunk of about 697 kB, past Vite's
-		// 500 kB default; the home page waits for none of it (#195).
+		// 500 kB default; the home page waits for none of it (#195). The limit
+		// stays silent if a static import puts the list back in the home page
+		// chunk (about 741 kB then): scripts/check-valid-guesses-lazy.sh, which
+		// CI runs after the build, is what keeps the list off the home page's
+		// load path (#232).
 		chunkSizeWarningLimit: 750
 	},
 	test: {

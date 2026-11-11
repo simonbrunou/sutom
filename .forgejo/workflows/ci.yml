@@ -61,3 +61,9 @@ jobs:
           BASE_PATH: ''
           PUBLIC_SITE_URL: https://sutom.sbrn.eu
         run: npm run build
+
+      # Reads build/ from the step above. The 750 kB chunk limit in
+      # vite.config.ts stays silent if a static import puts the valid-guesses
+      # list back in the home page chunk (#195), so this check guards it (#232).
+      - name: Check the home page loads no valid-guesses list
+        run: scripts/check-valid-guesses-lazy.sh
