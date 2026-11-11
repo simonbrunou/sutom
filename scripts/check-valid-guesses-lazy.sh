@@ -34,11 +34,12 @@
 #      precedes `_app/` (./, /, a base path) and whatever tag or call holds
 #      it: today the <link rel="modulepreload"> hrefs, the two import() calls
 #      of the inline script and the stylesheet links. index.html must name at
-#      least one such path.
+#      least one such path. A file it names outside `_app/` goes unread:
+#      SvelteKit writes every file a page loads under its appDir.
 #   6. Each of those paths names a regular file at build/<path>. A path that
 #      names none fails; it is never skipped.
 #   7. None of those files contains the marker.
-# For 1 and 2, a list the check cannot read fails too. The check reads no
+# For 1, 2 and 7, a file the check cannot read fails too. The check reads no
 # import inside a chunk: SvelteKit names in index.html every chunk of the
 # static import graph of its entry and of the home page node, so a static
 # import of the list puts it in a file index.html names (#232 proved it with
@@ -46,8 +47,9 @@
 #
 # Exit 0: rules 1 to 7 hold; it prints one line naming the number of files
 # read. Exit 1: rule 7 fails; it names each file that contains the marker.
-# Exit 2: a wrong call, a <repo dir> that is no directory, or rule 1 to 6
-# fails; the message names the rule. When rule 1 or 2 fails, pick another
+# Exit 2: a wrong call, a <repo dir> that is no directory, rule 1 to 6
+# failing, or a file rule 7 reads that grep cannot read; the message names
+# the cause. When rule 1 or 2 fails, pick another
 # marker found only in valid-guesses.txt and set it as MARKER below.
 # scripts/check-valid-guesses-lazy.test.ts runs it on throwaway trees, one
 # failure class per test.
@@ -128,10 +130,6 @@ fi
 # 7.
 hits=$(grep -lF -- "$MARKER" "${files[@]}")
 rc=$?
-if [ "$rc" -eq 1 ]; then
-  echo "$NAME: build/index.html and the ${#paths[@]} files it names under build/_app/ hold no $MARKER: the valid-guesses list stays off the home page's load path"
-  exit 0
-fi
 if [ -n "$hits" ]; then
   {
     echo "$NAME: the valid-guesses list is back on the home page's load path (#195). These files, which build/index.html loads up front, contain $MARKER, a word found only in src/lib/valid-guesses.txt:"
@@ -140,4 +138,7 @@ if [ -n "$hits" ]; then
   } >&2
   exit 1
 fi
-fail "grep could not read the files build/index.html names"
+# grep exits 1 when it read every file and found no marker, 2 when it could
+# not read one.
+[ "$rc" -eq 1 ] || fail "grep could not read every file build/index.html names (grep exit $rc)"
+echo "$NAME: build/index.html and the ${#paths[@]} files it names under build/_app/ hold no $MARKER: the valid-guesses list stays off the home page's load path"

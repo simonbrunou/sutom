@@ -7,8 +7,8 @@
 // changes one thing and asserts the exit code and the message, so each
 // failing fixture breaks one rule only and a rule removed from the script
 // turns its own test red.
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -110,8 +110,8 @@ beforeEach(() => {
 	});
 });
 
-function run(args: string[] = [tree]) {
-	const p = spawnSync(scriptPath, args, { encoding: 'utf8' });
+function run(args: string[] = [tree], env: NodeJS.ProcessEnv = process.env) {
+	const p = spawnSync(scriptPath, args, { encoding: 'utf8', env });
 	return { code: p.status, out: p.stdout, err: p.stderr };
 }
 
@@ -288,6 +288,29 @@ describe('check-valid-guesses-lazy refuses to check', () => {
 			)
 		});
 		refuses('  _app/immutable/chunks\n');
+	});
+
+	it('when grep cannot read a file index.html names', () => {
+		// chmod 000 stops no run as root, which CI's job is, so a grep first on
+		// PATH fails on the home page node chunk the way a read error does.
+		const realGrep = execFileSync('sh', ['-c', 'command -v grep'], { encoding: 'utf8' }).trim();
+		write({
+			'shim/grep': `#!/bin/sh
+for a in "$@"; do
+	case $a in */nodes/2.js) echo "grep: $a: Input/output error" >&2; exit 2 ;; esac
+done
+exec ${realGrep} "$@"
+`
+		});
+		chmodSync(path.join(tree, 'shim/grep'), 0o755);
+		const { code, out, err } = run([tree], {
+			...process.env,
+			PATH: `${path.join(tree, 'shim')}:${process.env.PATH}`
+		});
+		expect(code, `${out}${err}`).toBe(2);
+		expect(out).toBe('');
+		expect(err).toContain('nodes/2.js: Input/output error');
+		expect(err).toContain('grep could not read every file build/index.html names (grep exit 2)');
 	});
 });
 
