@@ -52,7 +52,15 @@ Agents may merge their own PR without asking once all three hold:
 - CI is green on the pushed SHA;
 - the pushed SHA has no conflict with `origin/main`. Run `git fetch origin` right before merging, then check that `git merge-tree --write-tree origin/main <pushed SHA>` exits 0.
 
-When the branch is behind `main` but has no conflict, merge it as it is. The accepted risk is that two PRs that pass on their own can break `main` together. The CI run on the newest `main` commit shows such a break. After the merge, run `git fetch origin`, then `git rev-parse <merge sha>^{tree} <pushed SHA>^{tree}`. Two different hashes mean the merge commit holds files CI has not tested together, so wait for that run and fix a red one in a new PR. The same hash twice means the merge commit holds the files CI already passed on the pushed SHA, and the `push` run repeats that job on them, so skip the wait.
+When the branch is behind `main` but has no conflict, merge it as it is. The accepted risk is that two PRs that pass on their own can break `main` together. The CI run on the newest `main` commit shows such a break.
+
+After every merge, check whether to wait for `main`'s CI run:
+
+1. Run `git fetch origin`. Take the merge SHA from `merge_commit_sha` in `python3 -I ~/.agents/skills/forgejo-issues/scripts/forgejo.py get sutom#<n>`.
+2. Run `git rev-parse <merge SHA>^{tree} <pushed SHA>^{tree}`. Two different hashes mean the merge commit holds files CI has not tested together, as when the branch was behind `main`, so wait (step 4).
+3. The same hash twice means the merge commit holds the files the PR's CI passed, since the PR run checks out the pushed SHA itself. To learn whether the `push` run on `main` repeats the PR run's jobs and steps on them, run `node scripts/check-push-repeats-pr.ts <pushed SHA>` in a checkout with its dependencies installed (`npm ci`). The script's header lists what it reads, the two differences this repo's CI keeps on purpose and what it cannot see. Exit 0 means skip the wait. Any other exit means wait (step 4); it printed each difference it found.
+4. To wait, run `python3 -I ~/.agents/skills/forgejo-issues/scripts/forgejo.py ci sutom --follow main` alone in its shell call (exit 3 means the run is still going, so run it again in a new call), and fix a red run in a new PR.
+5. Whatever steps 2 and 3 found, check the deploy as the last paragraph of this section says.
 
 On a conflict, merge `origin/main` into the branch, resolve it, run `npm ci && npm run lint && npm run check && npm run test && npm run build`, push, wait for CI on the new head, and check all three conditions again.
 
