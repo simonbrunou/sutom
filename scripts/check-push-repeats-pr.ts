@@ -11,8 +11,8 @@
 //
 // - no workflow file under .forgejo/workflows/, or a workflow anywhere under it that has no
 //   `on:`, lacks a `push` or a `pull_request` trigger, filters either one beyond
-//   `branches: [main]`, or has a trigger other than those two, `schedule` and
-//   `workflow_dispatch`;
+//   `branches: [main]`, filters one of them and not the other, or has a trigger other than those
+//   two, `schedule` and `workflow_dispatch`;
 // - a job that calls a reusable workflow (`jobs.<id>.uses`), whose steps this script cannot read;
 // - in a workflow, in any other YAML file under .forgejo/, or in an action.yml or action.yaml
 //   anywhere: a file the `yaml` package reads with an error or a warning (a duplicate key, an
@@ -27,9 +27,9 @@
 //
 // It allows the two differences this repo's CI keeps on purpose:
 //
-// - `branches: [main]` under `pull_request`, with `push` filtered the same way or not at all. It
-//   limits the PR runs to PRs into main, the ones whose merge starts a push run on main.
-// - CI's graphify-out guard (#178), a step that runs `scripts/check-graph-diff.sh` with
+// - `branches: [main]` under `pull_request`, matching the same filter under `push`. It limits the
+//   PR runs to PRs into main, the ones whose merge starts a push run on main.
+// - CI's graphify-out guard (#178), one step that runs `scripts/check-graph-diff.sh` with
 //   `if: github.event_name == 'pull_request'`, so the push run skips it. The step may hold that
 //   `if`, `${{ github.base_ref }}` in the value of GRAPH_CHECK_BASE and
 //   `${{ github.event.pull_request.head.sha }}` in the value of GRAPH_CHECK_HEAD, when its keys
@@ -38,7 +38,8 @@
 //   Every step inherits the workflow's `defaults` and `env` and the job's `defaults`, `env` and
 //   `container`, where a `shell`, a `working-directory` or a variable such as BASH_ENV could run
 //   other code on the PR run only. Any other key on the step, its job or its workflow keeps the
-//   step from counting as the guard, so its `if` and its expressions are reported.
+//   step from counting as the guard, so its `if` and its expressions are reported. A second step
+//   in the guard's shape, in any workflow, is reported too: the allowance covers one.
 //   scripts/check-graph-diff.sh reads git and writes nothing (its header says so), so the steps
 //   after the guard see the same files on both runs.
 //
@@ -135,6 +136,10 @@ function checkTriggers(file: string, doc: unknown) {
 		else if (!isMainOnly(triggers[name])) {
 			differences.push(`${file}: ${name} has a filter beyond branches: [main]`);
 		}
+	}
+	const filtered = ['push', 'pull_request'].filter((name) => !isEmpty(triggers[name]));
+	if ('push' in triggers && 'pull_request' in triggers && filtered.length === 1) {
+		differences.push(`${file}: only ${filtered[0]} has a filter`);
 	}
 	for (const name of Object.keys(triggers)) {
 		if (!ALLOWED_TRIGGERS.has(name)) differences.push(`${file}: trigger ${name}`);
@@ -256,6 +261,11 @@ for (const file of scanned) {
 		checkTriggers(file, value);
 		checkJobs(file, value);
 	}
+}
+if (guardCount > 1) {
+	differences.push(
+		`.forgejo/workflows/: ${guardCount} steps in the graphify-out guard's shape; the allowance covers one`
+	);
 }
 
 const pattern = [...RUNNER_NAMES, ...EVENT_READS].join('|');

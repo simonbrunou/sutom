@@ -231,6 +231,14 @@ describe('check-push-repeats-pr finds a difference in the triggers', () => {
 			expectDifference({ [CI]: ci }, /ci\.yml: push has a filter beyond branches: \[main\]/);
 		});
 	}
+	it("push with no filter beside pull_request's branches: [main]", () => {
+		const ci = edit(baseCi, '  push:\n    branches: [main]\n', '  push:\n');
+		expectDifference({ [CI]: ci }, /ci\.yml: only pull_request has a filter/);
+	});
+	it("pull_request with no filter beside push's branches: [main]", () => {
+		const ci = edit(baseCi, '  pull_request:\n    branches: [main]\n', '  pull_request:\n');
+		expectDifference({ [CI]: ci }, /ci\.yml: only push has a filter/);
+	});
 	it('a job that calls a reusable workflow', () => {
 		const ci = `${baseCi}  deploy:\n    uses: owner/repo/.forgejo/workflows/deploy.yml@main\n`;
 		expectDifference(
@@ -446,6 +454,22 @@ describe('check-push-repeats-pr finds an expression', () => {
 });
 
 describe("check-push-repeats-pr finds a step that is not this repo's guard", () => {
+	it("a second step in the guard's shape, which the allowance does not cover", () => {
+		const guard = baseCi.slice(
+			baseCi.indexOf('      - name: Check'),
+			baseCi.indexOf('      - run: npm')
+		);
+		expectDifference(
+			{ [CI]: `${baseCi}${guard}` },
+			/\.forgejo\/workflows\/: 2 steps in the graphify-out guard's shape; the allowance covers one/
+		);
+	});
+	it("the guard's shape in a YAML file under .forgejo that is not a workflow", () => {
+		expectDifference(
+			{ '.forgejo/shared/ci.yml': baseCi },
+			/\.forgejo\/shared\/ci\.yml:15: \.jobs\.test\.steps\[1\]\.if: an if: github\.event_name == 'pull_request'/
+		);
+	});
 	it("the guard's if: on a step that runs something else", () => {
 		const ci = ciWith(
 			'      - run: npm run build',
