@@ -35,7 +35,9 @@
 #      it: today the <link rel="modulepreload"> hrefs, the two import() calls
 #      of the inline script and the stylesheet links. index.html must name at
 #      least one such path. A file it names outside `_app/` goes unread:
-#      SvelteKit writes every file a page loads under its appDir.
+#      SvelteKit writes every chunk and stylesheet under its appDir, and the
+#      other local files index.html links today are the three favicons,
+#      images copied from static/.
 #   6. Each of those paths names a regular file at build/<path>. A path that
 #      names none fails; it is never skipped.
 #   7. None of those files contains the marker.
@@ -46,10 +48,11 @@
 # a `?raw` import in words.ts, which index.html then named in nodes/2.*.js).
 #
 # Exit 0: rules 1 to 7 hold; it prints one line naming the number of files
-# read. Exit 1: rule 7 fails; it names each file that contains the marker.
-# Exit 2: a wrong call, a <repo dir> that is no directory, rule 1 to 6
-# failing, or a file rule 7 reads that grep cannot read; the message names
-# the cause. When rule 1 or 2 fails, pick another
+# read. Exit 1: rule 7 fails; it names each file that contains the marker,
+# even when grep could not read another. Exit 2: a wrong call, a <repo dir>
+# that is no directory, rule 1 to 6 failing, or, with no file holding the
+# marker, a file rule 7 reads that grep cannot read; the message names the
+# cause. When rule 1 or 2 fails, pick another
 # marker found only in valid-guesses.txt and set it as MARKER below.
 # scripts/check-valid-guesses-lazy.test.ts runs it on throwaway trees, one
 # failure class per test.
