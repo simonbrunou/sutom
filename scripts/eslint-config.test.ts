@@ -12,8 +12,8 @@ import { ESLint, type Linter } from 'eslint';
 import { describe, expect, it } from 'vitest';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
-// One instance: the shared CI runner runs the tests several times slower than sbrn (#206), and
-// each new instance builds its own TypeScript program.
+// One in-process instance for every case, instead of a CLI run per case: the shared CI runner
+// runs the tests several times slower than sbrn (#206) under a one-minute timeout.
 const eslint = new ESLint({ cwd: repo });
 
 const declaration = '/** @deprecated use g */\nexport function f() {\n\treturn 1;\n}\n';
@@ -22,26 +22,41 @@ const cases = [
 	{ input: 'a root *.js path', filePath: path.join(repo, 'eslint.config.js') }
 ];
 
-async function errors(text: string, filePath: string): Promise<Linter.LintMessage[]> {
+// `errorCount` is what the ESLint CLI exits 1 on, so it stands in for `npm run lint`'s exit code.
+async function lint(
+	text: string,
+	filePath: string
+): Promise<{
+	errorCount: number;
+	errors: Pick<Linter.LintMessage, 'ruleId' | 'line' | 'message'>[];
+}> {
 	const [result] = await eslint.lintText(text, { filePath });
-	return result.messages.filter((message) => message.severity === 2);
+	const errors = result.messages
+		.filter((message) => message.severity === 2)
+		.map(({ ruleId, line, message }) => ({ ruleId, line, message }));
+	return { errorCount: result.errorCount, errors };
 }
 
 describe('eslint.config.js no-deprecated', () => {
 	describe.each(cases)('$input', ({ filePath }) => {
 		it('fails on a call to a @deprecated function', async () => {
-			const found = await errors(`${declaration}export const x = f();\n`, filePath);
-			expect(found.map(({ ruleId, line, message }) => ({ ruleId, line, message }))).toEqual([
-				{
-					ruleId: '@typescript-eslint/no-deprecated',
-					line: 5,
-					message: '`f` is deprecated. use g'
-				}
-			]);
+			expect(await lint(`${declaration}export const x = f();\n`, filePath)).toEqual({
+				errorCount: 1,
+				errors: [
+					{
+						ruleId: '@typescript-eslint/no-deprecated',
+						line: 5,
+						message: '`f` is deprecated. use g'
+					}
+				]
+			});
 		});
 
 		it('passes the same text without the call', async () => {
-			expect(await errors(`${declaration}export const x = 2;\n`, filePath)).toEqual([]);
+			expect(await lint(`${declaration}export const x = 2;\n`, filePath)).toEqual({
+				errorCount: 0,
+				errors: []
+			});
 		});
 	});
 });
