@@ -19,18 +19,24 @@
 # from the merge base of the base and the head to the head, with rename
 # detection off, so a renamed file lists its old path and its new one. A
 # file moved out of graphify-out/ counts as a change to it. With none, it
-# passes. Otherwise it passes only when the head commit is a refresh:
+# passes. Otherwise it passes only when the head commit is a refresh and no
+# commit before it leaves graphify-out/ changed:
 #   1. it has one parent and changes no file outside graphify-out/;
 #   2. its graphify-out/graph.json names the full id of that parent as
 #      built_at_commit;
 #   3. the first line of its graphify-out/GRAPH_REPORT.md starts with
-#      "# Graph Report - sutom ", the title scripts/refresh-graph.sh checks.
-# It reads both files from the head commit, never from the working tree,
-# and writes nothing. It cannot tell a PR about the graph from a feature PR
-# whose last commit is a refresh (#134's shape): review has to catch that.
+#      "# Graph Report - sutom ", the title scripts/refresh-graph.sh checks;
+#   4. its parent holds the merge base's graphify-out/: the diff of
+#      graphify-out/ from the merge base to that parent, with rename detection
+#      off, is empty (#229). Without it, a file an earlier commit adds,
+#      changes or deletes under graphify-out/ and the refresh leaves alone
+#      passes and stays in the PR's diff.
+# It reads commits only, never the working tree, and writes nothing. It
+# cannot tell a PR about the graph from a feature PR whose last commit is a
+# refresh (#134's shape): review has to catch that.
 #
 # Exit 0: nothing under graphify-out/ changed, or the head commit passes 1 to
-# 3; it prints one line naming the merge base and the head. Exit 1: the head
+# 4; it prints one line naming the merge base and the head. Exit 1: the head
 # commit fails a condition; the check names each failed condition, lists the
 # graphify-out/ paths in the diff and says how to fix the branch. Exit 2: a
 # wrong call, a <checkout> outside a git checkout, a base or head that names
@@ -102,10 +108,16 @@ parent=
 if [ "${#ids[@]}" -eq 2 ]; then
   parent=${ids[1]}
 else
-  fails+=("1. ${head:0:12} has $((${#ids[@]} - 1)) parents, not one: a refresh is a commit of its own, so after a merge run scripts/refresh-graph.sh again and commit its output last")
+  fails+=("1. ${head:0:12} has $((${#ids[@]} - 1)) parents, not one: a refresh is a commit of its own, so after a merge run scripts/refresh-graph.sh again and commit its output last, once a commit has restored $OUT/ to the merge base (condition 4)")
 fi
 
+earlier=
 if [ -n "$parent" ]; then
+  # Condition 4's diff, run first: the diff below reads the parent's
+  # graphify-out/ tree too, so a tree git cannot read fails here and names
+  # this diff. Its failure line follows 3's.
+  earlier=$(names "$mb" "$parent" "$OUT") || exit 2
+
   outside=$(names "$parent" "$head" . ":(exclude)$OUT") || exit 2
   if [ -n "$outside" ]; then
     fails+=("1. ${head:0:12} also changes files outside $OUT/:"$'\n'"$(printf '%s\n' "$outside" | sed 's/^/     /')")
@@ -131,16 +143,23 @@ else
   fails+=("3. ${head:0:12} has no $REPORT")
 fi
 
+if [ -n "$earlier" ]; then
+  fails+=("4. an earlier commit changes $OUT/: only the last commit may, so restore $OUT/ to the merge base and commit before the refresh. These paths differ from ${mb:0:12} to the parent ${parent:0:12}:"$'\n'"$(printf '%s\n' "$earlier" | sed 's/^/     /')")
+fi
+
 if [ "${#fails[@]}" -eq 0 ]; then
-  echo "check-graph-diff: from ${mb:0:12} (the merge base with $base_ref) to ${head:0:12}, the diff changes $OUT/ and the last commit is a refresh, built from its parent ${parent:0:12} and titled sutom"
+  echo "check-graph-diff: from ${mb:0:12} (the merge base with $base_ref) to ${head:0:12}, the diff changes $OUT/ and the last commit is a refresh, built from its parent ${parent:0:12}, which holds the merge base's $OUT/, and titled sutom"
   exit 0
 fi
 
 {
-  echo "check-graph-diff: from ${mb:0:12} (the merge base with $base_ref) to ${head:0:12}, the diff changes $OUT/, and the last commit is no refresh by scripts/refresh-graph.sh:"
+  echo "check-graph-diff: from ${mb:0:12} (the merge base with $base_ref) to ${head:0:12}, the diff changes $OUT/, and its last commit is not a refresh by scripts/refresh-graph.sh that alone changes $OUT/:"
   printf '  %s\n' "${fails[@]}"
   echo "  $OUT/ paths in the diff:"
   printf '%s\n' "$paths" | sed 's/^/     /'
-  echo "  Fix: drop them (git restore --source=$mb --staged --worktree -- $OUT, then commit), or, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed and commit its output alone, last on the branch (AGENTS.md, \`## graphify\`)."
+  # A refresh on top of a failing head always fails condition 4: the head
+  # holds a graphify-out/ that differs from the merge base, or the check
+  # would have passed above. So the restore comes first on every branch.
+  echo "  Fix: drop them (git restore --source=$mb --staged --worktree -- $OUT, then commit), then, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed and commit its output alone, last on the branch (AGENTS.md, \`## graphify\`)."
 } >&2
 exit 1
