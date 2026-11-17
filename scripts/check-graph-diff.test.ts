@@ -146,15 +146,19 @@ describe('check-graph-diff.sh passes', () => {
 		passesWith(`the last commit is a refresh, built from its parent ${parent.slice(0, 12)}`);
 	});
 
-	// Decision 2(a) on #178: the check reads the last commit only. #229 asks
-	// whether to fail this shape too.
-	it('when an earlier commit adds a file under graphify-out/ that the last refresh keeps', () => {
+	it("after an earlier graphify-out/ change, on following the failure's Fix: line", () => {
 		commit({ 'src/lib/game.ts': 'export const x = 2;\n', 'graphify-out/stray.json': '{}\n' });
 		refresh();
-		const { code, out, err } = run();
-		expect(code, err).toBe(0);
-		expect(out).toContain('the diff changes graphify-out/ and the last commit is a refresh');
-		expect(out).not.toContain('only in the last commit');
+		const err = failsWith('4. ');
+		const restore = err.match(/git restore --source=\w+ --staged --worktree -- graphify-out/);
+		expect(restore, err).not.toBeNull();
+		git(...restore![0].split(' ').slice(1));
+		commit({}, 'chore: drop the graphify-out/ changes');
+		const parent = commit({ 'src/lib/new.ts': 'export {};\n' });
+		refresh();
+		passesWith(
+			`built from its parent ${parent.slice(0, 12)}, which holds the merge base's graphify-out/, and titled sutom`
+		);
 	});
 
 	it('on a PR that is one refresh', () => {
@@ -177,6 +181,17 @@ describe('check-graph-diff.sh passes', () => {
 		expect(code, err).toBe(0);
 		expect(out).toContain(
 			'to 5974bed0fe54, the diff changes graphify-out/ and the last commit is a refresh'
+		);
+	});
+
+	it("on #134's own commits: a dependency upgrade, then a refresh by scripts/refresh-graph.sh", () => {
+		const { code, out, err } = run(
+			{ GRAPH_CHECK_BASE: '1a8371b^1', GRAPH_CHECK_HEAD: '1a8371b^2' },
+			[repo]
+		);
+		expect(code, err).toBe(0);
+		expect(out).toContain(
+			'to 097db8be3511, the diff changes graphify-out/ and the last commit is a refresh'
 		);
 	});
 });
@@ -295,6 +310,39 @@ describe('check-graph-diff.sh fails', () => {
 		failsWith(`3. `, `has no ${REPORT}`);
 	});
 
+	// #229: only the last commit may change graphify-out/.
+	it('when an earlier commit adds a file under graphify-out/ that the last refresh keeps', () => {
+		const mb = git('rev-parse', 'HEAD');
+		commit({ 'src/lib/game.ts': 'export const x = 2;\n', 'graphify-out/stray.json': '{}\n' });
+		const parent = git('rev-parse', 'HEAD');
+		refresh();
+		const err = failsWith(
+			'4. an earlier commit changes graphify-out/: only the last commit may',
+			`differ from ${mb.slice(0, 12)} to the parent ${parent.slice(0, 12)}:\n     graphify-out/stray.json\n`,
+			`git restore --source=${mb} --staged --worktree -- graphify-out, then commit`,
+			'run scripts/refresh-graph.sh once every other change is committed'
+		);
+		expect(err).not.toMatch(/^ {2}[123]\./m);
+	});
+
+	it('when an earlier commit changes graphify-out/ files that the last refresh rewrites', () => {
+		commit({
+			'src/lib/game.ts': 'export const x = 2;\n',
+			[GRAPH]: graph('b'.repeat(40)),
+			[REPORT]: `${title('sutom')}\n## God nodes\n`
+		});
+		refresh();
+		const err = failsWith(`4. `, `to the parent `, `:\n     ${REPORT}\n     ${GRAPH}\n`);
+		expect(err).not.toMatch(/^ {2}[123]\./m);
+	});
+
+	it('when an earlier commit deletes a file under graphify-out/', () => {
+		commit({ 'src/lib/game.ts': 'export const x = 2;\n', 'graphify-out/manifest.json': null });
+		refresh();
+		const err = failsWith(`4. `, `to the parent `, `:\n     graphify-out/manifest.json\n`);
+		expect(err).not.toMatch(/^ {2}[123]\./m);
+	});
+
 	it('when the last commit is a merge whose first-parent diff looks like a refresh', () => {
 		const first = git('rev-parse', 'HEAD');
 		git('checkout', '-q', '-b', 'side');
@@ -377,6 +425,20 @@ describe('check-graph-diff.sh refuses a wrong call', () => {
 		const { code, out, err } = run();
 		expect(code).toBe(2);
 		expect(err).toContain(`git diff ${parent.slice(0, 12)} `);
+		expect(out).toBe('');
+	});
+
+	it("when git cannot read the parent's graphify-out/, instead of finding no earlier change", () => {
+		const mb = git('rev-parse', 'HEAD');
+		const parent = commit({ 'graphify-out/stray.json': '{}\n' });
+		refresh();
+		// The parent's graphify-out/ tree is read only by the diff from the
+		// merge base to the parent (condition 4).
+		const tree = git('rev-parse', `${parent}:graphify-out`);
+		rmSync(path.join(checkout, '.git', 'objects', tree.slice(0, 2), tree.slice(2)));
+		const { code, out, err } = run();
+		expect(code).toBe(2);
+		expect(err).toContain(`git diff ${mb.slice(0, 12)} ${parent.slice(0, 12)} failed`);
 		expect(out).toBe('');
 	});
 
