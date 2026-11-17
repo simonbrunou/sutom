@@ -175,6 +175,14 @@ describe('check-graph-diff.sh passes', () => {
 		);
 	});
 
+	it('on an untracking PR: a .gitignore commit, then a refresh that holds the removal from the index (#259)', () => {
+		const parent = commit({ '.gitignore': 'graphify-out/manifest.json\n' });
+		git('rm', '-q', '--cached', 'graphify-out/manifest.json');
+		refresh();
+		expect(git('ls-files', 'graphify-out/manifest.json')).toBe('');
+		passesWith(`the last commit is a refresh, built from its parent ${parent.slice(0, 12)}`);
+	});
+
 	it('on a PR that is one refresh', () => {
 		refresh();
 		passesWith('titled sutom');
