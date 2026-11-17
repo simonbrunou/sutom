@@ -40,7 +40,8 @@
 # commit fails a condition; the check names each failed condition, lists the
 # graphify-out/ paths in the diff and says how to fix the branch. Exit 2: a
 # wrong call, a <checkout> outside a git checkout, a base or head that names
-# no commit, a base and head with no merge base, or git failing to diff them.
+# no commit, a base and head with no merge base, or git failing to diff them
+# or to list the head's parents.
 # scripts/check-graph-diff.test.ts runs it on throwaway git repos, one
 # failure class per test.
 set -uo pipefail
@@ -103,7 +104,13 @@ if [ -z "$paths" ]; then
 fi
 
 fails=()
-read -r -a ids <<<"$(git rev-list --parents -n 1 "$head")"
+# The head, then its parents. Its own command, so a failing git stops the
+# check instead of leaving ids empty.
+line=$(git rev-list --parents -n 1 "$head") || {
+  echo "check-graph-diff: git rev-list cannot list the parents of ${head:0:12}" >&2
+  exit 2
+}
+read -r -a ids <<<"$line"
 parent=
 if [ "${#ids[@]}" -eq 2 ]; then
   parent=${ids[1]}

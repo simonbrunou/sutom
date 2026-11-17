@@ -483,6 +483,28 @@ describe('check-graph-diff.sh refuses a wrong call', () => {
 		expect(out).toBe('');
 	});
 
+	it("when git cannot list the head's parents, instead of counting none", () => {
+		commit({ [REPORT]: title('t3-issue-178') });
+		// A git first on PATH that fails only `git rev-list`, which the check
+		// runs once, after the diffs that find graphify-out/ changed.
+		const realGit = execFileSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).trim();
+		const bin = path.join(base, String(testNumber), 'shim');
+		mkdirSync(bin);
+		writeFileSync(
+			path.join(bin, 'git'),
+			`#!/bin/sh\n[ "$1" = rev-list ] && { echo "git: shim fails" >&2; exit 128; }\nexec ${realGit} "$@"\n`,
+			{ mode: 0o755 }
+		);
+		const { code, out, err } = run({ PATH: `${bin}${path.delimiter}${process.env.PATH}` });
+		expect(code, out).toBe(2);
+		expect(err).toContain('git: shim fails');
+		expect(err).toContain(
+			`git rev-list cannot list the parents of ${git('rev-parse', 'HEAD').slice(0, 12)}`
+		);
+		expect(err).not.toContain('parents, not one');
+		expect(out).toBe('');
+	});
+
 	it('on a base with no merge base with the head', () => {
 		git('checkout', '-q', '--orphan', 'unrelated');
 		commit({ 'other.txt': 'x\n' });

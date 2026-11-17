@@ -459,6 +459,8 @@ read_package() {
   # one line, when it cannot read the file. The exit codes node documents
   # for its own failures are 1, 3 to 7, 9, 10, 12 to 14, 124 and 128 plus a
   # signal, and bash adds 126 and 127, so 65 means a parse failure only.
+  # The program's ${...} are JavaScript template literals, not shell.
+  # shellcheck disable=SC2016
   values=$(PIN_FILE="$file" node -e '
     let text, pkg;
     try {
