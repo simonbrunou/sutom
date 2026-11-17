@@ -319,10 +319,20 @@ describe('check-graph-diff.sh fails', () => {
 		const err = failsWith(
 			'4. an earlier commit changes graphify-out/: only the last commit may',
 			`differ from ${mb.slice(0, 12)} to the parent ${parent.slice(0, 12)}:\n     graphify-out/stray.json\n`,
-			`git restore --source=${mb} --staged --worktree -- graphify-out, then commit`,
-			'run scripts/refresh-graph.sh once every other change is committed'
+			`git restore --source=${mb} --staged --worktree -- graphify-out, then commit), then, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed`
 		);
 		expect(err).not.toMatch(/^ {2}[123]\./m);
+	});
+
+	// A refresh alone fixes conditions 1 to 3, so their Fix: line offers it
+	// as the other way out.
+	it('offering a refresh alone as the fix when no earlier commit changes graphify-out/', () => {
+		refresh(undefined, 't3-issue-229');
+		const err = failsWith(
+			'3. ',
+			'--worktree -- graphify-out, then commit), or, on a PR about the graph'
+		);
+		expect(err).not.toMatch(/^ {2}4\./m);
 	});
 
 	it('when an earlier commit changes graphify-out/ files that the last refresh rewrites', () => {
@@ -432,8 +442,10 @@ describe('check-graph-diff.sh refuses a wrong call', () => {
 		const mb = git('rev-parse', 'HEAD');
 		const parent = commit({ 'graphify-out/stray.json': '{}\n' });
 		refresh();
-		// The parent's graphify-out/ tree is read only by the diff from the
-		// merge base to the parent (condition 4).
+		// The diff from the merge base to the parent (condition 4) runs first
+		// and reads the parent's graphify-out/ tree; the parent-to-head diff
+		// outside graphify-out/ reads it too, so the test asserts which diff
+		// failed and that no other ran.
 		const tree = git('rev-parse', `${parent}:graphify-out`);
 		rmSync(path.join(checkout, '.git', 'objects', tree.slice(0, 2), tree.slice(2)));
 		const { code, out, err } = run();

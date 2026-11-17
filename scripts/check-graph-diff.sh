@@ -157,6 +157,10 @@ fi
   printf '  %s\n' "${fails[@]}"
   echo "  $OUT/ paths in the diff:"
   printf '%s\n' "$paths" | sed 's/^/     /'
-  echo "  Fix: drop them (git restore --source=$mb --staged --worktree -- $OUT, then commit), or, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed and commit its output alone, last on the branch (AGENTS.md, \`## graphify\`)."
+  # A refresh alone cannot fix condition 4: its parent would still hold the
+  # earlier change. The restore has to come first.
+  join=or
+  [ -z "$earlier" ] || join=then
+  echo "  Fix: drop them (git restore --source=$mb --staged --worktree -- $OUT, then commit), $join, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed and commit its output alone, last on the branch (AGENTS.md, \`## graphify\`)."
 } >&2
 exit 1
