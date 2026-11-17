@@ -137,6 +137,11 @@ describe('lint-shell.sh passes', () => {
 		passes(1);
 	});
 
+	it('skipping a shebang whose shell word starts after character 256, which Linux never reads', () => {
+		stage({ 'bin/run': `#!/usr/bin/env${' '.repeat(242)}sh\necho $1\n` });
+		passes(1);
+	});
+
 	it('skipping an untracked script', () => {
 		write({ 'scripts/new.sh': UNQUOTED });
 		passes(1);
@@ -180,7 +185,13 @@ describe('lint-shell.sh refuses a shell script it cannot classify', () => {
 		['#!/usr/bin/env bash\r'],
 		['#!/bin/sh'],
 		['#!/usr/bin/env zsh'],
-		['#! /bin/dash']
+		['#! /bin/dash'],
+		['#!/bin/ash'],
+		['#!/bin/ksh'],
+		['#!/bin/mksh'],
+		['#!/bin/busybox'],
+		// The shell word ends at character 256, the last the lint reads.
+		[`#!/usr/bin/env${' '.repeat(240)}sh`]
 	])('%j', (shebang) => {
 		stage({ 'bin/run': `${shebang}\necho "$1"\n` });
 		refuses('bin/run: a shell shebang this lint does not read', 'lints none');
