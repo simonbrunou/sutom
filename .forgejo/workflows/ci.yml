@@ -33,6 +33,23 @@ jobs:
           GRAPH_CHECK_HEAD: ${{ github.event.pull_request.head.sha }}
         run: scripts/check-graph-diff.sh
 
+      # ShellCheck 0.11.0, the version the dev shell takes from the locked
+      # nixpkgs (#214): the static build from the GitHub release, checked
+      # against the sha256 of that asset as downloaded on 2026-11-17. It lands
+      # in /usr/local/bin, so the lint below and `npm run test` find it.
+      - name: Install ShellCheck
+        run: |
+          set -eu
+          cd "$(mktemp -d)"
+          curl -sfL -o shellcheck.tar.xz https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz
+          echo "8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198  shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf shellcheck.tar.xz -C /usr/local/bin --strip-components=1 shellcheck-v0.11.0/shellcheck
+          shellcheck --version
+
+      # Every tracked bash script, with the checks .shellcheckrc enables.
+      - name: Lint shell scripts
+        run: scripts/lint-shell.sh
+
       # .nvmrc is the one Node pin: railpack builds production on its major too
       # (an older patch can run there: docs/agents/node-version.md).
       - uses: actions/setup-node@v7

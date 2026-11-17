@@ -41,7 +41,7 @@
 #   6. Each of those paths names a regular file at build/<path>. A path that
 #      names none fails; it is never skipped.
 #   7. None of those files contains the marker.
-# For 1, 2 and 7, a file the check cannot read fails too. The check reads no
+# For 1, 2, 5 and 7, a file the check cannot read fails too. The check reads no
 # import inside a chunk: SvelteKit names in index.html every chunk of the
 # static import graph of its entry and of the home page node, so a static
 # import of the list puts it in a file index.html names (#232 proved it with
@@ -108,9 +108,16 @@ grep -rqF -- "$MARKER" "$BUILD" 2>/dev/null ||
   fail "no file under build/ contains the marker $MARKER, so the valid-guesses list is missing from the build: run \`npm run build\` first"
 
 # 5.
-mapfile -t paths < <(grep -oE -- "$PATH_RE" "$INDEX" | sort -u)
-[ "${#paths[@]}" -gt 0 ] ||
-  fail "build/index.html names no file under _app/ to load up front: if SvelteKit's appDir changed, change \`_app/\` in PATH_RE"
+found=$(grep -oE -- "$PATH_RE" "$INDEX" | sort -u)
+rc=$?
+# With pipefail, 1 is grep finding no path; any other failure is grep or sort
+# failing to read.
+case $rc in
+  0) ;;
+  1) fail "build/index.html names no file under _app/ to load up front: if SvelteKit's appDir changed, change \`_app/\` in PATH_RE" ;;
+  *) fail "cannot read the paths build/index.html names (grep or sort exit $rc)" ;;
+esac
+mapfile -t paths <<<"$found"
 
 # 6.
 files=("$INDEX")

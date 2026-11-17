@@ -312,6 +312,27 @@ exec ${realGrep} "$@"
 		expect(err).toContain('nodes/2.js: Input/output error');
 		expect(err).toContain('grep could not read every file build/index.html names (grep exit 2)');
 	});
+
+	it('when grep cannot read the paths index.html names, instead of finding none', () => {
+		// Rule 5's grep alone runs with -oE, so the shim fails it only.
+		const realGrep = execFileSync('sh', ['-c', 'command -v grep'], { encoding: 'utf8' }).trim();
+		write({
+			'shim/grep': `#!/bin/sh
+[ "$1" = -oE ] && { echo "grep: index.html: Input/output error" >&2; exit 2; }
+exec ${realGrep} "$@"
+`
+		});
+		chmodSync(path.join(tree, 'shim/grep'), 0o755);
+		const { code, out, err } = run([tree], {
+			...process.env,
+			PATH: `${path.join(tree, 'shim')}:${process.env.PATH}`
+		});
+		expect(code, `${out}${err}`).toBe(2);
+		expect(out).toBe('');
+		expect(err).toContain('index.html: Input/output error');
+		expect(err).toContain('cannot read the paths build/index.html names (grep or sort exit 2)');
+		expect(err).not.toContain('names no file under _app/');
+	});
 });
 
 describe('check-valid-guesses-lazy usage', () => {

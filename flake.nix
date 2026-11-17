@@ -20,7 +20,9 @@
       devShells.x86_64-linux.default = pkgs.mkShell {
         # No fallback to another Node: a nixpkgs without nodejs_<major> fails
         # here, naming the attribute, until `nix flake update` brings it in.
-        packages = [ pkgs."nodejs_${major}" ];
+        # shellcheck runs scripts/lint-shell.sh and its tests; CI installs
+        # its own pinned build (.forgejo/workflows/ci.yml).
+        packages = [ pkgs."nodejs_${major}" pkgs.shellcheck ];
       };
     };
 }

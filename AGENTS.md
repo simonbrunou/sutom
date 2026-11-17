@@ -38,6 +38,10 @@ Production installs with railpack's `npm install`, CI with `npm ci`. Both instal
 
 Prettier formats the repo in the SvelteKit template's style: `.prettierrc` sets tabs, single quotes, no trailing commas and a print width of 100, and `prettier-plugin-svelte` formats `.svelte` files. `npm run lint` runs `prettier --check .` before ESLint, so CI's Lint step fails on any file Prettier would change and names it: run `npm run format` and commit the result. Prettier skips the paths in `.gitignore` and `.prettierignore`, `graphify-out/` included, so `npm run format` leaves the graph alone.
 
+## Shell scripts
+
+`scripts/lint-shell.sh` runs ShellCheck on every tracked file that starts with `#!/usr/bin/env bash`, the one shebang the repo's scripts use, so a new script needs no list edit once it is staged. It refuses any other shell shebang (`#!/bin/bash`, `#!/bin/sh`, a CRLF line end) and a `.sh` file with no shebang, and skips other interpreters and files with no shebang, `.envrc` included. CI runs it on every PR and push to `main` with a pinned ShellCheck 0.11.0 that `.forgejo/workflows/ci.yml` checks against a sha256; the dev shell gives the same version from the locked nixpkgs, so run `scripts/lint-shell.sh` there. `.shellcheckrc` is the one place to enable or disable a check: it enables `check-extra-masked-returns`, which flags a command whose exit status the script never sees (sutom#211). Silence one finding with a `# shellcheck disable=SCxxxx` directive on its command and a comment saying why, never file-wide. `scripts/lint-shell.test.ts` runs the real `shellcheck`, so `npm run test` fails outside the dev shell when shellcheck is missing from PATH.
+
 ## Review
 
 Paste this paragraph, as it stands, into the brief of every review sub-agent:
