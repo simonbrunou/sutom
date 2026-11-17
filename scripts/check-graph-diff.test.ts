@@ -112,16 +112,19 @@ function passesWith(message: string, env: Record<string, string> = {}): void {
 	expect(out).toContain(message);
 }
 
-// Assert the failure, then follow its Fix: line on the branch (restore
-// graphify-out/ to the merge base, commit, refresh last) and assert that the
-// check passes: every failure class must print advice that works.
-function failsWith(...messages: string[]): string {
+// Assert the failure and that its Fix: line asks for the restore of
+// graphify-out/, a commit, then a refresh alone and last. Then take those
+// steps on the branch, running the git restore the line prints, and assert
+// that the check passes: every failure class must print advice that works.
+function failsThenFixes(...messages: string[]): string {
 	const { code, out, err } = run();
 	expect(code, out).toBe(1);
 	for (const message of messages) expect(err).toContain(message);
-	const restore = err.match(/git restore --source=\w+ --staged --worktree -- graphify-out/);
-	expect(restore, err).not.toBeNull();
-	git(...restore![0].split(' ').slice(1));
+	const fix = err.match(
+		/ {2}Fix: drop them \((git restore --source=\w+ --staged --worktree -- graphify-out), then commit\), then, on a PR about the graph, run scripts\/refresh-graph\.sh once every other change is committed and commit its output alone, last on the branch/
+	);
+	expect(fix, err).not.toBeNull();
+	git(...fix![1].split(' ').slice(1));
 	const parent = commit({}, 'chore: drop the graphify-out/ changes');
 	refresh();
 	passesWith(`built from its parent ${parent.slice(0, 12)}, which holds the merge base's`);
@@ -153,26 +156,6 @@ describe('check-graph-diff.sh passes', () => {
 		const parent = commit({ 'src/lib/new.ts': 'export {};\n' });
 		refresh();
 		passesWith(`the last commit is a refresh, built from its parent ${parent.slice(0, 12)}`);
-	});
-
-	it("after an earlier graphify-out/ change, on following the failure's Fix: line", () => {
-		commit({ 'src/lib/game.ts': 'export const x = 2;\n', 'graphify-out/stray.json': '{}\n' });
-		refresh();
-		failsWith('4. ');
-	});
-
-	it("after a merge of main into a refreshed branch, on following the failure's Fix: line", () => {
-		refresh();
-		git('checkout', '-q', '-b', 'main', 'origin/main');
-		commit({ 'src/lib/other.ts': 'export {};\n' });
-		git('update-ref', 'refs/remotes/origin/main', 'HEAD');
-		git('checkout', '-q', 'feature');
-		git('merge', '-q', '--no-ff', '-m', 'merge main', 'main');
-		failsWith(
-			'has 2 parents, not one',
-			'once a commit has restored graphify-out/ to the merge base',
-			'then commit), then, on a PR about the graph, run scripts/refresh-graph.sh'
-		);
 	});
 
 	it('on an untracking PR: a .gitignore commit, then a refresh that holds the removal from the index (#259)', () => {
@@ -257,7 +240,7 @@ describe('check-graph-diff.sh fails', () => {
 			[GRAPH]: graph(parent),
 			[REPORT]: `${title('sutom')}\n## God nodes\n`
 		});
-		const err = failsWith(
+		const err = failsThenFixes(
 			'also changes files outside graphify-out/:\n     src/lib/game.ts',
 			`graphify-out/ paths in the diff:\n     ${REPORT}\n     ${GRAPH}`,
 			'run scripts/refresh-graph.sh once every other change is committed',
@@ -269,7 +252,7 @@ describe('check-graph-diff.sh fails', () => {
 	it('when an earlier commit refreshed the graph and the last commit changes code', () => {
 		refresh();
 		commit({ 'src/lib/game.ts': 'export const x = 2;\n' });
-		failsWith('1. ', 'src/lib/game.ts');
+		failsThenFixes('1. ', 'src/lib/game.ts');
 	});
 
 	it('when the last commit moves a file out of graphify-out/', () => {
@@ -277,7 +260,7 @@ describe('check-graph-diff.sh fails', () => {
 		mkdirSync(path.join(checkout, 'docs'));
 		git('mv', 'graphify-out/manifest.json', 'docs/manifest.json');
 		commit({ [GRAPH]: graph(parent) });
-		failsWith(
+		failsThenFixes(
 			'also changes files outside graphify-out/:\n     docs/manifest.json',
 			'paths in the diff:\n     graphify-out/graph.json\n     graphify-out/manifest.json'
 		);
@@ -286,7 +269,7 @@ describe('check-graph-diff.sh fails', () => {
 	it('listing both paths of a file renamed inside graphify-out/', () => {
 		git('mv', 'graphify-out/manifest.json', 'graphify-out/manifest.old.json');
 		commit({});
-		failsWith(
+		failsThenFixes(
 			'paths in the diff:\n     graphify-out/manifest.json\n     graphify-out/manifest.old.json\n'
 		);
 	});
@@ -295,7 +278,7 @@ describe('check-graph-diff.sh fails', () => {
 		const grandparent = git('rev-parse', 'HEAD');
 		const parent = commit({ 'src/lib/game.ts': 'export const x = 2;\n' });
 		refresh(grandparent);
-		const err = failsWith(`names built_at_commit "${grandparent}", not its parent ${parent}`);
+		const err = failsThenFixes(`names built_at_commit "${grandparent}", not its parent ${parent}`);
 		expect(err).not.toMatch(/^ {2}[13]\./m);
 	});
 
@@ -304,17 +287,17 @@ describe('check-graph-diff.sh fails', () => {
 		['a short one', graph('abc1234'), '"abc1234"']
 	])('when the graph names %s', (_, text, shown) => {
 		commit({ [GRAPH]: text, [REPORT]: title('sutom') });
-		failsWith(`2. ${GRAPH} in `, `names built_at_commit ${shown}, not its parent`);
+		failsThenFixes(`2. ${GRAPH} in `, `names built_at_commit ${shown}, not its parent`);
 	});
 
 	it('when the last commit deletes graph.json', () => {
 		commit({ [GRAPH]: null, [REPORT]: title('sutom') });
-		failsWith(`has no ${GRAPH}, so it names no built_at_commit`);
+		failsThenFixes(`has no ${GRAPH}, so it names no built_at_commit`);
 	});
 
 	it('when a stray `graphify update .` is committed alone, titled after the worktree', () => {
 		refresh(undefined, 't3-issue-178-graphify-out-guard');
-		const err = failsWith(
+		const err = failsThenFixes(
 			`3. ${REPORT} in `,
 			'starts with "# Graph Report - t3-issue-178-graphify-out-guard  (2026-11-07)", not "# Graph Report - sutom "'
 		);
@@ -323,13 +306,13 @@ describe('check-graph-diff.sh fails', () => {
 
 	it('when the report title only starts with sutom', () => {
 		refresh(undefined, 'sutom-old');
-		failsWith('starts with "# Graph Report - sutom-old  (2026-11-07)"');
+		failsThenFixes('starts with "# Graph Report - sutom-old  (2026-11-07)"');
 	});
 
 	it('when the last commit deletes the report', () => {
 		const parent = git('rev-parse', 'HEAD');
 		commit({ [GRAPH]: graph(parent), [REPORT]: null });
-		failsWith(`3. `, `has no ${REPORT}`);
+		failsThenFixes(`3. `, `has no ${REPORT}`);
 	});
 
 	// #229: only the last commit may change graphify-out/.
@@ -338,7 +321,7 @@ describe('check-graph-diff.sh fails', () => {
 		commit({ 'src/lib/game.ts': 'export const x = 2;\n', 'graphify-out/stray.json': '{}\n' });
 		const parent = git('rev-parse', 'HEAD');
 		refresh();
-		const err = failsWith(
+		const err = failsThenFixes(
 			'4. an earlier commit changes graphify-out/: only the last commit may',
 			`differ from ${mb.slice(0, 12)} to the parent ${parent.slice(0, 12)}:\n     graphify-out/stray.json\n`,
 			`git restore --source=${mb} --staged --worktree -- graphify-out, then commit), then, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed`
@@ -350,7 +333,7 @@ describe('check-graph-diff.sh fails', () => {
 	// Fix: line asks for the restore first even when only 1 to 3 fail.
 	it('asking for the restore before the refresh when only condition 3 fails', () => {
 		refresh(undefined, 't3-issue-229');
-		const err = failsWith(
+		const err = failsThenFixes(
 			'3. ',
 			'--worktree -- graphify-out, then commit), then, on a PR about the graph'
 		);
@@ -364,14 +347,14 @@ describe('check-graph-diff.sh fails', () => {
 			[REPORT]: `${title('sutom')}\n## God nodes\n`
 		});
 		refresh();
-		const err = failsWith(`4. `, `to the parent `, `:\n     ${REPORT}\n     ${GRAPH}\n`);
+		const err = failsThenFixes(`4. `, `to the parent `, `:\n     ${REPORT}\n     ${GRAPH}\n`);
 		expect(err).not.toMatch(/^ {2}[123]\./m);
 	});
 
 	it('when an earlier commit deletes a file under graphify-out/', () => {
 		commit({ 'src/lib/game.ts': 'export const x = 2;\n', 'graphify-out/manifest.json': null });
 		refresh();
-		const err = failsWith(`4. `, `to the parent `, `:\n     graphify-out/manifest.json\n`);
+		const err = failsThenFixes(`4. `, `to the parent `, `:\n     graphify-out/manifest.json\n`);
 		expect(err).not.toMatch(/^ {2}[123]\./m);
 	});
 
@@ -381,8 +364,25 @@ describe('check-graph-diff.sh fails', () => {
 		refresh(first);
 		git('checkout', '-q', 'feature');
 		git('merge', '-q', '--no-ff', '-m', 'merge side', 'side');
-		const err = failsWith('has 2 parents, not one', 'after a merge run scripts/refresh-graph.sh');
+		const err = failsThenFixes(
+			'has 2 parents, not one',
+			'after a merge run scripts/refresh-graph.sh'
+		);
 		expect(err).not.toMatch(/^ {2}[23]\./m);
+	});
+
+	it('when main is merged into a refreshed branch, asking for the restore first', () => {
+		refresh();
+		git('checkout', '-q', '-b', 'main', 'origin/main');
+		commit({ 'src/lib/other.ts': 'export {};\n' });
+		git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+		git('checkout', '-q', 'feature');
+		git('merge', '-q', '--no-ff', '-m', 'merge main', 'main');
+		failsThenFixes(
+			'has 2 parents, not one',
+			'once a commit has restored graphify-out/ to the merge base',
+			'then commit), then, on a PR about the graph, run scripts/refresh-graph.sh'
+		);
 	});
 });
 
