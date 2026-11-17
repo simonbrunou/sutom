@@ -161,6 +161,26 @@ describe('check-graph-diff.sh passes', () => {
 		);
 	});
 
+	it("after a merge of main into a refreshed branch, on following the failure's Fix: line", () => {
+		refresh();
+		git('checkout', '-q', '-b', 'main', 'origin/main');
+		commit({ 'src/lib/other.ts': 'export {};\n' });
+		git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+		git('checkout', '-q', 'feature');
+		git('merge', '-q', '--no-ff', '-m', 'merge main', 'main');
+		const err = failsWith(
+			'has 2 parents, not one',
+			'once a commit has restored graphify-out/ to the merge base',
+			'then commit), then, on a PR about the graph, run scripts/refresh-graph.sh'
+		);
+		const restore = err.match(/git restore --source=\w+ --staged --worktree -- graphify-out/);
+		expect(restore, err).not.toBeNull();
+		git(...restore![0].split(' ').slice(1));
+		const parent = commit({}, 'chore: drop the graphify-out/ changes');
+		refresh();
+		passesWith(`built from its parent ${parent.slice(0, 12)}, which holds the merge base's`);
+	});
+
 	it('on a PR that is one refresh', () => {
 		refresh();
 		passesWith('titled sutom');

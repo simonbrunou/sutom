@@ -108,7 +108,7 @@ parent=
 if [ "${#ids[@]}" -eq 2 ]; then
   parent=${ids[1]}
 else
-  fails+=("1. ${head:0:12} has $((${#ids[@]} - 1)) parents, not one: a refresh is a commit of its own, so after a merge run scripts/refresh-graph.sh again and commit its output last")
+  fails+=("1. ${head:0:12} has $((${#ids[@]} - 1)) parents, not one: a refresh is a commit of its own, so after a merge run scripts/refresh-graph.sh again and commit its output last, once a commit has restored $OUT/ to the merge base (condition 4)")
 fi
 
 earlier=
@@ -157,10 +157,12 @@ fi
   printf '  %s\n' "${fails[@]}"
   echo "  $OUT/ paths in the diff:"
   printf '%s\n' "$paths" | sed 's/^/     /'
-  # A refresh alone cannot fix condition 4: its parent would still hold the
-  # earlier change. The restore has to come first.
+  # A refresh alone cannot fix condition 4, nor a merge head: the refresh's
+  # parent would still hold a graphify-out/ that differs from the merge base
+  # (a merge head holds one, or the diff would be empty). The restore has to
+  # come first.
   join=or
-  [ -z "$earlier" ] || join=then
+  if [ -z "$parent" ] || [ -n "$earlier" ]; then join=then; fi
   echo "  Fix: drop them (git restore --source=$mb --staged --worktree -- $OUT, then commit), $join, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed and commit its output alone, last on the branch (AGENTS.md, \`## graphify\`)."
 } >&2
 exit 1
