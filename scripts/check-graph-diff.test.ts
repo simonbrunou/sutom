@@ -439,6 +439,8 @@ describe('check-graph-diff.sh refuses a wrong call', () => {
 		const { code, out, err } = run();
 		expect(code).toBe(2);
 		expect(err).toContain(`git diff ${mb.slice(0, 12)} ${parent.slice(0, 12)} failed`);
+		// It stops there: no later diff runs.
+		expect(err.match(/check-graph-diff: git diff/g)).toHaveLength(1);
 		expect(out).toBe('');
 	});
 
