@@ -157,12 +157,9 @@ fi
   printf '  %s\n' "${fails[@]}"
   echo "  $OUT/ paths in the diff:"
   printf '%s\n' "$paths" | sed 's/^/     /'
-  # A refresh alone cannot fix condition 4, nor a merge head: the refresh's
-  # parent would still hold a graphify-out/ that differs from the merge base
-  # (a merge head holds one, or the diff would be empty). The restore has to
-  # come first.
-  join=or
-  if [ -z "$parent" ] || [ -n "$earlier" ]; then join=then; fi
-  echo "  Fix: drop them (git restore --source=$mb --staged --worktree -- $OUT, then commit), $join, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed and commit its output alone, last on the branch (AGENTS.md, \`## graphify\`)."
+  # A refresh on top of a failing head always fails condition 4: the head
+  # holds a graphify-out/ that differs from the merge base, or the check
+  # would have passed above. So the restore comes first on every branch.
+  echo "  Fix: drop them (git restore --source=$mb --staged --worktree -- $OUT, then commit), then, on a PR about the graph, run scripts/refresh-graph.sh once every other change is committed and commit its output alone, last on the branch (AGENTS.md, \`## graphify\`)."
 } >&2
 exit 1

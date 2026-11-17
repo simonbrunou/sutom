@@ -344,15 +344,22 @@ describe('check-graph-diff.sh fails', () => {
 		expect(err).not.toMatch(/^ {2}[123]\./m);
 	});
 
-	// A refresh alone fixes conditions 1 to 3, so their Fix: line offers it
-	// as the other way out.
-	it('offering a refresh alone as the fix when no earlier commit changes graphify-out/', () => {
+	// A refresh on top of any failing head would fail condition 4, so the
+	// Fix: line asks for the restore first even when only 1 to 3 fail, and
+	// following it passes.
+	it('asking for the restore before the refresh when only condition 3 fails', () => {
 		refresh(undefined, 't3-issue-229');
 		const err = failsWith(
 			'3. ',
-			'--worktree -- graphify-out, then commit), or, on a PR about the graph'
+			'--worktree -- graphify-out, then commit), then, on a PR about the graph'
 		);
 		expect(err).not.toMatch(/^ {2}4\./m);
+		const restore = err.match(/git restore --source=\w+ --staged --worktree -- graphify-out/);
+		expect(restore, err).not.toBeNull();
+		git(...restore![0].split(' ').slice(1));
+		const parent = commit({}, 'chore: drop the graphify-out/ changes');
+		refresh();
+		passesWith(`built from its parent ${parent.slice(0, 12)}, which holds the merge base's`);
 	});
 
 	it('when an earlier commit changes graphify-out/ files that the last refresh rewrites', () => {
