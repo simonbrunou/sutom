@@ -1,0 +1,6 @@
+# The one ShellCheck config: scripts/lint-shell.sh, CI and its tests read it
+# (#214). Enable or disable checks here, never in the script.
+#
+# Flags a command substitution whose exit status the script never sees, such
+# as `done < <(awk ...)` (#211).
+enable=check-extra-masked-returns

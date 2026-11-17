@@ -1598,10 +1598,11 @@ const nvmrcForms = [
 ];
 
 // mkShell returns its argument, and nodejs_<n> is the string n for every
-// digit run in the forms, so the shell's one package names the major the
-// flake's match takes, whichever part of a form that is.
+// digit run in the forms, so the shell's first package names the major the
+// flake's match takes, whichever part of a form that is. Its second is
+// shellcheck (#214).
 const majors = [...new Set(nvmrcForms.flatMap((text) => text.match(/[0-9]+/g) ?? []))];
-const nixpkgsStandIn = `{ ... }: { mkShell = shell: shell; ${majors.map((n) => `nodejs_${n} = "${n}";`).join(' ')} }\n`;
+const nixpkgsStandIn = `{ ... }: { mkShell = shell: shell; shellcheck = "shellcheck"; ${majors.map((n) => `nodejs_${n} = "${n}";`).join(' ')} }\n`;
 const devShellPackages =
 	'((import ./flake.nix).outputs { self = { }; nixpkgs = ./nixpkgs; }).devShells.x86_64-linux.default.packages';
 
@@ -1637,7 +1638,12 @@ function flakeReads(text: string): string | null {
 	);
 	if (p.status === 0) {
 		const packages: unknown = JSON.parse(p.stdout);
-		if (Array.isArray(packages) && packages.length === 1 && typeof packages[0] === 'string') {
+		if (
+			Array.isArray(packages) &&
+			packages.length === 2 &&
+			typeof packages[0] === 'string' &&
+			packages[1] === 'shellcheck'
+		) {
 			return packages[0];
 		}
 	} else {
