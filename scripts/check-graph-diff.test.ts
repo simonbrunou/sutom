@@ -112,10 +112,19 @@ function passesWith(message: string, env: Record<string, string> = {}): void {
 	expect(out).toContain(message);
 }
 
+// Assert the failure, then follow its Fix: line on the branch (restore
+// graphify-out/ to the merge base, commit, refresh last) and assert that the
+// check passes: every failure class must print advice that works.
 function failsWith(...messages: string[]): string {
 	const { code, out, err } = run();
 	expect(code, out).toBe(1);
 	for (const message of messages) expect(err).toContain(message);
+	const restore = err.match(/git restore --source=\w+ --staged --worktree -- graphify-out/);
+	expect(restore, err).not.toBeNull();
+	git(...restore![0].split(' ').slice(1));
+	const parent = commit({}, 'chore: drop the graphify-out/ changes');
+	refresh();
+	passesWith(`built from its parent ${parent.slice(0, 12)}, which holds the merge base's`);
 	return err;
 }
 
@@ -149,16 +158,7 @@ describe('check-graph-diff.sh passes', () => {
 	it("after an earlier graphify-out/ change, on following the failure's Fix: line", () => {
 		commit({ 'src/lib/game.ts': 'export const x = 2;\n', 'graphify-out/stray.json': '{}\n' });
 		refresh();
-		const err = failsWith('4. ');
-		const restore = err.match(/git restore --source=\w+ --staged --worktree -- graphify-out/);
-		expect(restore, err).not.toBeNull();
-		git(...restore![0].split(' ').slice(1));
-		commit({}, 'chore: drop the graphify-out/ changes');
-		const parent = commit({ 'src/lib/new.ts': 'export {};\n' });
-		refresh();
-		passesWith(
-			`built from its parent ${parent.slice(0, 12)}, which holds the merge base's graphify-out/, and titled sutom`
-		);
+		failsWith('4. ');
 	});
 
 	it("after a merge of main into a refreshed branch, on following the failure's Fix: line", () => {
@@ -168,17 +168,11 @@ describe('check-graph-diff.sh passes', () => {
 		git('update-ref', 'refs/remotes/origin/main', 'HEAD');
 		git('checkout', '-q', 'feature');
 		git('merge', '-q', '--no-ff', '-m', 'merge main', 'main');
-		const err = failsWith(
+		failsWith(
 			'has 2 parents, not one',
 			'once a commit has restored graphify-out/ to the merge base',
 			'then commit), then, on a PR about the graph, run scripts/refresh-graph.sh'
 		);
-		const restore = err.match(/git restore --source=\w+ --staged --worktree -- graphify-out/);
-		expect(restore, err).not.toBeNull();
-		git(...restore![0].split(' ').slice(1));
-		const parent = commit({}, 'chore: drop the graphify-out/ changes');
-		refresh();
-		passesWith(`built from its parent ${parent.slice(0, 12)}, which holds the merge base's`);
 	});
 
 	it('on a PR that is one refresh', () => {
@@ -345,8 +339,7 @@ describe('check-graph-diff.sh fails', () => {
 	});
 
 	// A refresh on top of any failing head would fail condition 4, so the
-	// Fix: line asks for the restore first even when only 1 to 3 fail, and
-	// following it passes.
+	// Fix: line asks for the restore first even when only 1 to 3 fail.
 	it('asking for the restore before the refresh when only condition 3 fails', () => {
 		refresh(undefined, 't3-issue-229');
 		const err = failsWith(
@@ -354,12 +347,6 @@ describe('check-graph-diff.sh fails', () => {
 			'--worktree -- graphify-out, then commit), then, on a PR about the graph'
 		);
 		expect(err).not.toMatch(/^ {2}4\./m);
-		const restore = err.match(/git restore --source=\w+ --staged --worktree -- graphify-out/);
-		expect(restore, err).not.toBeNull();
-		git(...restore![0].split(' ').slice(1));
-		const parent = commit({}, 'chore: drop the graphify-out/ changes');
-		refresh();
-		passesWith(`built from its parent ${parent.slice(0, 12)}, which holds the merge base's`);
 	});
 
 	it('when an earlier commit changes graphify-out/ files that the last refresh rewrites', () => {
