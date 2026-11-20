@@ -1,11 +1,14 @@
 // @vitest-environment node
 // scripts/check-push-repeats-pr.ts (#239) against a small git repo written per test. The base
 // repo holds the shapes the script must pass, as this repo's CI has them: a workflow on `push`
-// and `pull_request` to `main`, the graphify-out guard with its PR-only `if` and its two `env`
-// expressions, and a runner variable name in Markdown. Each other case edits one file into one
-// difference and asserts exit 1 and the line that names it, so removing any rule from the script
-// turns a case red. The runner variable names are built from parts here, as in the script, so
-// neither file holds one and the script reads both.
+// and `pull_request` to `main`, and a runner variable name in Markdown. The other passing cases
+// edit the base into another shape the script allows, or run the script from a subfolder of the
+// repo. The cases that find a difference each edit one file and assert exit 1 and the lines that
+// name the difference or differences under test, so removing any rule from the script turns a
+// case red.
+// The last cases assert exit 2 on a wrong call, an unknown SHA, a folder outside git and a
+// missing yaml package. The runner variable names are built from parts here, as in the script,
+// so neither file holds one and the script reads both.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -18,7 +21,6 @@ const CI = '.forgejo/workflows/ci.yml';
 const [GH, FJ, FG] = ['GITHUB', 'FORGEJO', 'FORGE'].map((name) => `${name}_`);
 const LIB = ['@actions', 'github'].join('/');
 const EV = ['event', 'Name'].join('');
-const GUARD_IF = /steps\[1\]\.if: an if: github\.event_name == 'pull_request'/;
 
 // The repos below see neither the caller's git config, nor a GIT_* variable a hook set, nor a
 // NODE_PATH that could find the yaml package for the copy that must lack it.
@@ -46,14 +48,6 @@ const baseCi = [
 	'    runs-on: ubuntu-latest',
 	'    steps:',
 	'      - uses: actions/checkout@v7',
-	'        with:',
-	'          fetch-depth: 0',
-	'      - name: Check graphify-out/ changes',
-	"        if: github.event_name == 'pull_request'",
-	'        env:',
-	'          GRAPH_CHECK_BASE: origin/${{ github.base_ref }}',
-	'          GRAPH_CHECK_HEAD: ${{ github.event.pull_request.head.sha }}',
-	'        run: scripts/check-graph-diff.sh',
 	'      - run: npm run test',
 	''
 ].join('\n');
@@ -132,10 +126,10 @@ function expectDifference(
 }
 
 describe('check-push-repeats-pr passes', () => {
-	it("the base repo: this repo's triggers and graphify-out guard", () => {
+	it("the base repo: this repo's triggers", () => {
 		const { status, out } = check();
 		expect(out).toMatch(
-			/the push run repeats the PR run but for 1 PR-only graphify-out guard step\(s\) \(1 workflow file\(s\), 1 file\(s\) scanned\)/
+			/the push run repeats the PR run \(1 workflow file\(s\), 1 file\(s\) scanned\)/
 		);
 		expect(status).toBe(0);
 	});
@@ -158,16 +152,8 @@ describe('check-push-repeats-pr passes', () => {
 	it('branches written as a string under both triggers', () => {
 		expectPass({ [CI]: baseCi.replaceAll('branches: [main]', 'branches: main') });
 	});
-	it('a name on the guard job, and a guard step with no name', () => {
-		let ci = edit(baseCi, '    runs-on:', '    name: Test\n    runs-on:');
-		ci = edit(ci, '      - name: Check graphify-out/ changes\n        if:', '      - if:');
-		expectPass({ [CI]: ci });
-	});
 	it('an expression and an if in a comment, which the runner never reads', () => {
 		expectPass({ [CI]: ciWith('      # if: ${{ github.event_name }}', '      - run: echo hi') });
-	});
-	it('a runner variable name in graphify-out', () => {
-		expectPass({ 'graphify-out/graph.json': `{"label": "${GH}REF"}\n` });
 	});
 	it('run from a subfolder of the repo', () => {
 		expectPass({}, { subdir: 'scripts' });
@@ -269,7 +255,7 @@ describe('check-push-repeats-pr finds a YAML form it does not read', () => {
 		const encoded = Buffer.from('echo ${{ github.event_name }}').toString('base64');
 		expectDifference(
 			{ [CI]: ciWith(`      - run: !!binary ${encoded}`) },
-			/ci\.yml:21: \.jobs\.test\.steps\[3\]\.run: a tag \(tag:yaml\.org,2002:binary\)/
+			/ci\.yml:13: \.jobs\.test\.steps\[2\]\.run: a tag \(tag:yaml\.org,2002:binary\)/
 		);
 	});
 	it('an if: that is an alias', () => {
@@ -279,17 +265,17 @@ describe('check-push-repeats-pr finds a YAML form it does not read', () => {
 			'      - run: echo b',
 			'        if: *cond'
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:24: \.jobs\.test\.steps\[4\]\.if: an alias \(\*cond\)/);
+		expectDifference({ [CI]: ci }, /ci\.yml:16: \.jobs\.test\.steps\[3\]\.if: an alias \(\*cond\)/);
 	});
 	it('a merge key that pulls in an alias', () => {
 		const ci = ciWith('      - &step { run: echo a }', '      - <<: *step', '        name: b');
-		expectDifference({ [CI]: ci }, /steps\[4\]\.<<: an alias \(\*step\)/);
+		expectDifference({ [CI]: ci }, /steps\[3\]\.<<: an alias \(\*step\)/);
 	});
 	it('a merge key with a mapping of its own', () => {
 		const ci = ciWith('      - <<: { run: echo a }', '        name: b');
 		expectDifference(
 			{ [CI]: ci },
-			/ci\.yml:21: \.jobs\.test\.steps\[3\]\.<<: a merge key, which this script does not follow/
+			/ci\.yml:13: \.jobs\.test\.steps\[2\]\.<<: a merge key, which this script does not follow/
 		);
 	});
 	it('aliases that expand past what the yaml package resolves', () => {
@@ -304,17 +290,30 @@ describe('check-push-repeats-pr finds an if', () => {
 		const ci = ciWith('      - run: echo push', "        if: github.event_name == 'push'");
 		expectDifference(
 			{ [CI]: ci },
-			/ci\.yml:22: \.jobs\.test\.steps\[3\]\.if: an if: github\.event_name == 'push'/
+			/ci\.yml:14: \.jobs\.test\.steps\[2\]\.if: an if: github\.event_name == 'push'/
+		);
+	});
+	it('a PR-only step that reads the base ref and head sha of the PR', () => {
+		const ci = ciWith(
+			'      - run: scripts/pr-only.sh',
+			"        if: github.event_name == 'pull_request'",
+			'        env:',
+			'          BASE: origin/${{ github.base_ref }}',
+			'          HEAD: ${{ github.event.pull_request.head.sha }}'
+		);
+		expectDifference(
+			{ [CI]: ci },
+			/steps\[2\]\.if: an if: github\.event_name == 'pull_request'[\s\S]*steps\[2\]\.env\.BASE: an expression: \$\{\{ github\.base_ref \}\}[\s\S]*steps\[2\]\.env\.HEAD: an expression: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/
 		);
 	});
 	it('an if: that reads no event', () => {
 		const ci = ciWith('      - run: npm ci', "        if: steps.cache.outputs.cache-hit != 'true'");
-		expectDifference({ [CI]: ci }, /steps\[3\]\.if: an if: steps\.cache/);
+		expectDifference({ [CI]: ci }, /steps\[2\]\.if: an if: steps\.cache/);
 	});
 	it('an if: always()', () => {
 		expectDifference(
 			{ [CI]: ciWith('      - run: echo done', '        if: always()') },
-			/steps\[3\]\.if: an if: always\(\)/
+			/steps\[2\]\.if: an if: always\(\)/
 		);
 	});
 	it('an if: on the job', () => {
@@ -327,11 +326,11 @@ describe('check-push-repeats-pr finds an if', () => {
 	});
 	it('an if key written in quotes', () => {
 		const ci = ciWith('      - run: echo push', '        "if": github.ref == \'refs/heads/main\'');
-		expectDifference({ [CI]: ci }, /steps\[3\]\.if: an if:/);
+		expectDifference({ [CI]: ci }, /steps\[2\]\.if: an if:/);
 	});
 	it('an if key with a space before its colon', () => {
 		const ci = ciWith('      - run: echo push', "        if : github.ref == 'refs/heads/main'");
-		expectDifference({ [CI]: ci }, /steps\[3\]\.if: an if:/);
+		expectDifference({ [CI]: ci }, /steps\[2\]\.if: an if:/);
 	});
 	it('an if written as an explicit key', () => {
 		const ci = ciWith(
@@ -339,14 +338,14 @@ describe('check-push-repeats-pr finds an if', () => {
 			'        ? if',
 			"        : github.ref == 'refs/heads/main'"
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:22: \.jobs\.test\.steps\[3\]\.if: an if:/);
+		expectDifference({ [CI]: ci }, /ci\.yml:14: \.jobs\.test\.steps\[2\]\.if: an if:/);
 	});
 	it('an if in a flow mapping left open at the end of its line', () => {
 		const ci = ciWith(
 			'      - { run: echo a,',
 			'          if: "github.ref == \'refs/heads/main\'" }'
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:22: \.jobs\.test\.steps\[3\]\.if: an if:/);
+		expectDifference({ [CI]: ci }, /ci\.yml:14: \.jobs\.test\.steps\[2\]\.if: an if:/);
 	});
 });
 
@@ -355,13 +354,13 @@ describe('check-push-repeats-pr finds an expression', () => {
 		const ci = ciWith('      - run: echo ref', '        env:', '          REF: ${{ github.ref }}');
 		expectDifference(
 			{ [CI]: ci },
-			/ci\.yml:23: \.jobs\.test\.steps\[3\]\.env\.REF: an expression: \$\{\{ github\.ref \}\}/
+			/ci\.yml:15: \.jobs\.test\.steps\[2\]\.env\.REF: an expression: \$\{\{ github\.ref \}\}/
 		);
 	});
 	it("the index form github['event_name']", () => {
 		expectDifference(
 			{ [CI]: ciWith("      - run: echo ${{ github['event_name'] }}") },
-			/ci\.yml:21: .*an expression/
+			/ci\.yml:13: .*an expression/
 		);
 	});
 	it('an expression on a step output that follows the event', () => {
@@ -369,46 +368,34 @@ describe('check-push-repeats-pr finds an expression', () => {
 			'      - run: npm run e2e',
 			"        continue-on-error: ${{ steps.co.outputs.ref != 'refs/heads/main' }}"
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:22: .*continue-on-error: an expression/);
+		expectDifference({ [CI]: ci }, /ci\.yml:14: .*continue-on-error: an expression/);
 	});
 	it('the forgejo and forge contexts', () => {
 		const ci = ciWith(
 			'      - run: echo ${{ forgejo.event_name }}',
 			'      - run: echo ${{ forge.ref }}'
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:21: .*an expression[\s\S]*ci\.yml:22: .*an expression/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression[\s\S]*ci\.yml:14: .*an expression/);
 	});
 	it('an expression split over lines of a folded block', () => {
 		const ci = ciWith('      - run: >-', '          echo ${{', '          github.event_name }}');
-		expectDifference({ [CI]: ci }, /ci\.yml:21: .*an expression: \$\{\{ github\.event_name \}\}/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression: \$\{\{ github\.event_name \}\}/);
 	});
 	it('an expression split over lines of a literal block, which keeps the line break', () => {
 		const ci = ciWith('      - run: |', '          echo ${{', '          github.event_name }}');
-		expectDifference({ [CI]: ci }, /ci\.yml:21: .*an expression: \$\{\{\ngithub\.event_name \}\}/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression: \$\{\{\ngithub\.event_name \}\}/);
 	});
 	it('an expression in a quoted string that runs onto the next line', () => {
 		const ci = ciWith('      - run: "echo ${{', '          github.event_name }}"');
-		expectDifference({ [CI]: ci }, /ci\.yml:21: .*an expression: \$\{\{ github\.event_name \}\}/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression: \$\{\{ github\.event_name \}\}/);
 	});
 	it('an expression spelled with a YAML escape', () => {
 		const ci = ciWith('      - run: "echo \\x24{{ github.event_name }}"');
-		expectDifference({ [CI]: ci }, /ci\.yml:21: .*an expression: \$\{\{ github\.event_name \}\}/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression: \$\{\{ github\.event_name \}\}/);
 	});
 	it('an expression in a key', () => {
 		const ci = ciWith('      - run: echo key', '        env:', '          ${{ github.ref }}: x');
 		expectDifference({ [CI]: ci }, /\(key\): an expression: \$\{\{ github\.ref \}\}/);
-	});
-	it("the guard's expressions outside the guard", () => {
-		const ci = ciWith(
-			'      - run: echo base',
-			'        env:',
-			'          GRAPH_CHECK_BASE: ${{ github.base_ref }}',
-			'          GRAPH_CHECK_HEAD: ${{ github.event.pull_request.head.sha }}'
-		);
-		expectDifference(
-			{ [CI]: ci },
-			/steps\[3\]\.env\.GRAPH_CHECK_BASE: an expression: \$\{\{ github\.base_ref \}\}[\s\S]*steps\[3\]\.env\.GRAPH_CHECK_HEAD: an expression/
-		);
 	});
 	it('an expression in another YAML file under .forgejo', () => {
 		expectDifference(
@@ -448,139 +435,9 @@ describe('check-push-repeats-pr finds an expression', () => {
 		);
 		expectDifference(
 			{ [CI]: ci },
-			/ci\.yml:21: \.jobs\.test\.steps\[3\]\.uses: runs code that gets the event: actions\/github-script@v7/
+			/ci\.yml:13: \.jobs\.test\.steps\[2\]\.uses: runs code that gets the event: actions\/github-script@v7/
 		);
 	});
-});
-
-describe("check-push-repeats-pr finds a step that is not this repo's guard", () => {
-	it("a second step in the guard's shape, which the allowance does not cover", () => {
-		const guard = baseCi.slice(
-			baseCi.indexOf('      - name: Check'),
-			baseCi.indexOf('      - run: npm')
-		);
-		expectDifference(
-			{ [CI]: `${baseCi}${guard}` },
-			/\.forgejo\/workflows\/: 2 steps in the graphify-out guard's shape; the allowance covers one/
-		);
-	});
-	it("a step in the guard's shape in each of two workflows", () => {
-		expectDifference(
-			{ '.forgejo/workflows/other.yml': baseCi },
-			/\.forgejo\/workflows\/: 2 steps in the graphify-out guard's shape; the allowance covers one/
-		);
-	});
-	it("the guard's shape in a YAML file under .forgejo that is not a workflow", () => {
-		expectDifference(
-			{ '.forgejo/shared/ci.yml': baseCi },
-			/\.forgejo\/shared\/ci\.yml:15: \.jobs\.test\.steps\[1\]\.if: an if: github\.event_name == 'pull_request'/
-		);
-	});
-	it("the guard's if: on a step that runs something else", () => {
-		const ci = ciWith(
-			'      - run: npm run build',
-			"        if: github.event_name == 'pull_request'"
-		);
-		expectDifference({ [CI]: ci }, /steps\[3\]\.if: an if: github\.event_name == 'pull_request'/);
-	});
-	it('the guard script under another if:', () => {
-		const ci = edit(
-			baseCi,
-			"if: github.event_name == 'pull_request'",
-			"if: github.event_name != 'push'"
-		);
-		expectDifference(
-			{ [CI]: ci },
-			/steps\[1\]\.if: an if: github\.event_name != 'push'[\s\S]*GRAPH_CHECK_BASE: an expression: \$\{\{ github\.base_ref \}\}/
-		);
-	});
-	it('the guard with another run', () => {
-		const ci = edit(
-			baseCi,
-			'run: scripts/check-graph-diff.sh',
-			'run: scripts/check-graph-diff.sh; touch marker'
-		);
-		expectDifference({ [CI]: ci }, GUARD_IF);
-	});
-	it('a guard step with a shell, which runs other code on the PR run', () => {
-		const ci = edit(
-			baseCi,
-			'        run: scripts/check-graph-diff.sh',
-			"        shell: bash -c 'echo pr > marker; bash {0}'\n        run: scripts/check-graph-diff.sh"
-		);
-		expectDifference(
-			{ [CI]: ci },
-			new RegExp(`${GUARD_IF.source}[\\s\\S]*GRAPH_CHECK_BASE: an expression`)
-		);
-	});
-	it('a guard step with another env variable, which the shell can run code from', () => {
-		const ci = edit(
-			baseCi,
-			'          GRAPH_CHECK_BASE',
-			'          BASH_ENV: scripts/pr-only.sh\n          GRAPH_CHECK_BASE'
-		);
-		expectDifference({ [CI]: ci }, GUARD_IF);
-	});
-	it('a guard step that sets only one of its two env variables', () => {
-		const ci = edit(baseCi, /\n {10}GRAPH_CHECK_HEAD: .*/, '');
-		expectDifference({ [CI]: ci }, GUARD_IF);
-	});
-	it('a guard step that sets BASH_ENV in place of one of its env variables', () => {
-		const ci = edit(baseCi, '          GRAPH_CHECK_HEAD:', '          BASH_ENV:');
-		expectDifference({ [CI]: ci }, GUARD_IF);
-	});
-	it("each guard expression in the other variable's value", () => {
-		let ci = edit(
-			baseCi,
-			'origin/${{ github.base_ref }}',
-			'origin/${{ github.event.pull_request.head.sha }}'
-		);
-		ci = edit(
-			ci,
-			'GRAPH_CHECK_HEAD: ${{ github.event.pull_request.head.sha }}',
-			'GRAPH_CHECK_HEAD: ${{ github.base_ref }}'
-		);
-		expectDifference(
-			{ [CI]: ci },
-			/steps\[1\]\.env\.GRAPH_CHECK_BASE: an expression: \$\{\{ github\.event\.pull_request\.head\.sha \}\}[\s\S]*steps\[1\]\.env\.GRAPH_CHECK_HEAD: an expression: \$\{\{ github\.base_ref \}\}/
-		);
-	});
-	it("a guard expression in the guard's name", () => {
-		const ci = edit(
-			baseCi,
-			'name: Check graphify-out/ changes',
-			'name: Check ${{ github.base_ref }}'
-		);
-		expectDifference({ [CI]: ci }, /steps\[1\]\.name: an expression: \$\{\{ github\.base_ref \}\}/);
-	});
-	for (const [key, where, from, to] of [
-		[
-			'defaults',
-			'the workflow',
-			'jobs:',
-			'defaults:\n  run:\n    shell: bash -c "bash {0}; touch marker"\njobs:'
-		],
-		['env', 'the workflow', 'jobs:', 'env:\n  BASH_ENV: scripts/hook.sh\njobs:'],
-		['concurrency', 'the workflow', 'jobs:', 'concurrency: ci\njobs:'],
-		[
-			'defaults',
-			'the job',
-			'    runs-on:',
-			'    defaults:\n      run:\n        working-directory: sub\n    runs-on:'
-		],
-		['env', 'the job', '    runs-on:', '    env:\n      BASH_ENV: scripts/hook.sh\n    runs-on:'],
-		['container', 'the job', '    runs-on:', '    container:\n      image: node:26\n    runs-on:'],
-		[
-			'services',
-			'the job',
-			'    runs-on:',
-			'    services:\n      db:\n        image: postgres:17\n    runs-on:'
-		]
-	]) {
-		it(`${key} on ${where} of the guard`, () => {
-			expectDifference({ [CI]: edit(baseCi, from, to) }, GUARD_IF);
-		});
-	}
 });
 
 describe('check-push-repeats-pr finds a file that reads the event', () => {

@@ -1,15 +1,3 @@
-## graphify
-
-This project has a graphify knowledge graph at graphify-out/.
-
-Rules:
-
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- Leave `graphify-out/` out of feature and fix PRs. A graph refresh lands only in a PR about the graph (a `chore:` refresh, or work on the graphify setup), as its own commit, last on the branch. This overrides the "Run `graphify update .` after code changes" line that graphify rewrites into GRAPH_REPORT.md on every refresh. Undo a stray `graphify update` with `git restore graphify-out`: `.gitignore` already keeps the per-run files it leaves out of git
-- Refresh with `scripts/refresh-graph.sh`, from any checkout, a T3 worktree included, once every other change on the branch is committed. graphify titles GRAPH_REPORT.md with the name of the directory it updates, so `graphify update .` in a worktree writes the worktree's name; the script hands graphify a path through a symlink named `sutom`, then fails when the report has another title or graphify wrote a file git neither tracks nor ignores. Commit what it wrote under `graphify-out/` and nothing else, save an untracking PR's removal from the index (next bullet)
-- CI enforces that shape on every PR: `scripts/check-graph-diff.sh` fails a PR whose diff touches `graphify-out/` unless only its last commit changes `graphify-out/`, that commit changes nothing else, names its parent as `built_at_commit` in `graph.json` and titles the report `sutom`. A `scripts/refresh-graph.sh` run committed alone, last, passes. Run the check with `origin/main` fetched for CI's answer. It cannot tell a PR about the graph from a feature PR that ends in a refresh: review still has to catch that. A PR that stops tracking files under `graphify-out/` commits its `.gitignore` change first, then runs `git rm --cached` on those files and `scripts/refresh-graph.sh`, and commits that removal with the script's output, alone and last: the removal is the one change the refresh commit holds besides what the script wrote, since a removal in an earlier commit fails the check. When the script says "there is no refresh to commit", commit the removal alone, last: that PR fails the check and merges only by the maintainer's override (#228): never edit `graph.json` by hand to pass it
-
 ## Agent skills
 
 ### Issue tracker
@@ -36,7 +24,7 @@ Production installs with railpack's `npm install`, CI with `npm ci`. Both instal
 
 ## Formatting
 
-Prettier formats the repo in the SvelteKit template's style: `.prettierrc` sets tabs, single quotes, no trailing commas and a print width of 100, and `prettier-plugin-svelte` formats `.svelte` files. `npm run lint` runs `prettier --check .` before ESLint, so CI's Lint step fails on any file Prettier would change and names it: run `npm run format` and commit the result. Prettier skips the paths in `.gitignore` and `.prettierignore`, `graphify-out/` included, so `npm run format` leaves the graph alone.
+Prettier formats the repo in the SvelteKit template's style: `.prettierrc` sets tabs, single quotes, no trailing commas and a print width of 100, and `prettier-plugin-svelte` formats `.svelte` files. `npm run lint` runs `prettier --check .` before ESLint, so CI's Lint step fails on any file Prettier would change and names it: run `npm run format` and commit the result. Prettier skips the paths in `.gitignore` and `.prettierignore`.
 
 ## Shell scripts
 
@@ -62,7 +50,7 @@ After every merge, check whether to wait for `main`'s CI run:
 
 1. Run `git fetch origin`. Take the merge SHA from `merge_commit_sha` in `python3 -I ~/.agents/skills/forgejo-issues/scripts/forgejo.py get sutom#<n>`.
 2. Run `git rev-parse <merge SHA>^{tree} <pushed SHA>^{tree}`. Two different hashes mean the merge commit holds files CI has not tested together, as when the branch was behind `main`, so wait (step 4).
-3. The same hash twice means the merge commit holds the files the PR's CI passed, since the PR run checks out the pushed SHA itself. To learn whether the `push` run on `main` repeats the PR run's jobs and steps on them, run `node scripts/check-push-repeats-pr.ts <pushed SHA>` in a checkout with its dependencies installed (`npm ci`). The script's header lists what it reads, the two differences this repo's CI keeps on purpose and what it cannot see. Exit 0 means skip the wait. Any other exit means wait (step 4); it printed each difference it found.
+3. The same hash twice means the merge commit holds the files the PR's CI passed, since the PR run checks out the pushed SHA itself. To learn whether the `push` run on `main` repeats the PR run's jobs and steps on them, run `node scripts/check-push-repeats-pr.ts <pushed SHA>` in a checkout with its dependencies installed (`npm ci`). The script's header lists what it reads, the one difference this repo's CI keeps on purpose and what it cannot see. Exit 0 means skip the wait. Any other exit means wait (step 4); it printed each difference it found.
 4. To wait, run `python3 -I ~/.agents/skills/forgejo-issues/scripts/forgejo.py ci sutom --follow main` alone in its shell call (exit 3 means the run is still going, so run it again in a new call), and fix a red run in a new PR.
 5. Whatever steps 2 and 3 found, check the deploy as the last paragraph of this section says.
 
