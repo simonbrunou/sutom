@@ -1,12 +1,13 @@
 // @vitest-environment node
 // scripts/check-push-repeats-pr.ts (#239) against a small git repo written per test. The base
 // repo holds the shapes the script must pass, as this repo's CI has them: a workflow on `push`
-// and `pull_request` to `main`, and a runner variable name in Markdown. The cases that pass edit
-// the base into another shape the script allows. The cases that find a difference each edit one
-// file into one difference and assert exit 1 and the line that names it, so removing any rule
-// from the script turns a case red. The last cases assert exit 2 on a wrong call, an unknown SHA,
-// a folder outside git and a missing yaml package. The runner variable names are built from
-// parts here, as in the script, so neither file holds one and the script reads both.
+// and `pull_request` to `main`, and a runner variable name in Markdown. The other passing cases
+// edit the base into another shape the script allows, or run the script from a subfolder of the
+// repo. The cases that find a difference each edit one file into one difference and assert exit 1
+// and the line that names it, so removing any rule from the script turns a case red. The last
+// cases assert exit 2 on a wrong call, an unknown SHA, a folder outside git and a missing yaml
+// package. The runner variable names are built from parts here, as in the script, so neither
+// file holds one and the script reads both.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
