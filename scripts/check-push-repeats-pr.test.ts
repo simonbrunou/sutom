@@ -1,10 +1,12 @@
 // @vitest-environment node
 // scripts/check-push-repeats-pr.ts (#239) against a small git repo written per test. The base
 // repo holds the shapes the script must pass, as this repo's CI has them: a workflow on `push`
-// and `pull_request` to `main`, and a runner variable name in Markdown. Each other case edits one file into one
-// difference and asserts exit 1 and the line that names it, so removing any rule from the script
-// turns a case red. The runner variable names are built from parts here, as in the script, so
-// neither file holds one and the script reads both.
+// and `pull_request` to `main`, and a runner variable name in Markdown. The cases that pass edit
+// the base into another shape the script allows. The cases that find a difference each edit one
+// file into one difference and assert exit 1 and the line that names it, so removing any rule
+// from the script turns a case red. The last cases assert exit 2 on a wrong call, an unknown SHA,
+// a folder outside git and a missing yaml package. The runner variable names are built from
+// parts here, as in the script, so neither file holds one and the script reads both.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -44,8 +46,6 @@ const baseCi = [
 	'    runs-on: ubuntu-latest',
 	'    steps:',
 	'      - uses: actions/checkout@v7',
-	'        with:',
-	'          fetch-depth: 0',
 	'      - run: npm run test',
 	''
 ].join('\n');
@@ -253,7 +253,7 @@ describe('check-push-repeats-pr finds a YAML form it does not read', () => {
 		const encoded = Buffer.from('echo ${{ github.event_name }}').toString('base64');
 		expectDifference(
 			{ [CI]: ciWith(`      - run: !!binary ${encoded}`) },
-			/ci\.yml:15: \.jobs\.test\.steps\[2\]\.run: a tag \(tag:yaml\.org,2002:binary\)/
+			/ci\.yml:13: \.jobs\.test\.steps\[2\]\.run: a tag \(tag:yaml\.org,2002:binary\)/
 		);
 	});
 	it('an if: that is an alias', () => {
@@ -263,7 +263,7 @@ describe('check-push-repeats-pr finds a YAML form it does not read', () => {
 			'      - run: echo b',
 			'        if: *cond'
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:18: \.jobs\.test\.steps\[3\]\.if: an alias \(\*cond\)/);
+		expectDifference({ [CI]: ci }, /ci\.yml:16: \.jobs\.test\.steps\[3\]\.if: an alias \(\*cond\)/);
 	});
 	it('a merge key that pulls in an alias', () => {
 		const ci = ciWith('      - &step { run: echo a }', '      - <<: *step', '        name: b');
@@ -273,7 +273,7 @@ describe('check-push-repeats-pr finds a YAML form it does not read', () => {
 		const ci = ciWith('      - <<: { run: echo a }', '        name: b');
 		expectDifference(
 			{ [CI]: ci },
-			/ci\.yml:15: \.jobs\.test\.steps\[2\]\.<<: a merge key, which this script does not follow/
+			/ci\.yml:13: \.jobs\.test\.steps\[2\]\.<<: a merge key, which this script does not follow/
 		);
 	});
 	it('aliases that expand past what the yaml package resolves', () => {
@@ -288,7 +288,7 @@ describe('check-push-repeats-pr finds an if', () => {
 		const ci = ciWith('      - run: echo push', "        if: github.event_name == 'push'");
 		expectDifference(
 			{ [CI]: ci },
-			/ci\.yml:16: \.jobs\.test\.steps\[2\]\.if: an if: github\.event_name == 'push'/
+			/ci\.yml:14: \.jobs\.test\.steps\[2\]\.if: an if: github\.event_name == 'push'/
 		);
 	});
 	it('a PR-only step that reads the base ref and head sha of the PR', () => {
@@ -336,14 +336,14 @@ describe('check-push-repeats-pr finds an if', () => {
 			'        ? if',
 			"        : github.ref == 'refs/heads/main'"
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:16: \.jobs\.test\.steps\[2\]\.if: an if:/);
+		expectDifference({ [CI]: ci }, /ci\.yml:14: \.jobs\.test\.steps\[2\]\.if: an if:/);
 	});
 	it('an if in a flow mapping left open at the end of its line', () => {
 		const ci = ciWith(
 			'      - { run: echo a,',
 			'          if: "github.ref == \'refs/heads/main\'" }'
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:16: \.jobs\.test\.steps\[2\]\.if: an if:/);
+		expectDifference({ [CI]: ci }, /ci\.yml:14: \.jobs\.test\.steps\[2\]\.if: an if:/);
 	});
 });
 
@@ -352,13 +352,13 @@ describe('check-push-repeats-pr finds an expression', () => {
 		const ci = ciWith('      - run: echo ref', '        env:', '          REF: ${{ github.ref }}');
 		expectDifference(
 			{ [CI]: ci },
-			/ci\.yml:17: \.jobs\.test\.steps\[2\]\.env\.REF: an expression: \$\{\{ github\.ref \}\}/
+			/ci\.yml:15: \.jobs\.test\.steps\[2\]\.env\.REF: an expression: \$\{\{ github\.ref \}\}/
 		);
 	});
 	it("the index form github['event_name']", () => {
 		expectDifference(
 			{ [CI]: ciWith("      - run: echo ${{ github['event_name'] }}") },
-			/ci\.yml:15: .*an expression/
+			/ci\.yml:13: .*an expression/
 		);
 	});
 	it('an expression on a step output that follows the event', () => {
@@ -366,30 +366,30 @@ describe('check-push-repeats-pr finds an expression', () => {
 			'      - run: npm run e2e',
 			"        continue-on-error: ${{ steps.co.outputs.ref != 'refs/heads/main' }}"
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:16: .*continue-on-error: an expression/);
+		expectDifference({ [CI]: ci }, /ci\.yml:14: .*continue-on-error: an expression/);
 	});
 	it('the forgejo and forge contexts', () => {
 		const ci = ciWith(
 			'      - run: echo ${{ forgejo.event_name }}',
 			'      - run: echo ${{ forge.ref }}'
 		);
-		expectDifference({ [CI]: ci }, /ci\.yml:15: .*an expression[\s\S]*ci\.yml:16: .*an expression/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression[\s\S]*ci\.yml:14: .*an expression/);
 	});
 	it('an expression split over lines of a folded block', () => {
 		const ci = ciWith('      - run: >-', '          echo ${{', '          github.event_name }}');
-		expectDifference({ [CI]: ci }, /ci\.yml:15: .*an expression: \$\{\{ github\.event_name \}\}/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression: \$\{\{ github\.event_name \}\}/);
 	});
 	it('an expression split over lines of a literal block, which keeps the line break', () => {
 		const ci = ciWith('      - run: |', '          echo ${{', '          github.event_name }}');
-		expectDifference({ [CI]: ci }, /ci\.yml:15: .*an expression: \$\{\{\ngithub\.event_name \}\}/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression: \$\{\{\ngithub\.event_name \}\}/);
 	});
 	it('an expression in a quoted string that runs onto the next line', () => {
 		const ci = ciWith('      - run: "echo ${{', '          github.event_name }}"');
-		expectDifference({ [CI]: ci }, /ci\.yml:15: .*an expression: \$\{\{ github\.event_name \}\}/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression: \$\{\{ github\.event_name \}\}/);
 	});
 	it('an expression spelled with a YAML escape', () => {
 		const ci = ciWith('      - run: "echo \\x24{{ github.event_name }}"');
-		expectDifference({ [CI]: ci }, /ci\.yml:15: .*an expression: \$\{\{ github\.event_name \}\}/);
+		expectDifference({ [CI]: ci }, /ci\.yml:13: .*an expression: \$\{\{ github\.event_name \}\}/);
 	});
 	it('an expression in a key', () => {
 		const ci = ciWith('      - run: echo key', '        env:', '          ${{ github.ref }}: x');
@@ -433,7 +433,7 @@ describe('check-push-repeats-pr finds an expression', () => {
 		);
 		expectDifference(
 			{ [CI]: ci },
-			/ci\.yml:15: \.jobs\.test\.steps\[2\]\.uses: runs code that gets the event: actions\/github-script@v7/
+			/ci\.yml:13: \.jobs\.test\.steps\[2\]\.uses: runs code that gets the event: actions\/github-script@v7/
 		);
 	});
 });
