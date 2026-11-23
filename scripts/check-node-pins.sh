@@ -51,9 +51,11 @@
 #     one line, `FROM node:<major>-alpine AS <name>` or `FROM
 #     caddy:<major>[-builder]-alpine AS <name>`: another image, a flag, a
 #     digest, a registry, a build arg, a lowercase keyword or a FROM split
-#     over lines fails. The one heredoc form is `COPY <<'NAME' <dest>`, whose
-#     body it skips up to the line that is exactly NAME; any other `<<` fails,
-#     and so does a heredoc that never ends. Outside a heredoc body a line
+#     over lines fails. The one heredoc form is `COPY <<'NAME' <dest>`, NAME
+#     in A-Z and <dest> in A-Za-z0-9._/- (a quote there makes BuildKit see no
+#     heredoc, so the body would hold real instructions). It skips the body
+#     up to the line that is exactly NAME; any other `<<` fails, and so does
+#     a heredoc that never ends. Outside a heredoc body a line
 #     holds printable ASCII only, a CR fails anywhere, and an escape directive
 #     fails, since each can move where an instruction starts.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
@@ -475,7 +477,7 @@ read_dockerfile() {
     BEGIN {
       NODE = "^FROM node:[0-9]+-alpine AS [a-z][a-z0-9-]*$"
       OTHER = "^FROM caddy:[0-9]+(-builder)?-alpine AS [a-z][a-z0-9-]*$"
-      COPYDOC = "^COPY <<" q "[A-Z]+" q " [^ \\\\]+$"
+      COPYDOC = "^COPY <<" q "[A-Z]+" q " [A-Za-z0-9._/-]+$"
     }
     # The instruction in buf has ended: only a FROM matters here.
     function instruction(   word, major) {

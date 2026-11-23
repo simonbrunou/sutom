@@ -12,18 +12,24 @@ Both builds serve `/app/build` with the repo's `Caddyfile`. Read the Node patch 
 
 ## Which patch a Dockerfile build runs
 
-Node comes from the `FROM node:<major>-alpine` stage, whose major `scripts/check-node-pins.sh` holds to `.nvmrc`. Coolify's Dockerfile build passes no `--pull`, so the stage reuses the image of that tag already on the build server, and production can build on an older patch than CI until that image leaves the server.
+Node comes from the `FROM node:<major>-alpine` stage, whose major `scripts/check-node-pins.sh` holds to `.nvmrc`. Coolify's Dockerfile build passes no `--pull`, and a build leaves no local tag of that image, so without a local tag each build resolves the tag in the registry and gets the image it points to then. A local `node:<major>-alpine` tag on the build server, such as a manual `docker pull` leaves, wins over the registry: builds stay on that image, and can run an older patch than CI, until the tag moves or is removed.
 
-The final image holds Caddy and no Node, so the running container cannot report the patch. The build log names the Node image by digest, on a cached build too. While `build_pack` is `dockerfile`, this prints that digest for the deploy that built the running image: the newest deploy of the newest finished deploy's commit, counting no newer deploy, whose log holds the digest and `Rolling update started.`:
+The final image holds Caddy and no Node, so the running container cannot report the patch. While `build_pack` is `dockerfile`, this prints the deploy that built the running image, with the tag and digest on its build log's `FROM` line. That deploy is the newest deploy of the newest finished deploy's commit, counting no newer deploy, whose log holds a `FROM` line for the Node image and `Rolling update started.`:
 
 ```sh
-ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select q.id, q.status, q.created_at, substring(q.logs from 'node:[0-9]+-alpine@sha256:[0-9a-f]{64}') from application_deployment_queues q join applications a on a.id = q.application_id::int, (select r.id, r.commit from application_deployment_queues r join applications ra on ra.id = r.application_id::int where ra.uuid = '33k9gghhdlx4kzdivylxuopr' and r.status = 'finished' order by r.id desc limit 1) r where a.uuid = '33k9gghhdlx4kzdivylxuopr' and q.commit = r.commit and q.id <= r.id and q.logs ~ 'node:[0-9]+-alpine@sha256:[0-9a-f]{64}' and q.logs ~ 'Rolling update started' order by q.id desc limit 1\""
+ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select q.id, q.status, q.created_at, substring(q.logs from 'FROM docker[.]io[^ ]*(node:[0-9]+-alpine)'), substring(q.logs from 'FROM docker[.]io[^ ]*node:[0-9]+-alpine(?:@(sha256:[0-9a-f]{64}))?') from application_deployment_queues q join applications a on a.id = q.application_id::int, (select r.id, r.commit from application_deployment_queues r join applications ra on ra.id = r.application_id::int where ra.uuid = '33k9gghhdlx4kzdivylxuopr' and r.status = 'finished' order by r.id desc limit 1) r where a.uuid = '33k9gghhdlx4kzdivylxuopr' and q.commit = r.commit and q.id <= r.id and q.logs ~ 'FROM docker[.]io[^ ]*node:[0-9]+-alpine' and q.logs ~ 'Rolling update started' order by q.id desc limit 1\""
 ```
 
-Run the image it prints, on any host with Docker, to read the patch:
+The last two columns are the tag and the digest. Run that image, on any host with Docker, to read the patch:
 
 ```sh
 docker run --rm --entrypoint node node:<major>-alpine@sha256:<digest> --version
+```
+
+An empty digest means the `FROM` line named none. Docker's overlay2 store logs it that way when the build server holds a local tag of the image; the containerd store, which CT 126 used on 2026-11-23, logs the digest either way. Read the digest of that local tag on the build server, then run the image it prints with the same `docker run` command. This names the build's image only while the tag has not moved since that build:
+
+```sh
+ssh root@192.168.1.195 "pct exec 126 -- docker image inspect --format '{{index .RepoDigests 0}}' node:<major>-alpine"
 ```
 
 ## Why a railpack build lags CI

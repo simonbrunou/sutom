@@ -968,6 +968,45 @@ describe('check-node-pins.sh reads the Dockerfile', () => {
 			passesWith(ALL);
 		});
 
+		it('on a heredoc body that holds every byte but LF and CR', () => {
+			const bytes = Array.from({ length: 256 }, (_, byte) => byte).filter(
+				(byte) => byte !== 0x0a && byte !== 0x0d
+			);
+			const lines = fixture.Dockerfile.split('\n');
+			lines[5] = String.fromCharCode(...bytes);
+			writeFileSync(path.join(dir, 'Dockerfile'), lines.join('\n'), 'latin1');
+			passesWith(ALL);
+		});
+
+		it.each(['DATA', 'AZ'])('on a heredoc named %s', (name) => {
+			appendDocker(`COPY <<'${name}' notes.txt\nFROM node:99-alpine AS in-a-body\nEOF\n${name}`);
+			passesWith(ALL);
+		});
+
+		it.each(['eof', 'EOFX', 'XEOF', ' EOF', 'EOF '])(
+			'on a heredoc body line %j, which does not end the body',
+			(text) => {
+				setDockerLine(6, `${text}\nFROM node:98-alpine AS still-in-the-body`);
+				passesWith(ALL);
+			}
+		);
+
+		it.each(['Az09._/-', 'Dir-1/file_2.txt', '/abs/path', 'a', 'Z', '0', '.', '_', '/', '-'])(
+			'on a heredoc destination of %j',
+			(dest) => {
+				setDockerLine(4, `COPY <<'EOF' ${dest}`);
+				passesWith(ALL);
+			}
+		);
+
+		it('on a comment holding every printable ASCII character', () => {
+			const printable = String.fromCharCode(
+				...Array.from({ length: 0x7f - 0x20 }, (_, i) => i + 0x20)
+			);
+			setDockerLine(3, `# ${printable}`);
+			passesWith(ALL);
+		});
+
 		it('on a << inside a comment', () => {
 			setDockerLine(3, '# RUN <<EOF is not used here');
 			passesWith(ALL);
@@ -1127,6 +1166,8 @@ describe('check-node-pins.sh reads the Dockerfile', () => {
 			["COPY <<-'EOF' main.go\nok\nEOF", 15],
 			["COPY <<'eof' main.go\nok\neof", 15],
 			["COPY <<'EOF' a b\nok\nEOF", 15],
+			["COPY <<'EOF' \nok\nEOF", 15],
+			["COPY <<'EOF'\nok\nEOF", 15],
 			["COPY <<'EOF' main.go\\\nok\nEOF", 15],
 			["COPY --chmod=644 <<'EOF' main.go\nok\nEOF", 15],
 			["RUN COPY <<'EOF' main.go\nok\nEOF", 15],
@@ -1134,6 +1175,30 @@ describe('check-node-pins.sh reads the Dockerfile', () => {
 		])('a heredoc in another form: %j', (text, at) => {
 			appendDocker(text);
 			failsWith(`Dockerfile:${at} uses << in a form other than COPY <<'NAME' <dest>`);
+		});
+
+		// BuildKit reads no heredoc from `COPY <<'EOF' a"b`, so the next line is
+		// a real instruction: a skipped body could hide a stage on another major.
+		it.each(['a"b', "a'b", '${X'])('a heredoc destination of %j', (dest) => {
+			appendDocker(`COPY <<'EOF' ${dest}\nFROM node:24-alpine AS hidden\nEOF`);
+			failsWith(`Dockerfile:15 uses << in a form other than COPY <<'NAME' <dest>`);
+		});
+
+		it('a heredoc destination holding any other printable ASCII character', () => {
+			const chars = Array.from({ length: 0x7f - 0x21 }, (_, i) =>
+				String.fromCharCode(i + 0x21)
+			).filter((char) => !/[A-Za-z0-9._/-]/.test(char));
+			write('Dockerfile', chars.map((char) => `COPY <<'EOF' a${char}b`).join('\n') + '\n');
+			failsWith(
+				...chars.map(
+					(_, i) => `Dockerfile:${i + 1} uses << in a form other than COPY <<'NAME' <dest>`
+				)
+			);
+		});
+
+		it.each(['Eof', 'E0F', 'E_F', 'E-F', ''])('a heredoc named %j', (name) => {
+			setDockerLine(4, `COPY <<'${name}' main.go`);
+			failsWith(`Dockerfile:4 uses << in a form other than COPY <<'NAME' <dest>`);
 		});
 
 		it.each([
@@ -1154,10 +1219,25 @@ describe('check-node-pins.sh reads the Dockerfile', () => {
 			['a form feed after FROM', 3, 'FROM\fnode:26-alpine AS next'],
 			['a CR at a line end', 3, 'RUN npm ci\r'],
 			['a CR at the end of a heredoc end word', 7, 'EOF\r'],
-			['a non-ASCII comment', 3, '# caf\u00E9']
+			['a non-ASCII comment', 3, '# caf\u00E9'],
+			['the DEL character', 3, 'RUN npm\u007F ci'],
+			['a unit separator', 3, 'RUN npm\u001F ci'],
+			['a CR inside a heredoc body line', 6, 'ke\rpt'],
+			['a CR at the start of a heredoc body line', 6, '\rkept']
 		])('%s', (_name, at, text) => {
 			setDockerLine(at, text);
 			failsWith(`Dockerfile:${at} holds a CR, or outside a heredoc body`);
+		});
+
+		it('every control or high byte outside a heredoc body', () => {
+			const bytes = Array.from({ length: 256 }, (_, byte) => byte).filter(
+				(byte) => byte !== 0x0a && (byte < 0x20 || byte > 0x7e)
+			);
+			const text = bytes.map((byte) => `RUN npm${String.fromCharCode(byte)} ci`).join('\n');
+			writeFileSync(path.join(dir, 'Dockerfile'), `${text}\n`, 'latin1');
+			failsWith(
+				...bytes.map((_, i) => `Dockerfile:${i + 1} holds a CR, or outside a heredoc body`)
+			);
 		});
 
 		it.each([
