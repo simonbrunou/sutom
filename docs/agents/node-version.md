@@ -1,10 +1,44 @@
 # Node version in production
 
-## Why production lags CI
+## Which build runs production
+
+Coolify builds sutom with the build pack set on its app, `railpack` or `dockerfile`. This prints it:
+
+```sh
+ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select build_pack from applications where uuid = '33k9gghhdlx4kzdivylxuopr'\""
+```
+
+Both builds serve `/app/build` with the repo's `Caddyfile`. Read the Node patch with the section for the build pack this prints.
+
+## Which patch a Dockerfile build runs
+
+Node comes from the `FROM node:<major>-alpine` stage, whose major `scripts/check-node-pins.sh` holds to `.nvmrc`. Coolify's Dockerfile build passes no `--pull`, and a build leaves no local tag of that image, so without a local tag each build resolves the tag in the registry and gets the image it points to then. A local `node:<major>-alpine` tag on the build server, such as a manual `docker pull` leaves, wins over the registry: builds stay on that image, and can run an older patch than CI, until the tag moves or is removed.
+
+The final image holds Caddy and no Node, so the running container cannot report the patch. While `build_pack` is `dockerfile`, this prints the deploy that built the running image, with the tag and digest on its build log's `FROM` line. That deploy is the newest deploy of the newest finished deploy's commit, counting no newer deploy, whose log holds a `FROM` line for the Node image and `Rolling update started.`:
+
+```sh
+ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select q.id, q.status, q.created_at, substring(q.logs from 'FROM docker[.]io[^ ]*(node:[0-9]+-alpine)'), substring(q.logs from 'FROM docker[.]io[^ ]*node:[0-9]+-alpine(?:@(sha256:[0-9a-f]{64}))?') from application_deployment_queues q join applications a on a.id = q.application_id::int, (select r.id, r.commit from application_deployment_queues r join applications ra on ra.id = r.application_id::int where ra.uuid = '33k9gghhdlx4kzdivylxuopr' and r.status = 'finished' order by r.id desc limit 1) r where a.uuid = '33k9gghhdlx4kzdivylxuopr' and q.commit = r.commit and q.id <= r.id and q.logs ~ 'FROM docker[.]io[^ ]*node:[0-9]+-alpine' and q.logs ~ 'Rolling update started' order by q.id desc limit 1\""
+```
+
+The last two columns are the tag and the digest, which starts with `sha256:`. Run that image, on any host with Docker, to read the patch:
+
+```sh
+docker run --rm --entrypoint node <tag>@<digest> --version
+```
+
+An empty digest means the `FROM` line named none. Docker's overlay2 store logs it that way when the build server holds a local tag of the image; the containerd store, which CT 126 used on 2026-11-23, logs the digest either way. Read the digest of that local tag on the build server, then pass the image it prints to the same `docker run` command in place of `<tag>@<digest>`. This names the build's image only while the tag has not moved since that build:
+
+```sh
+ssh root@192.168.1.195 "pct exec 126 -- docker image inspect --format '{{index .RepoDigests 0}}' node:<major>-alpine"
+```
+
+## Why a railpack build lags CI
 
 CI's setup-node downloads the newest release of the `.nvmrc` major. Railpack's plan names that release too and writes it into the mise config it generates, a config that also holds back releases younger than 14 days (`minimum_release_age = "14d"` in the deploy log's `generated-mise-toml`). Mise prefers the bare major in `.nvmrc`, which railpack copies to `/app`, over that exact release, so `mise install` takes the newest release of the major that is at least 14 days old. BuildKit caches that install step. Coolify's forced Docker cleanup prunes the railpack builder's cache every night at 00:00 UTC, and skips the prune while a deploy is queued or running. That schedule is the sutom server's `docker_cleanup_frequency`, a Coolify setting outside this repo. The step reruns on the first deploy after a prune, and on a deploy that changes its inputs: the generated mise config (the release railpack's plan names, among other lines), `.nvmrc` or the builder image. So production misses each new release for its first 14 days, and then until the step next reruns, on the first deploy after the next prune at the latest.
 
-## Which patch production runs
+## Which patch a railpack build runs
+
+This section and its query apply only while `build_pack` is `railpack`. On `dockerfile` the query reads no Dockerfile build: after a force-deploy of the same commit it still names the earlier railpack deploy and prints that deploy's Node patch, and after the next commit it prints no row.
 
 Production runs the image tagged with the commit of the newest finished deploy, and `~/Projects/homelab-stacks/scripts/coolify-deploy-status.sh` prints that tag (`image <uuid>:<commit>`). A deploy that finds an image for its commit skips the build and logs `Build step skipped`, unless the deploy forces a rebuild or Coolify's `should_skip_build()` finds a reason to rebuild, such as a changed build setting. So after a Coolify rollback, an older deploy can have built the running image. The deploy that built it is the newest deploy of that commit whose log holds two Coolify lines, counting no deploy newer than the newest finished one. `Building docker image with Railpack.` means the build started. `Rolling update started.` means the build succeeded, since a failed build stops before that line. A deploy that skips the build writes it too, so the query needs both.
 

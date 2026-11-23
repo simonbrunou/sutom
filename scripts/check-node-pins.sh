@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Check that CI and the production build read one Node major (#168): the
-# Node of both comes from .nvmrc, and the Node types name the same major. The
-# production build can run an older patch of it than CI
-# (docs/agents/node-version.md says why). CI runs this script before
-# `npm ci`, so a local run runs the same check.
+# Check that CI and both production builds read one Node major (#168). CI and
+# railpack take their Node from .nvmrc, the Dockerfile names it in its FROM
+# lines, and the Node types name the same major. A production build can run
+# an older patch of it than CI (docs/agents/node-version.md says why). CI runs
+# this script before `npm ci`, so a local run runs the same check.
 #
 #   scripts/check-node-pins.sh [<repo dir>]
 #
 # It reads:
 #   .nvmrc  the one pin. CI's actions/setup-node reads it through
-#     `node-version-file`, and railpack, which builds production on Coolify,
-#     reads it when package.json sets no engines.node or devEngines.runtime.
+#     `node-version-file`, and railpack, when Coolify builds production with
+#     it, reads it when package.json sets no engines.node or devEngines.runtime.
 #     It must hold one version line (24, v24, 24.12.0) and nothing else: an
 #     alias such as lts/*, a comment or a second line fails, since setup-node
 #     and railpack could read those differently.
@@ -45,16 +45,29 @@
 #     as other text, and a flow mapping or sequence left open at the end of
 #     its line (scope: {a: 1,), which puts the lines after it inside a
 #     value: reading those would take a YAML parser.
+#   Dockerfile  the major of every top-level `FROM node:<major>-alpine AS
+#     <name>`, the Node of the image build. It reads only the forms this
+#     Dockerfile uses and fails, naming the line, on any other. A stage is
+#     one line, `FROM node:<major>-alpine AS <name>` or `FROM
+#     caddy:<major>[-builder]-alpine AS <name>`: another image, a flag, a
+#     digest, a registry, a build arg, a lowercase keyword or a FROM split
+#     over lines fails. The one heredoc form is `COPY <<'NAME' <dest>`, NAME
+#     in A-Z and <dest> in A-Za-z0-9._/- (a quote there makes BuildKit see no
+#     heredoc, so the body would hold real instructions). It skips the body
+#     up to the line that is exactly NAME; any other `<<` fails, and so does
+#     a heredoc that never ends. Outside a heredoc body a line
+#     holds printable ASCII only, a CR fails anywhere, and an escape directive
+#     fails, since each can move where an instruction starts.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
 #     in devDependencies or dependencies; one of them must list it. Railpack
 #     reads `engines.node` and `devEngines.runtime` before .nvmrc, so an
 #     engines.node is read as one more pin, and a devEngines.runtime fails.
 # Railpack also reads a RAILPACK_NODE_VERSION variable before all of these,
 # set on the Coolify app, which this check cannot see. The Node.js group in
-# renovate.json moves .nvmrc and @types/node together. The dev shell
-# (flake.nix) reads its Node major from .nvmrc too, so a `node --version` with
-# another major prints a warning only: the shell has not reloaded since .nvmrc
-# changed, or nix-direnv kept the previous shell after a failed evaluation.
+# renovate.json moves .nvmrc, the Dockerfile's node image and @types/node
+# together. The dev shell (flake.nix) reads its Node major from .nvmrc too, so
+# a `node --version` with another major prints a warning only: the shell has
+# not reloaded since .nvmrc changed, or nix-direnv kept the previous shell after a failed evaluation.
 # flake.nix parses .nvmrc with its own builtins.match, which must take the
 # forms read_nvmrc takes, so an edit to one needs the same edit to the other.
 # A case in scripts/check-node-pins.test.ts reads each form with both and
@@ -63,9 +76,9 @@
 # Exit 0: every setup-node step reads .nvmrc and every pin reads the same
 # major. Exit 1: a workflow hardcodes node-version, the pins differ, or one
 # cannot be read, and the output names each file, line and value. When awk
-# fails on a workflow, sed fails on .nvmrc, or node fails on package.json
-# (it cannot read the file, or node itself fails) or prints other than the
-# four lines read_package reads from it, the check prints `cannot read
+# fails on a workflow or the Dockerfile, sed fails on .nvmrc, or node fails on
+# package.json (it cannot read the file, or node itself fails) or prints other
+# than the four lines read_package reads from it, the check prints `cannot read
 # <file>` and how the reader ended, after any error the reader printed, and
 # reads nothing the reader printed. The node program exits 65 only for a
 # package.json that is not JSON, a code node and bash never use for their
@@ -95,6 +108,7 @@ fi
 
 NVMRC=.nvmrc
 WORKFLOWS=.forgejo/workflows
+DOCKERFILE=Dockerfile
 PACKAGE=package.json
 
 # One major, as a Node version or an npm range: 24, v24, 24.x, 24.12.0,
@@ -445,6 +459,96 @@ read_workflows() {
   fi
 }
 
+# Whether a FROM line named a node image.
+found_node=0
+
+read_dockerfile() {
+  local file="$ROOT/$DOCKERFILE" out kind n value
+  if [ ! -f "$file" ]; then
+    fail "$DOCKERFILE not found"
+    return
+  fi
+  # One `<kind> <line> [<value>]` per node stage and per form this reader
+  # refuses. It follows the rules of BuildKit parser.go for the forms it
+  # accepts: comment lines, and blank lines inside an instruction, are
+  # skipped, and a line that ends in one backslash (not two) continues into
+  # the next with no separator.
+  out=$(LC_ALL=C awk -v q="'" '
+    BEGIN {
+      NODE = "^FROM node:[0-9]+-alpine AS [a-z][a-z0-9-]*$"
+      OTHER = "^FROM caddy:[0-9]+(-builder)?-alpine AS [a-z][a-z0-9-]*$"
+      COPYDOC = "^COPY <<" q "[A-Z]+" q " [A-Za-z0-9._/-]+$"
+    }
+    # The instruction in buf has ended: only a FROM matters here.
+    function instruction(   word, major) {
+      word = buf
+      sub(/^ +/, "", word)
+      sub(/ .*$/, "", word)
+      if (tolower(word) != "from") return
+      if (lines > 1) print "split", start
+      else if (buf ~ NODE) {
+        major = buf
+        sub(/^FROM node:/, "", major)
+        sub(/-alpine.*$/, "", major)
+        print "node", start, major
+      } else if (buf !~ OTHER) print "form", start, buf
+    }
+    { if (heredoc != "" ? $0 ~ /\r/ : $0 !~ /^[ -~]*$/) print "chars", NR }
+    heredoc != "" {
+      if ($0 == heredoc) heredoc = ""
+      next
+    }
+    /^ *#/ {
+      if (tolower($0) ~ /^ *# *escape *=/) print "escape", NR
+      next
+    }
+    /^ *$/ { next }
+    index($0, "<<") {
+      if (!cont && $0 ~ COPYDOC) {
+        heredoc = substr($0, 9)
+        sub(q ".*$", "", heredoc)
+        heredocline = NR
+        next
+      }
+      print "heredoc", NR
+    }
+    {
+      line = $0
+      if (!cont) { buf = ""; start = NR; lines = 0 }
+      lines++
+      cont = line ~ /(^|[^\\])\\ *$/
+      if (cont) sub(/\\ *$/, "", line)
+      buf = buf line
+      if (!cont) instruction()
+    }
+    END {
+      if (heredoc != "") print "openheredoc", heredocline
+      else if (cont) instruction()
+    }
+  ' "$file") || {
+    # As for a workflow: what a failed awk printed is not read.
+    fail "cannot read $DOCKERFILE: awk exited $?"
+    return
+  }
+  while read -r kind n value; do
+    case "$kind" in
+      node)
+        found_node=1
+        pin "$DOCKERFILE:$n" "$value" "node:$value-alpine"
+        ;;
+      form) fail "$DOCKERFILE:$n '$value' is not FROM node:<major>-alpine AS <name> or FROM caddy:<major>[-builder]-alpine AS <name>, the forms this check reads" ;;
+      split) fail "$DOCKERFILE:$n FROM runs over several lines, which this check does not read" ;;
+      chars) fail "$DOCKERFILE:$n holds a CR, or outside a heredoc body a character other than printable ASCII, which this check does not read" ;;
+      escape) fail "$DOCKERFILE:$n sets an escape directive, which this check does not read" ;;
+      heredoc) fail "$DOCKERFILE:$n uses << in a form other than COPY <<'NAME' <dest>, which this check does not read" ;;
+      openheredoc) fail "$DOCKERFILE:$n starts a heredoc that never ends" ;;
+    esac
+  done <<<"$out"
+  if [ "$found_node" -eq 0 ]; then
+    fail "$DOCKERFILE has no FROM node line"
+  fi
+}
+
 read_package() {
   local file="$ROOT/$PACKAGE" values field key types=0 i code
   local -a lines=()
@@ -541,6 +645,7 @@ read_package() {
 
 read_nvmrc
 read_workflows
+read_dockerfile
 read_package
 
 expected="${major[0]:-}"
