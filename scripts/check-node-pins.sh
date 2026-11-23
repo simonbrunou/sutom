@@ -45,19 +45,17 @@
 #     as other text, and a flow mapping or sequence left open at the end of
 #     its line (scope: {a: 1,), which puts the lines after it inside a
 #     value: reading those would take a YAML parser.
-#   Dockerfile  the major of the tag of every `FROM [<registry>/]node:<tag>`
-#     (24 out of 24-alpine or 24.12.0-alpine@sha256:...), the Node of the
-#     image build. It reads lines, continuations and comments as BuildKit's
-#     parser does (see read_dockerfile). Where this script could read a
-#     Dockerfile otherwise than Docker does, it fails rather than skip a
-#     line: a heredoc body (RUN <<EOF) reads like any other line, so a body
-#     line FROM node:<tag> counts as a stage, and so does a line that starts
-#     with FROM inside a continued instruction, read with the lines that
-#     continue it; FROM node reads as an untagged image even when it names an
-#     earlier stage called node; an escape directive other than a backslash
-#     fails. Skipping heredoc bodies or stage names would take BuildKit's
-#     parser, and any way this script read one differently could let a real
-#     stage go unread.
+#   Dockerfile  the major of every top-level `FROM node:<major>-alpine AS
+#     <name>`, the Node of the image build. It reads only the forms this
+#     Dockerfile uses and fails, naming the line, on any other. A stage is
+#     one line, `FROM node:<major>-alpine AS <name>` or `FROM
+#     caddy:<major>[-builder]-alpine AS <name>`: another image, a flag, a
+#     digest, a registry, a build arg, a lowercase keyword or a FROM split
+#     over lines fails. The one heredoc form is `COPY <<'NAME' <dest>`, whose
+#     body it skips up to the line that is exactly NAME; any other `<<` fails,
+#     and so does a heredoc that never ends. Outside a heredoc body a line
+#     holds printable ASCII only, a CR fails anywhere, and an escape directive
+#     fails, since each can move where an instruction starts.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
 #     in devDependencies or dependencies; one of them must list it. Railpack
 #     reads `engines.node` and `devEngines.runtime` before .nvmrc, so an
@@ -65,9 +63,9 @@
 # Railpack also reads a RAILPACK_NODE_VERSION variable before all of these,
 # set on the Coolify app, which this check cannot see. The Node.js group in
 # renovate.json moves .nvmrc, the Dockerfile's node image and @types/node
-# together. The dev shell (flake.nix) reads its Node major from .nvmrc too, so a `node --version` with
-# another major prints a warning only: the shell has not reloaded since .nvmrc
-# changed, or nix-direnv kept the previous shell after a failed evaluation.
+# together. The dev shell (flake.nix) reads its Node major from .nvmrc too, so
+# a `node --version` with another major prints a warning only: the shell has
+# not reloaded since .nvmrc changed, or nix-direnv kept the previous shell after a failed evaluation.
 # flake.nix parses .nvmrc with its own builtins.match, which must take the
 # forms read_nvmrc takes, so an edit to one needs the same edit to the other.
 # A case in scripts/check-node-pins.test.ts reads each form with both and
@@ -76,9 +74,9 @@
 # Exit 0: every setup-node step reads .nvmrc and every pin reads the same
 # major. Exit 1: a workflow hardcodes node-version, the pins differ, or one
 # cannot be read, and the output names each file, line and value. When awk
-# fails on a workflow or the Dockerfile, sed fails on .nvmrc, or node fails on package.json
-# (it cannot read the file, or node itself fails) or prints other than the
-# four lines read_package reads from it, the check prints `cannot read
+# fails on a workflow or the Dockerfile, sed fails on .nvmrc, or node fails on
+# package.json (it cannot read the file, or node itself fails) or prints other
+# than the four lines read_package reads from it, the check prints `cannot read
 # <file>` and how the reader ended, after any error the reader printed, and
 # reads nothing the reader printed. The node program exits 65 only for a
 # package.json that is not JSON, a code node and bash never use for their
@@ -462,124 +460,87 @@ read_workflows() {
 # Whether a FROM line named a node image.
 found_node=0
 
-# Read one FROM: its line number and image.
-read_from() {
-  local n="$1" image="$2" ref name last tag
-  # An image named by a build arg (FROM ${IMAGE}) hides its tag from this
-  # check, so it fails instead of passing that stage unread.
-  if [[ "$image" == *'$'* ]]; then
-    fail "$DOCKERFILE:$n FROM takes its image from a build arg, which this check cannot read"
-    return
-  fi
-  ref=${image%%@*}
-  # The tag follows the last colon after the last slash, so a registry port
-  # (localhost:5000/node) is not read as a tag.
-  name=$ref
-  tag=
-  last=${ref##*/}
-  if [[ "$last" == *:* ]]; then
-    tag=${last#*:}
-    name=${ref%:*}
-  fi
-  if [[ ! "$name" =~ (^|/)node$ ]]; then
-    return
-  fi
-  found_node=1
-  if [ -z "$tag" ]; then
-    fail "$DOCKERFILE:$n $image has no tag"
-  elif [[ "$tag" =~ ^([0-9]+)([.-]|$) ]]; then
-    pin "$DOCKERFILE:$n" "${BASH_REMATCH[1]}" "$image"
-  else
-    fail "$DOCKERFILE:$n node tag '$tag' does not start with a Node major"
-  fi
-}
-
 read_dockerfile() {
-  local file="$ROOT/$DOCKERFILE" out entry n i
-  local -a words
+  local file="$ROOT/$DOCKERFILE" out kind n value
   if [ ! -f "$file" ]; then
     fail "$DOCKERFILE not found"
     return
   fi
-  # One `<line>:FROM ...` per FROM instruction, read line by line as
-  # BuildKit's parser (frontend/dockerfile/parser/parser.go, Parse) reads a
-  # Dockerfile: trailing CRs and, on line 1, a UTF-8 byte order mark dropped;
-  # leading Unicode spaces trimmed from an instruction's first line; comment
-  # lines, and blank lines inside an instruction, skipped; a line that ends
-  # in one backslash (not two) continued into the next with no separator;
-  # words split on tabs, vertical tabs, form feeds, CRs and spaces. Two rules
-  # read more than Docker, failing closed: a line that starts with FROM
-  # inside a continued instruction also prints, with the lines that continue
-  # it, since Docker may end the instruction before it (a heredoc end word
-  # that ends in a backslash); and any escape directive other than a
-  # backslash prints `<line>:#escape`, since escape=` makes a backslash
-  # literal and this parser does not follow it.
-  out=$(LC_ALL=C awk '
-    # bytes.TrimLeftFunc(s, unicode.IsSpace), on UTF-8 bytes.
-    function ltrim(s) {
-      while (match(s, /^([\t\n\v\f\r ]|\302[\205\240]|\341\232\200|\342\200[\200-\212\250\251\257]|\342\201\237|\343\200\200)/))
-        s = substr(s, RLENGTH + 1)
-      return s
+  # One `<kind> <line> [<value>]` per node stage and per form this reader
+  # refuses. It follows the rules of BuildKit parser.go for the forms it
+  # accepts: comment lines, and blank lines inside an instruction, are
+  # skipped, and a line that ends in one backslash (not two) continues into
+  # the next with no separator.
+  out=$(LC_ALL=C awk -v q="'" '
+    BEGIN {
+      NODE = "^FROM node:[0-9]+-alpine AS [a-z][a-z0-9-]*$"
+      OTHER = "^FROM caddy:[0-9]+(-builder)?-alpine AS [a-z][a-z0-9-]*$"
+      COPYDOC = "^COPY <<" q "[A-Z]+" q " [^ \\\\]+$"
     }
-    # The column of s where a FROM instruction word starts, or 0.
-    function from_at(s, t) {
-      t = ltrim(s)
-      if (tolower(t) !~ /^from([\t\v\f\r ]|$)/) return 0
-      return length(s) - length(t) + 1
+    # The instruction in buf has ended: only a FROM matters here.
+    function instruction(   word, major) {
+      word = buf
+      sub(/^ +/, "", word)
+      sub(/ .*$/, "", word)
+      if (tolower(word) != "from") return
+      if (lines > 1) print "split", start
+      else if (buf ~ NODE) {
+        major = buf
+        sub(/^FROM node:/, "", major)
+        sub(/-alpine.*$/, "", major)
+        print "node", start, major
+      } else if (buf !~ OTHER) print "form", start, buf
     }
-    function out(n, s) {
-      gsub(/[\t\v\f\r]/, " ", s)
-      print n ":" s
+    { if (heredoc != "" ? $0 ~ /\r/ : $0 !~ /^[ -~]*$/) print "chars", NR }
+    heredoc != "" {
+      if ($0 == heredoc) heredoc = ""
+      next
     }
-    # The instruction if it is a FROM, then each FROM line inside it: the
-    # rest of buf from the column at[k] where line inner[k] starts.
-    function emit(k, c) {
-      if ((c = from_at(buf))) out(start, substr(buf, c))
-      for (k = 1; k <= froms; k++) if (inner[k] != start) out(inner[k], substr(buf, at[k]))
+    /^ *#/ {
+      if (tolower($0) ~ /^ *# *escape *=/) print "escape", NR
+      next
     }
-    { sub(/\r+$/, "") }
-    NR == 1 { sub(/^\357\273\277/, "") }
-    {
-      t = ltrim($0)
-      if (t ~ /^#/) {
-        d = ltrim(substr(t, 2))
-        if (tolower(d) ~ /^escape[\t\n\v\f\r ]*=/ && d !~ /=[\t\n\v\f\r ]*\\[\t\n\v\f\r ]*$/) print NR ":#escape"
+    /^ *$/ { next }
+    index($0, "<<") {
+      if (!cont && $0 ~ COPYDOC) {
+        heredoc = substr($0, 9)
+        sub(q ".*$", "", heredoc)
+        heredocline = NR
         next
       }
-      if (t == "") next
-      line = $0
-      if (!cont) {
-        buf = ""
-        start = NR
-        froms = 0
-      } else if ((c = from_at(line))) {
-        froms++
-        inner[froms] = NR
-        at[froms] = length(buf) + c
-      }
-      cont = line ~ /(^|[^\\])\\[ \t]*$/
-      if (cont) sub(/\\[ \t]*$/, "", line)
-      buf = buf line
-      if (!cont) emit()
+      print "heredoc", NR
     }
-    END { if (cont) emit() }
+    {
+      line = $0
+      if (!cont) { buf = ""; start = NR; lines = 0 }
+      lines++
+      cont = line ~ /(^|[^\\])\\ *$/
+      if (cont) sub(/\\ *$/, "", line)
+      buf = buf line
+      if (!cont) instruction()
+    }
+    END {
+      if (heredoc != "") print "openheredoc", heredocline
+      else if (cont) instruction()
+    }
   ' "$file") || {
     # As for a workflow: what a failed awk printed is not read.
     fail "cannot read $DOCKERFILE: awk exited $?"
     return
   }
-  while IFS= read -r entry; do
-    n=${entry%%:*}
-    entry=${entry#*:}
-    if [ "$entry" = '#escape' ]; then
-      fail "$DOCKERFILE:$n sets an escape character other than a backslash, which this check does not read"
-      continue
-    fi
-    read -ra words <<<"$entry"
-    # Skip the flags (--platform=...) between FROM and the image.
-    i=1
-    while [[ "${words[i]:-}" == --* ]]; do i=$((i + 1)); done
-    read_from "$n" "${words[i]:-}"
+  while read -r kind n value; do
+    case "$kind" in
+      node)
+        found_node=1
+        pin "$DOCKERFILE:$n" "$value" "node:$value-alpine"
+        ;;
+      form) fail "$DOCKERFILE:$n '$value' is not FROM node:<major>-alpine AS <name> or FROM caddy:<major>[-builder]-alpine AS <name>, the forms this check reads" ;;
+      split) fail "$DOCKERFILE:$n FROM runs over several lines, which this check does not read" ;;
+      chars) fail "$DOCKERFILE:$n holds a CR, or outside a heredoc body a character other than printable ASCII, which this check does not read" ;;
+      escape) fail "$DOCKERFILE:$n sets an escape directive, which this check does not read" ;;
+      heredoc) fail "$DOCKERFILE:$n uses << in a form other than COPY <<'NAME' <dest>, which this check does not read" ;;
+      openheredoc) fail "$DOCKERFILE:$n starts a heredoc that never ends" ;;
+    esac
   done <<<"$out"
   if [ "$found_node" -eq 0 ]; then
     fail "$DOCKERFILE has no FROM node line"

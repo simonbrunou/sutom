@@ -8,9 +8,23 @@ Coolify builds sutom with the build pack set on its app, `railpack` or `dockerfi
 ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select build_pack from applications where uuid = '33k9gghhdlx4kzdivylxuopr'\""
 ```
 
-Both builds serve `/app/build` with the repo's `Caddyfile`. The two sections after this one describe the `railpack` build.
+Both builds serve `/app/build` with the repo's `Caddyfile`. Read the Node patch with the section for the build pack this prints.
 
-On `dockerfile`, Node comes from the `FROM node:<major>-alpine` stage, whose major `scripts/check-node-pins.sh` holds to `.nvmrc`. Coolify's Dockerfile build passes no `--pull`, so the stage reuses the image of that tag already on the build server, and production can build on an older patch than CI until that image leaves the server. The final image holds Caddy and no Node.
+## Which patch a Dockerfile build runs
+
+Node comes from the `FROM node:<major>-alpine` stage, whose major `scripts/check-node-pins.sh` holds to `.nvmrc`. Coolify's Dockerfile build passes no `--pull`, so the stage reuses the image of that tag already on the build server, and production can build on an older patch than CI until that image leaves the server.
+
+The final image holds Caddy and no Node, so the running container cannot report the patch. The build log names the Node image by digest, on a cached build too. While `build_pack` is `dockerfile`, this prints that digest for the deploy that built the running image: the newest deploy of the newest finished deploy's commit, counting no newer deploy, whose log holds the digest and `Rolling update started.`:
+
+```sh
+ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select q.id, q.status, q.created_at, substring(q.logs from 'node:[0-9]+-alpine@sha256:[0-9a-f]{64}') from application_deployment_queues q join applications a on a.id = q.application_id::int, (select r.id, r.commit from application_deployment_queues r join applications ra on ra.id = r.application_id::int where ra.uuid = '33k9gghhdlx4kzdivylxuopr' and r.status = 'finished' order by r.id desc limit 1) r where a.uuid = '33k9gghhdlx4kzdivylxuopr' and q.commit = r.commit and q.id <= r.id and q.logs ~ 'node:[0-9]+-alpine@sha256:[0-9a-f]{64}' and q.logs ~ 'Rolling update started' order by q.id desc limit 1\""
+```
+
+Run the image it prints, on any host with Docker, to read the patch:
+
+```sh
+docker run --rm --entrypoint node node:<major>-alpine@sha256:<digest> --version
+```
 
 ## Why a railpack build lags CI
 
@@ -18,11 +32,13 @@ CI's setup-node downloads the newest release of the `.nvmrc` major. Railpack's p
 
 ## Which patch a railpack build runs
 
+This section and its query apply only while `build_pack` is `railpack`. On `dockerfile` the query reads no Dockerfile build: after a force-deploy of the same commit it still names the earlier railpack deploy and prints that deploy's Node patch, and after the next commit it prints no row.
+
 Production runs the image tagged with the commit of the newest finished deploy, and `~/Projects/homelab-stacks/scripts/coolify-deploy-status.sh` prints that tag (`image <uuid>:<commit>`). A deploy that finds an image for its commit skips the build and logs `Build step skipped`, unless the deploy forces a rebuild or Coolify's `should_skip_build()` finds a reason to rebuild, such as a changed build setting. So after a Coolify rollback, an older deploy can have built the running image. The deploy that built it is the newest deploy of that commit whose log holds two Coolify lines, counting no deploy newer than the newest finished one. `Building docker image with Railpack.` means the build started. `Rolling update started.` means the build succeeded, since a failed build stops before that line. A deploy that skips the build writes it too, so the query needs both.
 
 Coolify 4.6.0 writes both lines. It writes the second only on its rolling update path, which sutom takes while it maps no host port, keeps the consistent container name setting off and sets no custom IP. A Coolify upgrade can reword either line, and a reworded line makes the query print no row or an older build's row. After an upgrade, check that the newest deploy that built an image still logs both, and update the query's two patterns when it does not.
 
-The patch is the `mise node@<version>` of the newest deploy whose node step ran, counting deploys up to the one that built the image, a failed deploy included, since a failed build's finished steps stay in the cache. The query reads railpack's log lines, so it prints no row while the newest finished deploy's commit has no railpack build:
+The patch is the `mise node@<version>` of the newest deploy whose node step ran, counting deploys up to the one that built the image, a failed deploy included, since a failed build's finished steps stay in the cache:
 
 ```sh
 ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select q.id, q.status, q.created_at, substring(q.logs from 'mise node@([0-9]+[.][0-9]+[.][0-9]+)') from application_deployment_queues q join applications a on a.id = q.application_id::int where a.uuid = '33k9gghhdlx4kzdivylxuopr' and q.logs ~ 'mise node@[0-9]' and q.id <= (select max(b.id) from application_deployment_queues b, (select r.id, r.commit from application_deployment_queues r where r.application_id = q.application_id and r.status = 'finished' order by r.id desc limit 1) r where b.application_id = q.application_id and b.commit = r.commit and b.id <= r.id and b.logs ~ 'Building docker image with Railpack' and b.logs ~ 'Rolling update started') order by q.id desc limit 1\""
