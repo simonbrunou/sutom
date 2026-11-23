@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Check that CI and the production build read one Node major (#168): the
-# Node of both comes from .nvmrc, and the Node types name the same major. The
-# production build can run an older patch of it than CI
-# (docs/agents/node-version.md says why). CI runs this script before
-# `npm ci`, so a local run runs the same check.
+# Check that CI and both production builds read one Node major (#168). CI and
+# railpack take their Node from .nvmrc, the Dockerfile names it in its FROM
+# lines, and the Node types name the same major. A production build can run
+# an older patch of it than CI (docs/agents/node-version.md says why). CI runs
+# this script before `npm ci`, so a local run runs the same check.
 #
 #   scripts/check-node-pins.sh [<repo dir>]
 #
 # It reads:
 #   .nvmrc  the one pin. CI's actions/setup-node reads it through
-#     `node-version-file`, and railpack, which builds production on Coolify,
-#     reads it when package.json sets no engines.node or devEngines.runtime.
+#     `node-version-file`, and railpack, when Coolify builds production with
+#     it, reads it when package.json sets no engines.node or devEngines.runtime.
 #     It must hold one version line (24, v24, 24.12.0) and nothing else: an
 #     alias such as lts/*, a comment or a second line fails, since setup-node
 #     and railpack could read those differently.
@@ -45,14 +45,27 @@
 #     as other text, and a flow mapping or sequence left open at the end of
 #     its line (scope: {a: 1,), which puts the lines after it inside a
 #     value: reading those would take a YAML parser.
+#   Dockerfile  the major of the tag of every `FROM [<registry>/]node:<tag>`
+#     (24 out of 24-alpine or 24.12.0-alpine@sha256:...), the Node of the
+#     image build. It reads lines, continuations and comments as BuildKit's
+#     parser does (see read_dockerfile). Where this script could read a
+#     Dockerfile otherwise than Docker does, it fails rather than skip a
+#     line: a heredoc body (RUN <<EOF) reads like any other line, so a body
+#     line FROM node:<tag> counts as a stage, and so does a line that starts
+#     with FROM inside a continued instruction, read with the lines that
+#     continue it; FROM node reads as an untagged image even when it names an
+#     earlier stage called node; an escape directive other than a backslash
+#     fails. Skipping heredoc bodies or stage names would take BuildKit's
+#     parser, and any way this script read one differently could let a real
+#     stage go unread.
 #   package.json  the major of each `@types/node` range (24 out of ^24.0.0),
 #     in devDependencies or dependencies; one of them must list it. Railpack
 #     reads `engines.node` and `devEngines.runtime` before .nvmrc, so an
 #     engines.node is read as one more pin, and a devEngines.runtime fails.
 # Railpack also reads a RAILPACK_NODE_VERSION variable before all of these,
 # set on the Coolify app, which this check cannot see. The Node.js group in
-# renovate.json moves .nvmrc and @types/node together. The dev shell
-# (flake.nix) reads its Node major from .nvmrc too, so a `node --version` with
+# renovate.json moves .nvmrc, the Dockerfile's node image and @types/node
+# together. The dev shell (flake.nix) reads its Node major from .nvmrc too, so a `node --version` with
 # another major prints a warning only: the shell has not reloaded since .nvmrc
 # changed, or nix-direnv kept the previous shell after a failed evaluation.
 # flake.nix parses .nvmrc with its own builtins.match, which must take the
@@ -63,7 +76,7 @@
 # Exit 0: every setup-node step reads .nvmrc and every pin reads the same
 # major. Exit 1: a workflow hardcodes node-version, the pins differ, or one
 # cannot be read, and the output names each file, line and value. When awk
-# fails on a workflow, sed fails on .nvmrc, or node fails on package.json
+# fails on a workflow or the Dockerfile, sed fails on .nvmrc, or node fails on package.json
 # (it cannot read the file, or node itself fails) or prints other than the
 # four lines read_package reads from it, the check prints `cannot read
 # <file>` and how the reader ended, after any error the reader printed, and
@@ -95,6 +108,7 @@ fi
 
 NVMRC=.nvmrc
 WORKFLOWS=.forgejo/workflows
+DOCKERFILE=Dockerfile
 PACKAGE=package.json
 
 # One major, as a Node version or an npm range: 24, v24, 24.x, 24.12.0,
@@ -445,6 +459,133 @@ read_workflows() {
   fi
 }
 
+# Whether a FROM line named a node image.
+found_node=0
+
+# Read one FROM: its line number and image.
+read_from() {
+  local n="$1" image="$2" ref name last tag
+  # An image named by a build arg (FROM ${IMAGE}) hides its tag from this
+  # check, so it fails instead of passing that stage unread.
+  if [[ "$image" == *'$'* ]]; then
+    fail "$DOCKERFILE:$n FROM takes its image from a build arg, which this check cannot read"
+    return
+  fi
+  ref=${image%%@*}
+  # The tag follows the last colon after the last slash, so a registry port
+  # (localhost:5000/node) is not read as a tag.
+  name=$ref
+  tag=
+  last=${ref##*/}
+  if [[ "$last" == *:* ]]; then
+    tag=${last#*:}
+    name=${ref%:*}
+  fi
+  if [[ ! "$name" =~ (^|/)node$ ]]; then
+    return
+  fi
+  found_node=1
+  if [ -z "$tag" ]; then
+    fail "$DOCKERFILE:$n $image has no tag"
+  elif [[ "$tag" =~ ^([0-9]+)([.-]|$) ]]; then
+    pin "$DOCKERFILE:$n" "${BASH_REMATCH[1]}" "$image"
+  else
+    fail "$DOCKERFILE:$n node tag '$tag' does not start with a Node major"
+  fi
+}
+
+read_dockerfile() {
+  local file="$ROOT/$DOCKERFILE" out entry n i
+  local -a words
+  if [ ! -f "$file" ]; then
+    fail "$DOCKERFILE not found"
+    return
+  fi
+  # One `<line>:FROM ...` per FROM instruction, read line by line as
+  # BuildKit's parser (frontend/dockerfile/parser/parser.go, Parse) reads a
+  # Dockerfile: trailing CRs and, on line 1, a UTF-8 byte order mark dropped;
+  # leading Unicode spaces trimmed from an instruction's first line; comment
+  # lines, and blank lines inside an instruction, skipped; a line that ends
+  # in one backslash (not two) continued into the next with no separator;
+  # words split on tabs, vertical tabs, form feeds, CRs and spaces. Two rules
+  # read more than Docker, failing closed: a line that starts with FROM
+  # inside a continued instruction also prints, with the lines that continue
+  # it, since Docker may end the instruction before it (a heredoc end word
+  # that ends in a backslash); and any escape directive other than a
+  # backslash prints `<line>:#escape`, since escape=` makes a backslash
+  # literal and this parser does not follow it.
+  out=$(LC_ALL=C awk '
+    # bytes.TrimLeftFunc(s, unicode.IsSpace), on UTF-8 bytes.
+    function ltrim(s) {
+      while (match(s, /^([\t\n\v\f\r ]|\302[\205\240]|\341\232\200|\342\200[\200-\212\250\251\257]|\342\201\237|\343\200\200)/))
+        s = substr(s, RLENGTH + 1)
+      return s
+    }
+    # The column of s where a FROM instruction word starts, or 0.
+    function from_at(s, t) {
+      t = ltrim(s)
+      if (tolower(t) !~ /^from([\t\v\f\r ]|$)/) return 0
+      return length(s) - length(t) + 1
+    }
+    function out(n, s) {
+      gsub(/[\t\v\f\r]/, " ", s)
+      print n ":" s
+    }
+    # The instruction if it is a FROM, then each FROM line inside it: the
+    # rest of buf from the column at[k] where line inner[k] starts.
+    function emit(k, c) {
+      if ((c = from_at(buf))) out(start, substr(buf, c))
+      for (k = 1; k <= froms; k++) if (inner[k] != start) out(inner[k], substr(buf, at[k]))
+    }
+    { sub(/\r+$/, "") }
+    NR == 1 { sub(/^\357\273\277/, "") }
+    {
+      t = ltrim($0)
+      if (t ~ /^#/) {
+        d = ltrim(substr(t, 2))
+        if (tolower(d) ~ /^escape[\t\n\v\f\r ]*=/ && d !~ /=[\t\n\v\f\r ]*\\[\t\n\v\f\r ]*$/) print NR ":#escape"
+        next
+      }
+      if (t == "") next
+      line = $0
+      if (!cont) {
+        buf = ""
+        start = NR
+        froms = 0
+      } else if ((c = from_at(line))) {
+        froms++
+        inner[froms] = NR
+        at[froms] = length(buf) + c
+      }
+      cont = line ~ /(^|[^\\])\\[ \t]*$/
+      if (cont) sub(/\\[ \t]*$/, "", line)
+      buf = buf line
+      if (!cont) emit()
+    }
+    END { if (cont) emit() }
+  ' "$file") || {
+    # As for a workflow: what a failed awk printed is not read.
+    fail "cannot read $DOCKERFILE: awk exited $?"
+    return
+  }
+  while IFS= read -r entry; do
+    n=${entry%%:*}
+    entry=${entry#*:}
+    if [ "$entry" = '#escape' ]; then
+      fail "$DOCKERFILE:$n sets an escape character other than a backslash, which this check does not read"
+      continue
+    fi
+    read -ra words <<<"$entry"
+    # Skip the flags (--platform=...) between FROM and the image.
+    i=1
+    while [[ "${words[i]:-}" == --* ]]; do i=$((i + 1)); done
+    read_from "$n" "${words[i]:-}"
+  done <<<"$out"
+  if [ "$found_node" -eq 0 ]; then
+    fail "$DOCKERFILE has no FROM node line"
+  fi
+}
+
 read_package() {
   local file="$ROOT/$PACKAGE" values field key types=0 i code
   local -a lines=()
@@ -541,6 +682,7 @@ read_package() {
 
 read_nvmrc
 read_workflows
+read_dockerfile
 read_package
 
 expected="${major[0]:-}"

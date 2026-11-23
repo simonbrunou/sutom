@@ -1,9 +1,10 @@
 // @vitest-environment node
 // scripts/check-node-pins.sh (#168) against small pin files written per test,
 // so every line number below is exact and no edit to the repo's own
-// workflows, .nvmrc or package.json moves it. The fixture holds the shapes
-// the script must read: three setup-node steps that read .nvmrc, written
-// three ways, and @types/node. A test edits one line into one failure class
+// workflows, .nvmrc, Dockerfile or package.json moves it. The fixture holds
+// the shapes the script must read: three setup-node steps that read .nvmrc,
+// written three ways, three node stages among the FROM forms of a Dockerfile,
+// and @types/node. A test edits one line into one failure class
 // and asserts the exit code and the message that names the file and value.
 // The cases at the end compare the check with a YAML parser instead: they
 // assert only that the check never passes a workflow the parser reads as a
@@ -61,13 +62,26 @@ const ciLines = [
 	'      with: # the setup-node inputs',
 	"        node-version-file: './.nvmrc'" // 30
 ];
+const dockerLines = [
+	'# syntax=docker/dockerfile:1.29', // 1
+	'FROM node:24-alpine AS builder', // 2
+	'RUN npm ci',
+	'FROM --platform=linux/amd64 docker.io/library/node:24.12.0-bookworm-slim@sha256:0123abcd AS deps', // 4
+	'FROM builder AS test', // 5: builds on the stage of line 2
+	'from node:24 as runtime', // 6: lowercase keywords
+	'FROM caddy:2-alpine AS runner', // 7: not a node image
+	'COPY --from=builder /app/build /app/build'
+];
 const fixture: Record<string, string> = {
 	[CI]: `${ciLines.join('\n')}\n`,
 	'.nvmrc': '24\n',
+	Dockerfile: `${dockerLines.join('\n')}\n`,
 	'package.json': `${JSON.stringify({ devDependencies: { '@types/node': '^24.0.0' } }, null, 2)}\n`
 };
-const ALL =
-	'2 pins read Node 24 (.nvmrc, package.json devDependencies @types/node); the 3 actions/setup-node step(s) read .nvmrc';
+const DOCKER_PINS = 'Dockerfile:2, Dockerfile:4, Dockerfile:6';
+const ALL = `5 pins read Node 24 (.nvmrc, ${DOCKER_PINS}, package.json devDependencies @types/node); the 3 actions/setup-node step(s) read .nvmrc`;
+// For a test that moves the Dockerfile's line numbers.
+const FIVE = '5 pins read Node 24';
 
 const base = mkdtempSync(path.join(tmpdir(), 'check-node-pins-'));
 // The current test's copy of the fixture: base/<test number>.
@@ -96,6 +110,17 @@ function setLine(file: string, at: number, text: string): void {
 	if (at < 1 || at > lines.length) throw new Error(`${file} has no line ${at}`);
 	lines[at - 1] = text;
 	writeFileSync(p, lines.join('\n'));
+}
+
+function setDockerLine(at: number, text: string): void {
+	setLine('Dockerfile', at, text);
+}
+
+// Move the three node stages of the fixture to `major`.
+function setDockerMajor(major: string, stages = [2, 4, 6]): void {
+	for (const at of stages) {
+		setDockerLine(at, dockerLines[at - 1]!.replace('node:24', `node:${major}`));
+	}
 }
 
 function writePackage(pkg: unknown): void {
@@ -155,19 +180,21 @@ describe('check-node-pins.sh passes', () => {
 
 	it('on @types/node in dependencies', () => {
 		writeTypesNode('^24.0.0', 'dependencies');
-		passesWith('2 pins read Node 24 (.nvmrc, package.json dependencies @types/node)');
+		passesWith(
+			`5 pins read Node 24 (.nvmrc, ${DOCKER_PINS}, package.json dependencies @types/node)`
+		);
 	});
 
 	it('on @types/node in both devDependencies and dependencies, reading each', () => {
 		const types = { '@types/node': '^24.0.0' };
 		writePackage({ devDependencies: types, dependencies: types });
-		passesWith('3 pins read Node 24');
+		passesWith('6 pins read Node 24');
 	});
 
 	it('on an engines.node of the same major, read as a third pin', () => {
 		writePackage({ engines: { node: '24.x' }, devDependencies: { '@types/node': '^24.0.0' } });
 		passesWith(
-			'3 pins read Node 24 (.nvmrc, package.json engines.node, package.json devDependencies @types/node)'
+			`6 pins read Node 24 (.nvmrc, ${DOCKER_PINS}, package.json engines.node, package.json devDependencies @types/node)`
 		);
 	});
 
@@ -307,8 +334,9 @@ describe('check-node-pins.sh passes', () => {
 describe('check-node-pins.sh warns, and still passes', () => {
 	it('when the shell runs another Node major than the pins', () => {
 		write('.nvmrc', '99\n');
+		setDockerMajor('99');
 		writeTypesNode('^99.0.0');
-		expect(passesWith('2 pins read Node 99')).toMatch(/warning: this shell runs Node/);
+		expect(passesWith('5 pins read Node 99')).toMatch(/warning: this shell runs Node/);
 	});
 
 	it('not when the shell runs the pinned major', () => {
@@ -316,8 +344,9 @@ describe('check-node-pins.sh warns, and still passes', () => {
 			.replace(/^v/, '')
 			.split('.')[0];
 		write('.nvmrc', `${running}\n`);
+		setDockerMajor(running!);
 		writeTypesNode(`^${running}.0.0`);
-		expect(passesWith(`2 pins read Node ${running}`)).toBe('');
+		expect(passesWith(`5 pins read Node ${running}`)).toBe('');
 	});
 });
 
@@ -800,7 +829,7 @@ describe('check-node-pins.sh fails when the Node majors differ, listing every pi
 });
 
 describe('check-node-pins.sh fails when it cannot read a pin', () => {
-	it.each(['.nvmrc', 'package.json'])('a %s that is gone', (file) => {
+	it.each(['.nvmrc', 'Dockerfile', 'package.json'])('a %s that is gone', (file) => {
 		renameSync(path.join(dir, file), path.join(dir, `${file}.old`));
 		failsWith(`${file} not found`);
 	});
@@ -920,6 +949,172 @@ describe('check-node-pins.sh fails when it cannot read a pin', () => {
 	});
 });
 
+describe('check-node-pins.sh reads the Dockerfile', () => {
+	describe('and passes', () => {
+		it('on an escape directive that keeps the backslash', () => {
+			setDockerLine(1, '# escape=\\');
+			passesWith(ALL);
+		});
+
+		it('on a registry with a port', () => {
+			setDockerLine(6, 'FROM localhost:5000/node:24-alpine');
+			passesWith(ALL);
+		});
+
+		it('on a FROM continued over lines that hold a comment and a blank line', () => {
+			setDockerLine(
+				4,
+				'FROM --platform=linux/amd64 \\\n  # the deps stage\n\n  docker.io/library/node:24.12.0-bookworm-slim \\\n  AS deps'
+			);
+			passesWith(FIVE);
+		});
+
+		it('on images that are not node, whatever their name holds', () => {
+			setDockerLine(
+				7,
+				'FROM example.com/node-tools:2\nFROM example.com/nodejs:26\nFROM example.com/mynode:26'
+			);
+			passesWith(FIVE);
+		});
+
+		it('on a line inside an instruction that starts with a word longer than FROM', () => {
+			setDockerLine(3, 'RUN echo \\\nfromage node:26');
+			passesWith(FIVE);
+		});
+
+		// BuildKit ends the instruction at the escaped backslash, so node:26 is
+		// no image of this FROM.
+		it('on a line that ends in an escaped backslash, which continues nothing', () => {
+			setDockerLine(7, 'FROM --platform=linux/amd64\\\\\n  node:26');
+			passesWith(FIVE);
+		});
+	});
+
+	describe('and fails when a stage differs, listing it', () => {
+		it.each([2, 4, 6])('the stage on line %d', (at) => {
+			setDockerMajor('26', [at]);
+			failsWith('the Node majors differ', `Dockerfile:${at}  26 (`, '.nvmrc  24 (24)');
+		});
+
+		it('a node image on the continued line of a FROM', () => {
+			setDockerLine(6, 'FROM \\\n  node:26-alpine AS runtime');
+			failsWith('the Node majors differ', 'Dockerfile:6  26 (node:26-alpine)');
+		});
+
+		it('a FROM whose continuation runs to the end of the file', () => {
+			write('Dockerfile', `${dockerLines.join('\n')}\nFROM node:26 \\`);
+			failsWith('the Node majors differ', 'Dockerfile:9  26 (node:26)');
+		});
+
+		it('a FROM after a comment line that ends in a backslash', () => {
+			setDockerLine(3, '# a comment \\\nFROM node:26');
+			failsWith('the Node majors differ', 'Dockerfile:4  26 (node:26)');
+		});
+
+		it('a FROM after heredocs, whatever their end words', () => {
+			setDockerLine(3, 'RUN <<EOF-END\necho ok\nEOF-END\nFROM node:26\nRUN <<EOF\necho ok\nEOF');
+			failsWith('the Node majors differ', 'Dockerfile:6  26 (node:26)');
+		});
+
+		// Known limit, failing closed: the check reads a heredoc body like any
+		// other line rather than risk skipping a real stage (see the script header).
+		it('a heredoc body line that starts with FROM node:<tag>', () => {
+			setDockerLine(3, 'RUN <<EOF\nFROM node:26\nEOF');
+			failsWith('the Node majors differ', 'Dockerfile:4  26 (node:26)');
+		});
+
+		it('a FROM after a heredoc body that reads like a stage name', () => {
+			setDockerLine(3, 'RUN <<EOF\nFROM alpine AS node:26\nEOF\nFROM node:26');
+			failsWith('the Node majors differ', 'Dockerfile:6  26 (node:26)');
+		});
+
+		it('a FROM after a heredoc end word that ends in a backslash', () => {
+			setDockerLine(3, "RUN <<'EOF\\'\necho ok\nEOF\\\nFROM node:26");
+			failsWith('the Node majors differ', 'Dockerfile:6  26 (node:26)');
+		});
+
+		it('a FROM split over two lines after a heredoc end word that ends in a backslash', () => {
+			setDockerLine(3, "RUN <<'EOF\\'\necho ok\nEOF\\\nFROM \\\nnode:26");
+			failsWith('the Node majors differ', 'Dockerfile:6  26 (node:26)');
+		});
+
+		// Lines BuildKit's parser reads as a FROM node:26 stage.
+		it.each([
+			['a continuation that splits the image mid-word', 6, 'FROM no\\\nde:26', 6],
+			['a no-break space before FROM', 6, '\u00A0FROM node:26', 6],
+			['an ideographic space before FROM', 6, '\u3000FROM node:26', 6],
+			['a next-line character before FROM', 6, '\u0085FROM node:26', 6],
+			['an ogham space before FROM', 6, '\u1680FROM node:26', 6],
+			['an en quad before FROM', 6, '\u2000FROM node:26', 6],
+			['a hair space before FROM', 6, '\u200AFROM node:26', 6],
+			['a line separator before FROM', 6, '\u2028FROM node:26', 6],
+			['a paragraph separator before FROM', 6, '\u2029FROM node:26', 6],
+			['a narrow no-break space before FROM', 6, '\u202FFROM node:26', 6],
+			['a medium mathematical space before FROM', 6, '\u205FFROM node:26', 6],
+			['a tab before FROM', 6, '\tFROM node:26', 6],
+			['a vertical tab before FROM', 6, '\vFROM node:26', 6],
+			['a form feed before FROM', 6, '\fFROM node:26', 6],
+			['a continuation backslash followed by blanks', 6, 'FROM \\ \t\nnode:26', 6],
+			['a tab after FROM', 6, 'FROM\tnode:26', 6],
+			['a vertical tab after FROM', 6, 'FROM\vnode:26', 6],
+			['a form feed after FROM', 6, 'FROM\fnode:26', 6],
+			['a CR after FROM', 6, 'FROM\rnode:26', 6],
+			['a continuation line that ends in two CRs', 6, 'FROM \\\r\r\nnode:26', 6],
+			['a FROM after a line that ends in an escaped backslash', 3, 'RUN echo \\\\\nFROM node:26', 4]
+		])('%s', (_name, at, text, from) => {
+			setDockerLine(at, text);
+			failsWith('the Node majors differ', `Dockerfile:${from}  26 (node:26)`);
+		});
+
+		it('a FROM on the first line, after a UTF-8 byte order mark', () => {
+			setDockerLine(1, '\uFEFFFROM node:26-alpine AS first');
+			failsWith('the Node majors differ', 'Dockerfile:1  26 (node:26-alpine)');
+		});
+	});
+
+	describe('and fails when it cannot read a stage', () => {
+		it.each([
+			['node:lts-alpine', "node tag 'lts-alpine' does not start with a Node major"],
+			['node:alpine', "node tag 'alpine' does not start with a Node major"],
+			['node:24a-alpine', "node tag '24a-alpine' does not start with a Node major"],
+			['node', 'node has no tag'],
+			['node@sha256:0123abcd', 'node@sha256:0123abcd has no tag']
+		])('a stage FROM %s', (image, message) => {
+			setDockerLine(6, `FROM ${image}`);
+			failsWith(`Dockerfile:6 ${message}`);
+		});
+
+		it.each(['FROM ${IMG}', 'FROM --platform=linux/amd64 ${IMG}'])(
+			'a stage that takes its image from a build arg: %s',
+			(from) => {
+				setDockerLine(6, `ARG IMG=node:24\n${from}`);
+				failsWith('Dockerfile:7 FROM takes its image from a build arg');
+			}
+		);
+
+		// Known limit, failing closed (see the script header).
+		it('a FROM node that names an earlier stage called node, read as an untagged image', () => {
+			setDockerLine(2, 'FROM node:24-alpine AS node');
+			setDockerLine(5, 'FROM node AS test');
+			failsWith('Dockerfile:5 node has no tag');
+		});
+
+		it.each([
+			['# escape=`\nFROM node:24\nRUN echo ok\\\nFROM node:26', 1],
+			['# syntax=docker/dockerfile:1.29\n#  ESCAPE = `', 2],
+			[' # escape=`', 1]
+		])('a Dockerfile whose escape directive makes a backslash literal: %j', (text, at) => {
+			write('Dockerfile', `${text}\n`);
+			failsWith(`Dockerfile:${at} sets an escape character other than a backslash`);
+		});
+
+		it('a Dockerfile with no node stage', () => {
+			for (const at of [2, 4, 6]) setDockerLine(at, 'FROM debian:bookworm-slim');
+			failsWith('Dockerfile has no FROM node line');
+		});
+	});
+});
+
 // Put a shim for `name` (awk, sed, node) first on PATH, running `body` in sh
 // with $REAL set to the real command, and return the environment to run the
 // check with. A shim is how these tests make a reader fail: CI runs as root,
@@ -937,6 +1132,14 @@ function awkOnCi(onCi: string): NodeJS.ProcessEnv {
 	return shim(
 		'awk',
 		`for last; do :; done\ncase "$last" in */ci.yml) ${onCi} ;; esac\nexec "$REAL" "$@"`
+	);
+}
+
+// An awk that runs `onDockerfile` on the Dockerfile, and the real awk on workflows.
+function awkOnDockerfile(onDockerfile: string): NodeJS.ProcessEnv {
+	return shim(
+		'awk',
+		`for last; do :; done\ncase "$last" in */Dockerfile) ${onDockerfile} ;; esac\nexec "$REAL" "$@"`
 	);
 }
 
@@ -967,6 +1170,22 @@ describe('check-node-pins.sh fails, naming the file, when its reader fails', () 
 
 	it('an awk that prints every step of the workflow, then exits non-zero', () => {
 		failsWithEnv(awkOnCi('"$REAL" "$@"; exit 3'), [`cannot read ${CI}: awk exited 3`], []);
+	});
+
+	it('an awk that prints nothing on the Dockerfile, without reporting no FROM node line', () => {
+		failsWithEnv(
+			awkOnDockerfile('echo "awk: shim fails" >&2; exit 2'),
+			['awk: shim fails', 'cannot read Dockerfile: awk exited 2'],
+			['has no FROM node line']
+		);
+	});
+
+	it('an awk that prints every FROM of the Dockerfile, then exits non-zero', () => {
+		failsWithEnv(
+			awkOnDockerfile('"$REAL" "$@"; exit 3'),
+			['cannot read Dockerfile: awk exited 3'],
+			['has no FROM node line']
+		);
 	});
 
 	// A blank line counts as a line, at the end of the output too.
@@ -1065,17 +1284,18 @@ describe('check-node-pins.sh exits 2', () => {
 	});
 });
 
-// The script holds two programs in single quotes: the awk workflow reader
-// and the node package.json reader. An apostrophe in either, in a comment
+// The script holds three programs in single quotes: the awk workflow reader,
+// the awk Dockerfile reader and the node package.json reader. An apostrophe in either, in a comment
 // too, ends that quoting. One alone leaves bash a syntax error at a later
 // line, which names neither the apostrophe nor its line. A pair splices
 // shell text into the program, which may then fail nowhere; a blank
 // between the two also splits the program into several arguments, and
-// the check may then report some other fault. The awk program spells a
+// the check may then report some other fault. The workflow reader spells a
 // quote as `q`.
 describe('check-node-pins.sh source', () => {
 	it.each([
-		['awk', `awk -v q="'" '`, `  ' "$ROOT/$rel")`],
+		['awk workflow', `awk -v q="'" '`, `  ' "$ROOT/$rel")`],
+		['awk Dockerfile', `LC_ALL=C awk '`, `  ' "$file")`],
 		['node', `node -e '`, `  ' && echo .) || {`]
 	])('holds no apostrophe inside its single-quoted %s program', (_name, opening, closing) => {
 		const lines = readFileSync(scriptPath, 'utf8').split('\n');

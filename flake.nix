@@ -5,7 +5,7 @@
     let
       system = "x86_64-linux";  # ponytail: single machine; add flake-utils for multi-arch
       pkgs = import nixpkgs { inherit system; };
-      # The Node major comes from .nvmrc, the pin CI and production read and
+      # The Node major comes from .nvmrc, the pin CI and railpack read and
       # Renovate's Node.js group moves (#171). The match takes what
       # scripts/check-node-pins.sh takes: one version line (24, v24,
       # 24.12.0), blank lines and spaces around it, a CR at a line end. A
