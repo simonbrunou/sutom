@@ -20,13 +20,13 @@ The final image holds Caddy and no Node, so the running container cannot report 
 ssh root@192.168.1.195 "pct exec 104 -- docker exec coolify-db psql -U coolify -d coolify -At -c \"select q.id, q.status, q.created_at, substring(q.logs from 'FROM docker[.]io[^ ]*(node:[0-9]+-alpine)'), substring(q.logs from 'FROM docker[.]io[^ ]*node:[0-9]+-alpine(?:@(sha256:[0-9a-f]{64}))?') from application_deployment_queues q join applications a on a.id = q.application_id::int, (select r.id, r.commit from application_deployment_queues r join applications ra on ra.id = r.application_id::int where ra.uuid = '33k9gghhdlx4kzdivylxuopr' and r.status = 'finished' order by r.id desc limit 1) r where a.uuid = '33k9gghhdlx4kzdivylxuopr' and q.commit = r.commit and q.id <= r.id and q.logs ~ 'FROM docker[.]io[^ ]*node:[0-9]+-alpine' and q.logs ~ 'Rolling update started' order by q.id desc limit 1\""
 ```
 
-The last two columns are the tag and the digest. Run that image, on any host with Docker, to read the patch:
+The last two columns are the tag and the digest, which starts with `sha256:`. Run that image, on any host with Docker, to read the patch:
 
 ```sh
-docker run --rm --entrypoint node node:<major>-alpine@sha256:<digest> --version
+docker run --rm --entrypoint node <tag>@<digest> --version
 ```
 
-An empty digest means the `FROM` line named none. Docker's overlay2 store logs it that way when the build server holds a local tag of the image; the containerd store, which CT 126 used on 2026-11-23, logs the digest either way. Read the digest of that local tag on the build server, then run the image it prints with the same `docker run` command. This names the build's image only while the tag has not moved since that build:
+An empty digest means the `FROM` line named none. Docker's overlay2 store logs it that way when the build server holds a local tag of the image; the containerd store, which CT 126 used on 2026-11-23, logs the digest either way. Read the digest of that local tag on the build server, then pass the image it prints to the same `docker run` command in place of `<tag>@<digest>`. This names the build's image only while the tag has not moved since that build:
 
 ```sh
 ssh root@192.168.1.195 "pct exec 126 -- docker image inspect --format '{{index .RepoDigests 0}}' node:<major>-alpine"
