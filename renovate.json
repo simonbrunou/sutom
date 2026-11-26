@@ -2,6 +2,11 @@
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": ["config:recommended"],
 	"platformAutomerge": true,
+	"rebaseWhen": "conflicted",
+	"pin": {
+		"description": "Repeats the top-level rebaseWhen (#286, homelab-stacks#228): Renovate's built-in pin config sets behind-base-branch, which would override it for pin updates, so Renovate's next run after each main move would rebase an unmodified pin PR that fell behind main, and run its CI on the shared runner.",
+		"rebaseWhen": "conflicted"
+	},
 	"lockFileMaintenance": {
 		"description": "Refresh package-lock.json on Renovate's default lockFileMaintenance schedule (#194), so transitive dependencies such as undici pick up fixed releases inside their parents' ranges. OSV vulnerability alerts cover only direct dependencies. The 'Auto-merge low-risk updates' rule automerges these PRs once CI passes.",
 		"enabled": true
